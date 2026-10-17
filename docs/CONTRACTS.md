@@ -6,8 +6,8 @@ Contractele sunt codul din `src/lib/contracts/`. Acest document explică cine pr
 
 | | Responsabil |
 | --- | --- |
-| Generare (instrumentele `propose_task`, `propose_study_sessions`) | Sergiu |
-| Validare la creare (`ProposalPayloadSchema.safeParse` + `checkProposalTiming`) și inserare în `ai_proposals` cu status `pending` | Sergiu |
+| Generare (instrumentele `propose_task`, `propose_study_sessions`) | David |
+| Validare la creare (`ProposalPayloadSchema.safeParse` + `checkProposalTiming`) și inserare în `ai_proposals` cu status `pending` | David |
 | Afișare (`<ProposalCard proposal={…} />`): exact ce se va salva + butoanele Confirmă / Renunță | David |
 | Confirmare (`confirmProposal(id)` → `ConfirmProposalResult`) și respingere (`rejectProposal(id)`) | David |
 
@@ -26,7 +26,7 @@ Formatul (versiunea 1):
 
 Reguli obligatorii:
 
-- Datele sunt ISO 8601 **cu decalaj** (`+03:00` / `+02:00`). Sergiu le produce cu `fromLocal()` din `lib/time/zone.ts`, nu le lasă modelului să le calculeze liber.
+- Datele sunt ISO 8601 **cu decalaj** (`+03:00` / `+02:00`). Asistentul le produce cu `fromLocal()` din `lib/time/zone.ts`, nu le lasă modelului să le calculeze liber.
 - Intervalele propuse provin din `computeFreeSlots()` (cod), nu din model.
 - `fitsAvailableTime: false` + `warnings` când obiectivul nu încape realist. Interfața afișează avertismentul vizibil.
 - Confirmarea (David) **nu primește payload de la client**: citește propunerea după `id` (RLS), verifică `status = 'pending'` și `expires_at`, revalidează schema și timpul, verifică suprapunerile cu `findConflicts()` și `findInternalOverlaps()`, apoi inserează cu `proposal_id` + `proposal_item_index` (index unic, deci fără duplicate) și marchează `confirmed`.
@@ -37,7 +37,7 @@ Reguli obligatorii:
 
 ## 2. Citirile calendarului — `features/calendar/queries.ts` (David)
 
-Folosite de pagina Azi, de calendar și de instrumentele AI ale lui Sergiu:
+Folosite de pagina Azi, de calendar și de instrumentele AI:
 
 ```ts
 getOccurrencesBetween(range: { start: Date; end: Date }): Promise<EventOccurrence[]>
@@ -51,11 +51,11 @@ Nu primesc `user_id`: RLS limitează la utilizatorul curent. Semnăturile rămâ
 
 `fromLocal`, `toDateKey`, `toTimeOfDay`, `dayBounds`, `shiftDateKey`, `isoWeekday` · `expandEvent(s)` · `overlaps`, `findConflicts`, `findInternalOverlaps`, `computeFreeSlots({ range, busy, availability, minMinutes, bufferMinutes, notBefore })` · formatare în română (`formatTime`, `formatDayLong`, `formatRelativeDay`, …). Acoperite de teste. Orice schimbare de comportament vine cu test.
 
-## 4. Testele grilă — `lib/contracts/quiz.ts` (Sergiu)
+## 4. Testele grilă — `lib/contracts/quiz.ts` (David)
 
-`QuizSchema` (3–10 întrebări, 4 variante, `correctIndex`, `explanation`, `topic`, `source { materialId, page }`), `scoreAttempt()` și `weakTopics()`. David citește `QuizAttemptSummary` pentru cardul „Progres recent” de pe pagina Azi, printr-o funcție exportată de Sergiu din `features/quizzes/queries.ts` (`getRecentAttempts(limit)`).
+`QuizSchema` (3–10 întrebări, 4 variante, `correctIndex`, `explanation`, `topic`, `source { materialId, page }`), `scoreAttempt()` și `weakTopics()`. David citește `QuizAttemptSummary` pentru cardul „Progres recent” de pe pagina Azi, prin `features/quizzes/queries.ts` (`getRecentAttempts(limit)`).
 
-## 5. Instrumentele AI — `lib/contracts/ai-tools.ts` (Sergiu)
+## 5. Instrumentele AI — `lib/contracts/ai-tools.ts` (David)
 
 Numele și schemele argumentelor: `get_schedule`, `get_upcoming_deadlines`, `find_free_slots`, `get_subject_material`, `propose_task`, `propose_study_sessions`, `generate_quiz`. Limitele sunt în `AI_LIMITS` (max. 4 pași de instrumente, 12 mesaje de istoric, 24.000 de caractere de material). Argumentele se validează cu Zod înainte de execuție. Niciun instrument nu primește `user_id`, nu rulează SQL arbitrar și nu scrie direct în calendar.
 
@@ -76,9 +76,9 @@ getLearningStats(): Promise<{
 }>
 ```
 
-Calculat din date reale, nimic stocat separat. Sergiu salvează `duration_seconds` la fiecare încercare de test (S7).
+Calculat din date reale, nimic stocat separat. Fiecare încercare de test salvează `duration_seconds` (S7).
 
-## 8. Fotografii — `materials` (Sergiu)
+## 8. Fotografii — `materials` (încărcare: Sergiu · folosire în chat: David)
 
 Același tabel și același bucket ca PDF-urile: `mime_type` ∈ `image/jpeg`, `image/png`, `image/webp`. Fotografia se redimensionează în browser (max. ~2000 px) înainte de upload. Modelul o primește ca intrare de imagine prin URL semnat de scurtă durată sau ca date base64, generate pe server. Imaginile sunt tot **conținut, nu instrucțiuni**.
 

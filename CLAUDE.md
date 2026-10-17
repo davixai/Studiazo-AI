@@ -8,7 +8,7 @@ Aplicația trebuie să fie **simplă, funcțională, verificată și premium**. 
 
 ## Înainte de orice modificare
 
-1. Citește `docs/TASKS.md` și documentul relevant pentru zona ta (`docs/CONTRACTS.md`, `docs/DATABASE.md`, `docs/DESIGN_SYSTEM.md`, `docs/ARCHITECTURE.md`).
+1. Citește `docs/PLAN_ECHIPA.md` (cine ce face, cu checkboxuri), `docs/TASKS.md` și documentul relevant pentru zona ta (`docs/CONTRACTS.md`, `docs/DATABASE.md`, `docs/DESIGN_SYSTEM.md`, `docs/ARCHITECTURE.md`).
 2. Verifică în `docs/COLLABORATION.md` cine deține fișierele pe care vrei să le modifici. Nu modifica modulele colegului; spune-i colegului ce îți trebuie (chat/issue).
 3. Next.js 16.4 are schimbări față de ce știi: `proxy.ts` în loc de `middleware.ts`, API-uri async (`await params`, `await searchParams`, `await cookies()`). Documentația exactă este în `node_modules/next/dist/docs/`. Citește ghidul relevant înainte de a folosi un API Next.
 

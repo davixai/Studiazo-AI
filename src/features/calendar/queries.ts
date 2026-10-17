@@ -7,7 +7,7 @@ import { EVENT_COLUMNS, TASK_COLUMNS, toEvent, toTask } from "@/lib/supabase/map
 import { expandEvents, type Range } from "@/lib/time/recurrence";
 
 // Citiri comune ale calendarului. Proprietar: David.
-// Folosite și de instrumentele AI ale lui Sergiu (get_schedule, get_upcoming_deadlines, find_free_slots).
+// Folosite și de instrumentele AI (get_schedule, get_upcoming_deadlines, find_free_slots).
 // RLS limitează rezultatele la utilizatorul autentificat; nu primesc niciodată un user_id ca parametru.
 
 /** Aparițiile activităților care intersectează intervalul (recurența extinsă în ora locală). */

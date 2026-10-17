@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Contractul testelor grilă. Proprietar: Sergiu. Citit de David pentru „Progres recent” pe dashboard.
+// Contractul testelor grilă. Proprietar: David. Citit și pentru „Progres recent” pe dashboard.
 
 export const QuizQuestionSchema = z.object({
   id: z.string().min(1).max(20),
@@ -26,7 +26,7 @@ export type Quiz = z.infer<typeof QuizSchema>;
 /** Rezultatul pe teme al unei încercări: { "Limite": { correct: 1, total: 3 } } */
 export type TopicBreakdown = Record<string, { correct: number; total: number }>;
 
-/** Rezumat citit de dashboard (David) și de planificare (Sergiu). */
+/** Rezumat citit de dashboard și de planificare. */
 export type QuizAttemptSummary = {
   id: string;
   quizId: string;

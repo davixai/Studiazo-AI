@@ -13,10 +13,10 @@ Migrația inițială: `supabase/migrations/20261017100000_initial_schema.sql`. P
 | `notes` | notițe pe materie (text, max. 50.000 de caractere) | Sergiu |
 | `materials` | PDF-uri și fotografii (`mime_type`: pdf, jpeg, png, webp): `storage_path`, `size_bytes` ≤ 20 MB, `page_count`, `status` (incarcat, in_procesare, procesat, fara_text, esuat), `status_message`, `studied_at` | Sergiu |
 | `material_pages` | text extras pe pagini (pentru citări „pagina N”) | Sergiu |
-| `conversations`, `messages` | istoricul asistentului; `messages.metadata` jsonb (citări, propuneri, test) | Sergiu |
-| `quizzes`, `quiz_attempts` | teste grilă (`questions` jsonb = `QuizSchema`) și încercări (`score`, `total`, `topic_breakdown`, `duration_seconds` pentru timpul de învățare) | Sergiu |
-| `ai_proposals` | propuneri AI: `kind` (task / study_sessions), `payload` jsonb (`ProposalPayloadSchema`), `status` (pending, confirmed, rejected, expired), `expires_at` (24 h) | creare: Sergiu · confirmare: David |
-| `ai_usage` | evidența consumului AI pentru limite (fără update/delete pentru utilizator) | Sergiu |
+| `conversations`, `messages` | istoricul asistentului; `messages.metadata` jsonb (citări, propuneri, test) | David |
+| `quizzes`, `quiz_attempts` | teste grilă (`questions` jsonb = `QuizSchema`) și încercări (`score`, `total`, `topic_breakdown`, `duration_seconds` pentru timpul de învățare) | David |
+| `ai_proposals` | propuneri AI: `kind` (task / study_sessions), `payload` jsonb (`ProposalPayloadSchema`), `status` (pending, confirmed, rejected, expired), `expires_at` (24 h) | David |
+| `ai_usage` | evidența consumului AI pentru limite (fără update/delete pentru utilizator) | David |
 
 Toate cheile externe către utilizator au `on delete cascade`, deci ștergerea contului șterge tot. Materia ștearsă lasă activitățile și termenele fără materie (`set null`), dar șterge notițele, materialele și testele ei.
 

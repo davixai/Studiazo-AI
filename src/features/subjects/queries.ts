@@ -5,7 +5,7 @@ import { PREVIEW_SUBJECTS } from "@/lib/preview/fixtures";
 import { createClient } from "@/lib/supabase/server";
 import { SUBJECT_COLUMNS, toSubject } from "@/lib/supabase/mappers";
 
-// Proprietar: Sergiu. Citit și de David (asocierea activităților și termenelor cu materii).
+// Proprietar: Sergiu. Citit și de David (calendar, termene, asistent).
 
 export async function listSubjects(): Promise<Subject[]> {
   if (isPreviewMode()) return PREVIEW_SUBJECTS;

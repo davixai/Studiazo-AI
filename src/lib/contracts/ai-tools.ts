@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Instrumentele pe care modelul le poate apela. Proprietar: Sergiu (implementare în src/features/assistant).
+// Instrumentele pe care modelul le poate apela. Proprietar: David (implementare în src/features/assistant).
 // Argumentele vin de la model, deci sunt NESIGURE: se validează cu aceste scheme și NU conțin user_id —
 // identitatea vine mereu din sesiunea autentificată. Niciun instrument nu execută SQL sau cod arbitrar.
 

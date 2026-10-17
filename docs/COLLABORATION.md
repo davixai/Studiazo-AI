@@ -19,10 +19,9 @@ Lucrați **amândoi direct pe `main`** (decizia echipei, pentru viteză).
 | --- | --- | --- |
 | `src/components/ui`, `components/layout`, `app/globals.css`, `app/layout.tsx`, `app/(app)/layout.tsx` | David | îi spune lui David înainte |
 | `src/lib/contracts/domain.ts`, `lib/time/*`, `lib/supabase/*`, `lib/auth/*`, `proxy.ts` | David | îi spune lui David înainte |
-| `src/lib/contracts/proposals.ts` | **amândoi** | doar după acordul amândurora |
-| `src/lib/contracts/quiz.ts`, `ai-tools.ts`, `src/lib/ai/*` | Sergiu | îi spune lui Sergiu înainte |
-| `features/auth`, `profile`, `dashboard`, `calendar`, `tasks`, `proposals` + rutele `azi`, `calendar`, `profil`, `bun-venit` | David | — |
-| `features/subjects`, `materials`, `notes`, `assistant`, `quizzes` + rutele `materii`, `asistent`, `api/ai/*` | Sergiu | — |
+| `src/lib/contracts/proposals.ts`, `quiz.ts`, `ai-tools.ts`, `src/lib/ai/*` | David | îi spune lui David înainte |
+| `features/auth`, `profile`, `dashboard`, `calendar`, `tasks`, `proposals`, `assistant`, `quizzes` + rutele `azi`, `calendar`, `profil`, `bun-venit`, `asistent`, `api/ai/*` | David | — |
+| `features/subjects`, `materials`, `notes` + rutele `materii`, `materii/[id]` | Sergiu | — |
 | `features/resources` + `resurse` | David (simplu, la final) | — |
 | `supabase/migrations` | David aprobă | Sergiu adaugă migrații pentru tabelele lui |
 | `package.json`, `package-lock.json` | David aprobă | oricine adaugă o dependență, într-un commit separat cu motivul |
@@ -47,10 +46,11 @@ Lucrați **amândoi direct pe `main`** (decizia echipei, pentru viteză).
 
 ## Integrarea planului de studiu
 
-1. Sergiu creează propunerea (`ai_proposals`, status `pending`) și afișează în chat `<ProposalCard proposal={…} />`.
-2. Până când David livrează `ProposalCard`, Sergiu afișează un rezumat simplu temporar, fără buton de salvare.
-3. David livrează `features/proposals`: `ProposalCard`, `confirmProposal`, `rejectProposal`, cu teste.
-4. Testul de integrare: fluxul din `docs/DEMO.md`.
+Tot fluxul AI este al lui David: chatul creează propunerea (`ai_proposals`, status `pending`), `<ProposalCard>` o afișează, iar `confirmProposal` / `rejectProposal` o salvează sau o resping.
+
+Sergiu livrează ce folosește asistentul: `listSubjects()`, materialele cu textul extras pe pagini (`material_pages`) și fotografiile din `materials`. Dacă asistentul are nevoie de o funcție nouă de citire din modulele lui Sergiu (ex. `getSubjectMaterialText`), David o cere, iar Sergiu o exportă din `features/materials/queries.ts`.
+
+Testul de integrare: fluxul din `docs/DEMO.md`.
 
 ## Predare la finalul fiecărui task
 

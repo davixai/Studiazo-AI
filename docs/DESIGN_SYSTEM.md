@@ -1,6 +1,6 @@
 # Sistem de design
 
-Direcție: **calm, matur, minimalist, premium**. Un produs care pare făcut cu grijă, nu un panou generic. Referința vie: `/sistem-design` (disponibilă în dezvoltare și în modul previzualizare).
+Direcție: **prietenos, luminos, premium**. Lavandă și violet, carduri albe cu colțuri moi, umbre fine, animații scurte. Un produs care pare făcut cu grijă, nu un panou generic. Referința vie: pagina **Azi** (`src/app/(app)/azi/page.tsx`) și `/sistem-design` (în dezvoltare și în modul previzualizare).
 
 ## Fundamente
 
@@ -8,28 +8,40 @@ Direcție: **calm, matur, minimalist, premium**. Un produs care pare făcut cu g
 
 | Rol | Token | Folosire |
 | --- | --- | --- |
-| Fundal pagină | `canvas` `#f7f6f3` | neutru cald („hârtie”) |
-| Suprafețe | `surface`, `surface-muted`, `surface-sunken` | carduri, câmpuri, zone secundare |
-| Contururi | `line`, `line-strong` | 1px, discrete |
+| Fundal pagină | `canvas` `#f5f5fb` | lavandă foarte deschis |
+| Suprafețe | `surface` (alb), `surface-muted`, `surface-sunken` | carduri, câmpuri, zone secundare |
+| Contururi | `line`, `line-strong` | 1px, discrete (`border-line/70` pe carduri) |
 | Text | `ink` > `ink-soft` > `ink-muted` > `ink-faint` | ierarhie prin ton, nu prin mărime |
-| Accent unic | `accent` `#3049c4` (albastru-cerneală), `accent-soft`, `accent-ink` | acțiunea principală, starea activă, focus |
+| Accent unic | `accent` `#5b4be0` (violet), `accent-hover`, `accent-soft`, `accent-line`, `accent-ink`, `accent-deep` | acțiunea principală, starea activă, focus, cardurile-erou |
 | Stări | `success`, `warning`, `danger` (+ `-soft`) | doar pentru a comunica o stare |
-| Categorii | `cat-blue/teal/green/amber/rose/violet/slate` | materii și tipuri de activități: punct, bară de 3px, fundal 8% |
+| Categorii | `cat-blue/teal/green/amber/rose/violet/slate` | materii și tipuri de activități: `SUBJECT_COLOR_CLASSES` (punct, pastilă, fundal soft) |
 
 Contrast: textul `ink-muted` pe `canvas` și pe `surface` ≥ 4,5:1. `ink-faint` se folosește doar pentru informație secundară non-esențială.
 
 **Tipografie**
-- UI: **Geist** (subset latin-ext, cu ș/ț corecte).
-- Titluri de pagină și momente editoriale: **Newsreader** (`font-display`), greutate 500, `tracking-[-0.02em]`.
-- Scară: titlu pagină 32/40px · titlu secțiune 15px semibold · text 14–15px · meta 13px · etichete mici 11–12px.
-- Cifrele orelor folosesc `tabular` (cifre de lățime egală).
+- Un singur font: **Plus Jakarta Sans** (`font-sans` = `font-display`, subset latin-ext, cu ș/ț corecte).
+- Titluri: `font-display font-bold tracking-[-0.03em]`.
+- Scară: titlu pagină 28–32px · titlu card 15–17px semibold · text 14–15px · meta 13px · etichete mici 11–12px.
+- Cifrele orelor și statisticile folosesc `tabular` (cifre de lățime egală).
 
 **Spațiere și formă**
-- Grilă de 4px; carduri `p-5 sm:p-6`; între secțiuni 24–40px.
-- Raze: `sm` 6 · `md` 10 (butoane, câmpuri) · `lg` 14 (carduri) · `xl` 20 (dialoguri).
-- Umbre: `shadow-xs` implicit, `shadow-sm` la hover sau elemente active, `shadow-lg` doar pentru dialoguri.
+- Grilă de 4px; carduri `p-4 sm:p-5` sau `p-5 sm:p-6`; între secțiuni 16–32px.
+- Raze: `sm` 8 · `md` 12 (butoane, câmpuri) · `lg` 18 (carduri) · `xl` 24 (dialoguri).
+- Umbre: `shadow-xs` / `shadow-sm` pe carduri, `shadow-md` la hover (clasa `lift`), `shadow-lg` pentru dialoguri, `shadow-accent` doar pentru cardurile violet.
 
-**Mișcare**: 150–260 ms, `ease-out`; `fade-in`, `rise-in`, `sheet-in`. Toate se opresc la `prefers-reduced-motion`.
+**Mișcare** (în `globals.css`, toate oprite automat la `prefers-reduced-motion`):
+
+| Clasă | Folosire |
+| --- | --- |
+| `stagger` + `style={{ "--i": n }}` | intrarea în cascadă a cardurilor unei pagini (70 ms între ele) |
+| `animate-rise-in` / `animate-fade-in` | un element nou apărut (mesaj, rând adăugat, stare de succes) |
+| `animate-sheet-in` | foaie de jos pe mobil (deja în `Dialog`) |
+| `animate-pop-in` | o confirmare mică (insignă, bifă) |
+| `animate-grow-y` / `animate-fill-x` | grafice și bare de progres (ex. progresul unei încărcări) |
+| `lift` | carduri pe care se poate apăsa: se ridică ușor la hover |
+| `active:scale-[0.99]` | apăsare pe carduri-link și butoane mari, pe telefon |
+
+Reguli: animațiile ajută la orientare, nu decorează. 200–500 ms, `ease-out`. Fără confetti, fără mișcare continuă (excepție: flacăra streak-ului). Animă doar `opacity` și `transform`, ca să rămână fluide pe telefon.
 
 ## Componente (`src/components/ui`)
 

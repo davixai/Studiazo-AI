@@ -11,7 +11,7 @@
 | AI | OpenAI Responses API, SDK oficial `openai` 7.x | doar pe server |
 | Validare | Zod 4 | formulare, contracte, argumentele instrumentelor AI |
 | Timp | `@date-fns/tz` + `src/lib/time` | fus `Europe/Bucharest` |
-| PDF | `unpdf` (instalat pentru Sergiu) | text pe pagini |
+| PDF | `unpdf` | text pe pagini |
 | Teste | Vitest 5; Playwright cu Chrome-ul instalat pentru capturi | |
 
 Manager de pachete: **npm** (un singur `package-lock.json`).
@@ -60,19 +60,19 @@ scripts/                  capturi de ecran, generarea iconițelor
 ### Propunere AI → confirmare → salvare
 ```
 Student: „Am examen vineri, găsește-mi 3 intervale”
-  → Chat (Sergiu): modelul apelează get_upcoming_deadlines, find_free_slots
+  → Chat: modelul apelează get_upcoming_deadlines, find_free_slots
   → codul calculează intervalele libere (computeFreeSlots), modelul alege și explică
   → propose_study_sessions: serverul validează payload-ul (ProposalPayloadSchema + checkProposalTiming)
     și îl salvează în ai_proposals (status 'pending'). NIMIC în calendar încă.
-  → UI (David): <ProposalCard> arată exact ce se va salva + butonul Confirmă
-  → confirmProposal(id) (David): requireUser → citește propunerea din DB (nu de la client)
+  → UI: <ProposalCard> arată exact ce se va salva + butonul Confirmă
+  → confirmProposal(id): requireUser → citește propunerea din DB (nu de la client)
     → revalidează → verifică suprapunerile cu programul actual → inserează cu (proposal_id, item_index)
     → marchează 'confirmed' → revalidatePath
   → AI-ul spune „Am salvat” numai după rezultatul ok.
 ```
 Duplicatele sunt prevenite de indexul unic `(proposal_id, proposal_item_index)` și de tranziția `pending → confirmed`.
 
-### Materiale (Sergiu)
+### Materiale (Sergiu) și asistentul (David)
 Încărcarea se face direct din browser în Storage (`materials/{user_id}/{subject_id}/{material_id}.pdf`), cu validare în browser și în bucket (doar PDF, max. 20 MB). Apoi o acțiune pe server extrage textul pe pagini cu `unpdf` și îl salvează în `material_pages`. Dacă PDF-ul nu are text selectabil, statusul devine `fara_text`, cu un mesaj clar. Textul extras se salvează o singură dată.
 Fotografiile (JPEG/PNG/WebP) merg în același bucket. Sunt redimensionate în browser, iar în chat se trimit modelului ca intrare de imagine (`gpt-6-luna` acceptă text + imagine). Fiecare materie are chatul ei (`conversations.subject_id`), care folosește doar materialele materiei.
 

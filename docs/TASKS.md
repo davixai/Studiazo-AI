@@ -39,23 +39,29 @@ Legendă: ✅ gata și verificat · 🟡 demonstrativ sau parțial · ⬜ de fă
 | D3 | Teme și examene: creare, editare, finalizare; `?adauga=examen\|tema` deschide formularul | apar pe pagina Azi și în agendă |
 | D4 | Calendar: vederea săptămână (desktop) + zi; agenda rămâne implicită pe mobil | capturi 360/768/1440 |
 | D5 | `features/proposals`: `ProposalCard`, `confirmProposal`, `rejectProposal` | teste: fără confirmare nu se salvează nimic; dublu-click nu dublează; suprapunerea este respinsă; altă persoană nu poate confirma |
-| D6 | Azi: „Sesiunea recomandată” (următoarea sesiune de studiu confirmată) + „Progres recent” (de la Sergiu) | date reale |
+| D6 | Azi: „Sesiunea recomandată” (următoarea sesiune de studiu confirmată) + „Progres recent” (din testele grilă, S7) | date reale |
 | D7 | Disponibilitatea în profil (intervale pe zile) | salvată în `profiles.availability` |
 | D8 | **Progres și obicei**: streak, insigne (3/7/14/30/60/100 de zile), timpul de învățare pe ultimele 7 zile (grafic cu bare Lun–Dum) pe pagina Azi și într-o pagină Progres. Logica pură în `lib/progress/streak.ts`, cu teste (zile locale, schimbarea orei, zi fără activitate). Vezi CONTRACTS.md §7 | cifre doar din date reale; cont nou → 0 și „Începe-ți streak-ul azi” |
 
-### Sergiu
+#### David — asistentul AI (preluat de la Sergiu pe 17.10.2026)
 | # | Task | Criteriu de finalizare |
 | --- | --- | --- |
-| S1 | Materii: creare, editare, arhivare; pagina `/materii/[id]` | RLS verificat cu 2 conturi |
-| S2 | Notițe pe materie | creare, editare, ștergere |
-| S3 | Încărcare PDF (Storage direct, validare 20 MB / PDF) + extragere text pe pagini (`unpdf`) + stări | PDF cu text → `procesat`; scanat → `fara_text`, cu mesaj clar; previzualizare cu URL semnat; ștergere |
-| S3b | **Fotografii**: „Fă o poză” (`<input accept="image/*" capture="environment">` pe telefon) sau încărcare JPEG/PNG/WebP; redimensionare în browser (max. ~2000 px) înainte de upload; status `procesat` | poza apare la materie, se poate previzualiza și șterge |
 | S4 | Chat: **un chat pentru fiecare materie a studentului** (listă: General + materiile lui, ex. Matematică, Analiză, Electronică, Programare) + istoric, Responses API, limite, erori, timeout. Butonul „Întreabă despre materie” din `/materii/[id]` deschide chatul materiei | chatul materiei folosește doar materialele ei; AI indisponibil → mesaj clar, restul aplicației merge |
 | S4b | **AI vede poza**: studentul trimite o poză în chat (exercițiu, tablă, notițe), modelul (`gpt-6-luna`, intrare text + imagine) o citește și îl îndrumă pas cu pas, cu întrebări și indicii; spune clar când poza e neclară | test cu o poză reală clară + una neclară |
 | S5 | Instrumentele AI (`ai-tools.ts`), cu validare și max. 4 pași | „Am examen vineri. Găsește-mi trei intervale.” → propunere `pending` |
 | S6 | Explicații din material, cu citare de pagină; „nu apare în materiale” când e cazul | test cu PDF real |
 | S7 | Teste grilă: generare (structured output), rezolvare, scor, istoric, teme slabe | `getRecentAttempts()` pentru David |
 | S8 | Propunerile de studiu țin cont de testele slabe și de examene | avertisment când nu încape |
+
+### Sergiu — materii și fișiere
+| # | Task | Criteriu de finalizare |
+| --- | --- | --- |
+| S1 | Materii: creare, editare, arhivare; pagina `/materii/[id]` | RLS verificat cu 2 conturi |
+| S2 | Notițe pe materie | creare, editare, ștergere |
+| S3 | Încărcare PDF (Storage direct, validare 20 MB / PDF) + extragere text pe pagini (`unpdf`) + stări | PDF cu text → `procesat`; scanat → `fara_text`, cu mesaj clar; previzualizare cu URL semnat; ștergere |
+| S3b | **Fotografii**: „Fă o poză” (`<input accept="image/*" capture="environment">` pe telefon) sau încărcare JPEG/PNG/WebP; redimensionare în browser (max. ~2000 px) înainte de upload; status `procesat` | poza apare la materie, se poate previzualiza și șterge |
+
+S6 (explicații din material) depinde de S3: are nevoie de textul extras în `material_pages`.
 
 ## Etapa 3 — Integrare și verificare
 ⬜ Fluxul din DEMO.md cap-coadă · ⬜ izolarea datelor (2 conturi) · ⬜ refuzul salvării fără confirmare · ⬜ suprapuneri și duplicate · ⬜ OpenAI indisponibil · ⬜ telefon real (iOS și Android) + desktop.

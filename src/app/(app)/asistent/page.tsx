@@ -13,7 +13,7 @@ const EXAMPLES = [
   { icon: CalendarClock, text: "Am examen vineri. Găsește-mi trei intervale de studiu." },
 ];
 
-// Etapa 1: pagina de pornire a asistentului. Chatul, instrumentele și testele vin în etapa 2 (Sergiu).
+// Etapa 1: pagina de pornire a asistentului. Chatul, instrumentele și testele vin în etapa 2 (David).
 export default function AssistantPage() {
   const status = getAiStatus();
 

@@ -2,10 +2,9 @@ import { z } from "zod";
 import { TASK_KINDS } from "./domain";
 
 // ─────────────────────────────────────────────────────────────
-// Contractul propunerilor AI — formatul comun David ↔ Sergiu.
-// Sergiu: asistentul produce un payload valid și îl salvează în `ai_proposals` (status 'pending').
-// David: interfața afișează payload-ul, studentul confirmă, serverul revalidează și salvează.
-// Schimbările acestui fișier se fac prin PR aprobat de amândoi (vezi docs/CONTRACTS.md).
+// Contractul propunerilor AI — formatul comun asistent ↔ calendar. Proprietar: David.
+// Asistentul produce un payload valid și îl salvează în `ai_proposals` (status 'pending').
+// Interfața afișează payload-ul, studentul confirmă, serverul revalidează și salvează.
 // ─────────────────────────────────────────────────────────────
 
 export const PROPOSAL_VERSION = 1;
@@ -113,7 +112,7 @@ export type TimingIssue = { itemIndex: number; message: string };
 
 /**
  * Verificări temporale pentru o propunere deja validată de schemă.
- * Se rulează și când se creează propunerea (Sergiu), și la confirmare (David).
+ * Se rulează și când se creează propunerea, și la confirmare.
  */
 export function checkProposalTiming(payload: ProposalPayload, now = new Date()): TimingIssue[] {
   const earliest = now.getTime() - PROPOSAL_LIMITS.pastToleranceMinutes * 60_000;

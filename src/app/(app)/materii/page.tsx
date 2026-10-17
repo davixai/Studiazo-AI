@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Materii" };
 
-// Etapa 1: lista materiilor (citire). Crearea materiilor, notițele și PDF-urile vin în etapa 2 (Sergiu).
+// Etapa 1: lista materiilor (citire). Crearea materiilor, notițele, PDF-urile și fotografiile vin în etapa 2 (Sergiu).
 export default async function SubjectsPage() {
   const subjects = await listSubjects();
 

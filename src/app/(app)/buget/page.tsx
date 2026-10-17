@@ -9,12 +9,16 @@ import { AdvicePanel } from "@/features/finance/components/advice-panel";
 import { CategoryBars, RuleMeter, TrendChart } from "@/features/finance/components/charts";
 import { CopyPreviousMonth, EntryList } from "@/features/finance/components/entry-list";
 import { EntryForm } from "@/features/finance/components/entry-form";
+import { MigrationHelp } from "@/features/finance/components/migration-help";
 import { currentMonth, getFinance } from "@/features/finance/queries";
 import { extraIncomeNeeded, formatLei, formatPercent, isMonthKey, monthLabel, shiftMonth, summarize, trend } from "@/features/finance/stats";
 import { JobRecommendations } from "@/features/jobs/components/job-recommendations";
 import { getProfile } from "@/features/profile/queries";
 import { getAiStatus } from "@/lib/ai/config";
+import { publicEnv } from "@/lib/env";
 import { cn } from "@/lib/utils";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 export const metadata: Metadata = { title: "Buget" };
 
@@ -40,9 +44,10 @@ export default async function BudgetPage({ searchParams }: PageProps<"/buget">) 
         {header}
         <Alert tone="warning" title={data.reason === "migration" ? "Bugetul nu este încă activat" : "Nu am putut încărca bugetul"}>
           {data.reason === "migration"
-            ? "Baza de date nu are încă tabelul pentru buget. Aplică migrația supabase/migrations/20261017205000_finance.sql (SQL Editor → Run) și reîncarcă pagina."
+            ? "Baza de date nu are încă tabelul pentru buget. Se activează o singură dată, în mai puțin de un minut."
             : "Reîncarcă pagina peste câteva momente."}
         </Alert>
+        {data.reason === "migration" ? <MigrationHelp sql={await migrationSql()} editorUrl={sqlEditorUrl()} /> : null}
       </div>
     );
   }
@@ -181,4 +186,19 @@ function MonthSwitcher({ month, thisMonth }: { month: string; thisMonth: string 
       )}
     </nav>
   );
+}
+
+/** SQL-ul migrației pentru buget (citit din repo; afișat doar cât timp tabelul lipsește). */
+async function migrationSql() {
+  try {
+    return await readFile(path.join(process.cwd(), "supabase", "migrations", "20261017205000_finance.sql"), "utf8");
+  } catch {
+    return "-- Rulează supabase/migrations/20261017205000_finance.sql din proiect.";
+  }
+}
+
+/** Linkul direct către SQL Editor-ul proiectului Supabase (ref-ul vine din URL-ul public). */
+function sqlEditorUrl() {
+  const ref = /^https:\/\/([a-z0-9]+)\.supabase\.co/.exec(publicEnv.supabaseUrl)?.[1];
+  return ref ? `https://supabase.com/dashboard/project/${ref}/sql/new` : null;
 }

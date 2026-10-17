@@ -50,8 +50,7 @@ export default async function SubjectsPage() {
       )}
 
       <p className="text-[13px] leading-6 text-ink-muted">
-        Formate acceptate acum: PDF cu text selectabil, maximum 20 MB. Fotografiile și PDF-urile scanate vor fi acceptate
-        într-o etapă următoare.
+        Formate: PDF cu text selectabil și fotografii (JPEG, PNG, WebP), maximum 20 MB. Încărcarea vine în curând.
       </p>
     </div>
   );

@@ -39,6 +39,11 @@ D5. features/proposals: <ProposalCard proposal /> (arată exact ce se salvează,
 D6. Azi: „Sesiunea recomandată” = următoarea sesiune de studiu confirmată (sau CTA către asistent);
     „Progres recent” din getRecentAttempts() al lui Sergiu (când există; până atunci starea goală).
 D7. Profil: disponibilitatea pe zile (profiles.availability, AvailabilitySchema).
+D8. Progres și obicei („Ține flacăra aprinsă”), după docs/CONTRACTS.md §7: streak (zile locale consecutive cu o sesiune
+    de studiu finalizată sau un test rezolvat), insigne de etapă 3/7/14/30/60/100 de zile, timpul de învățare pe ultimele
+    7 zile ca grafic cu bare Lun–Dum. Pe Azi un card compact; pagina /progres cu detaliile. Logica pură în
+    lib/progress/streak.ts, cu teste (schimbarea orei, zi lipsă, azi încă inactiv). Doar date reale: cont nou → 0 minute
+    și „Începe-ți streak-ul azi”. Sobru și premium: flacăra și insignele discrete, fără confetti sau culori stridente.
 
 La fiecare task:
 - npm run check && npm run build; pentru UI, capturi la 360/390/768/1280/1440 (npm run screenshots, serverul cu STUDIA_PREVIEW=1

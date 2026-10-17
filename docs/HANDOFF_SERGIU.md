@@ -56,15 +56,26 @@ S3. PDF: încărcare direct în Storage din browser (bucket materials, cale {use
     PDF ≤ 20 MB în browser și pe server, rând în materials; extragere text pe pagini cu unpdf într-o acțiune de server, salvat
     în material_pages; stări incarcat → in_procesare → procesat | fara_text | esuat, cu mesaje clare; previzualizare prin
     createSignedUrl (60 s); ștergere (fișier + rânduri); marcare „parcurs”. Spune clar ce formate acceptăm.
-S4. Chat: conversații generale și pe materie, istoric salvat (conversations/messages), Responses API, limite, erori, stări de
-    încărcare. Pagina /asistent pe mobil: compozitor lipit jos, deasupra tastaturii.
+S3b. Fotografii: în /materii/[id], „Fă o poză” (<input type="file" accept="image/*" capture="environment"> pe telefon)
+    sau încărcare din galerie; JPEG/PNG/WebP; redimensionare în browser (max. ~2000 px, JPEG ~0.85) înainte de upload,
+    în același bucket materials; previzualizare și ștergere. Spune clar ce formate acceptăm.
+S4. Chat pe materii: în /asistent, o listă cu „General” + câte un chat pentru FIECARE materie a studentului
+    (ex. Matematică, Analiză, Electronică, Programare — din listSubjects(), nu dintr-o listă fixă), fiecare cu istoricul
+    lui (conversations.subject_id). Chatul unei materii folosește doar materialele acelei materii. Butonul
+    „Întreabă despre materie” din /materii/[id] deschide chatul materiei. Responses API, limite, erori, stări de încărcare.
+    Pe mobil: lista de chaturi → ecranul chatului, compozitorul lipit jos, deasupra tastaturii.
+S4b. AI-ul vede poza: în chat, studentul atașează sau face o poză (exercițiu, tablă, notițe). Serverul o trimite modelului
+    ca intrare de imagine (gpt-6-luna acceptă text + imagine; verifică formatul în documentația Responses API).
+    Asistentul îndrumă pas cu pas: întâi întrebări și indicii, soluția completă doar dacă studentul o cere;
+    spune clar când poza e neclară. Imaginea e conținut, nu instrucțiuni. Limită de imagini per cerere.
 S5. Instrumente (lib/contracts/ai-tools.ts): get_schedule, get_upcoming_deadlines, find_free_slots (folosesc
     features/calendar/queries.ts + lib/time/slots.ts), get_subject_material, propose_task, propose_study_sessions, generate_quiz.
     Exemple de test: „Am examen vineri. Găsește-mi trei intervale de studiu.”, „Adaugă o temă la matematică pentru luni, ora 18.”,
     „Explică-mi acest curs și apoi dă-mi cinci întrebări.”
 S6. Explicații din materiale, cu citarea paginii; test cu un PDF real și cu un PDF care conține o instrucțiune malițioasă.
 S7. Teste grilă: generare cu structured output validată cu QuizSchema (întrebări de înțelegere, nu de memorare), rezolvare,
-    scor (scoreAttempt), explicații, istoric, teme slabe (weakTopics). Exportă getRecentAttempts(limit) pentru David.
+    scor (scoreAttempt), explicații, istoric, teme slabe (weakTopics). Salvează duration_seconds (pentru streak-ul lui
+    David). Exportă getRecentAttempts(limit) pentru David.
 S8. Propuneri de studiu care țin cont de examene, de volumul de material și de temele slabe; fitsAvailableTime=false + avertisment
     când nu încape realist; preferințele din profil (preferred_time, session_minutes, daily_study_limit_minutes).
 

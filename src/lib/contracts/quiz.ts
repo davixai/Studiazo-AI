@@ -35,6 +35,8 @@ export type QuizAttemptSummary = {
   score: number;
   total: number;
   topicBreakdown: TopicBreakdown;
+  /** Durata rezolvării; intră în „timpul de învățare” (David, progres). */
+  durationSeconds: number | null;
   completedAt: string;
 };
 

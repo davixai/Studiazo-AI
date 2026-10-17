@@ -20,7 +20,7 @@ Ce vrem să aflăm: dacă fluxul „explică → testează → planifică” aju
 4. **Durata sesiunilor:** lăsăm studentul să aleagă (25/50/90 min). Ar trebui să recomandăm noi o valoare implicită?
 5. **„Lucrez singur”:** când studentul vrea indicii, nu soluția — care e o secvență bună de indicii (întrebare → indiciu → pas → soluție)?
 6. **Riscul de dependență:** cum evităm ca AI-ul să facă temele în locul studentului? Ce limite ar trebui să aibă asistentul la teme notate?
-7. **Motivația:** ce arată „progresul” într-un mod care motivează, fără gamificare ieftină (puncte, serii)?
+7. **Motivația:** plănuim un streak (zile la rând cu studiu), insigne la 3/7/14/30 de zile și timpul de învățare pe 7 zile. Ajută la formarea obiceiului sau creează presiune/anxietate? Ce ar trebui să se întâmple când studentul „rupe” streak-ul?
 8. **Demonstrația:** dacă ați avea 3 minute să vedeți aplicația, ce v-ar convinge că ajută un student real?
 
 Notițe:
@@ -47,7 +47,8 @@ Context tehnic de spus pe scurt:
 5. **Costuri:** limite rezonabile per student (cereri/oră, tokeni/zi)? Cum folosim prompt caching (instrucțiuni de sistem stabile la început)?
 6. **Halucinații:** cum facem ca asistentul să spună clar „nu apare în materialele tale”? Merită un pas de verificare a citărilor?
 7. **Evaluare:** cum testăm calitatea răspunsurilor înainte de demo, cu un set mic de întrebări de referință?
-8. **Scanări și poze (etapa următoare):** OCR prin modelul cu viziune sau un serviciu separat? Ce limite de calitate să comunicăm?
+8. **Poze în chat:** studentul pozează un exercițiu și AI-ul îl îndrumă. Ajunge intrarea de imagine a `gpt-6-luna` sau e nevoie de OCR separat pentru formule și scris de mână? Ce rezoluție să trimitem ca să păstrăm costul mic? Cum tratăm pozele neclare?
+9. **Chat pe fiecare materie:** un chat separat pe materie (Analiză, Electronică, Programare…) cu materialele ei. Merită instrucțiuni de sistem diferite pe tip de materie (ex. pași de calcul la matematică, cod la programare)?
 
 Notițe:
 

@@ -9,11 +9,13 @@ Marcaj: ✅ funcțional · 🟡 parțial · ⬜ planificat (etapa 2). Actualiza�
 | 3 | Adaugă examenul de vineri | termenul apare pe pagina Azi („în 6 zile”) | ⬜ D3 |
 | 4 | Materii → încarcă un curs PDF | stare „Se procesează” → „Gata de folosit” | ⬜ S1–S3 |
 | 5 | „Explică-mi capitolul 2” | explicație simplă, cu „pagina 7” | ⬜ S4–S6 |
+| 5b | În chatul materiei: pozează un exercițiu din caiet | AI-ul citește poza și îndrumă pas cu pas | ⬜ S3b, S4b |
 | 6 | „Dă-mi cinci întrebări” → rezolvă testul | scor, explicații, teme slabe | ⬜ S7 |
 | 7 | „Am examen vineri. Găsește-mi trei intervale.” | propunere cu explicație și avertismente | ⬜ S5, S8 |
 | 8 | Confirmă | sesiunile apar în calendar | ⬜ D5 |
 | 9 | Reîncarcă pagina | sesiunile rămân salvate | ⬜ |
-| 10 | (Opțional) Al doilea cont | nu vede nimic din primul | ⬜ etapa 3 |
+| 10 | Pagina Azi: streak și timpul de învățare pe 7 zile | progresul crește după test și sesiune | ⬜ D8 |
+| 11 | (Opțional) Al doilea cont | nu vede nimic din primul | ⬜ etapa 3 |
 
 ## Pregătire
 

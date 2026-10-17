@@ -11,10 +11,10 @@ Migrația inițială: `supabase/migrations/20261017100000_initial_schema.sql`. P
 | `events` | activități din calendar: `kind` (curs, seminar, laborator, studiu, job, sport, personal, pauza), prima apariție `starts_at/ends_at`, `timezone`, `recurrence` (none/weekly/biweekly), `recurrence_until`, `excluded_dates`, `completed_at`, `proposal_id` + `proposal_item_index` | David |
 | `tasks` | termene: `kind` (tema, proiect, examen, colocviu, test, altul), `due_at`, `duration_minutes` (examen), `estimated_minutes`, `completed_at`, legătura cu propunerea | David |
 | `notes` | notițe pe materie (text, max. 50.000 de caractere) | Sergiu |
-| `materials` | PDF-uri: `storage_path`, `size_bytes` ≤ 20 MB, `page_count`, `status` (incarcat, in_procesare, procesat, fara_text, esuat), `status_message`, `studied_at` | Sergiu |
+| `materials` | PDF-uri și fotografii (`mime_type`: pdf, jpeg, png, webp): `storage_path`, `size_bytes` ≤ 20 MB, `page_count`, `status` (incarcat, in_procesare, procesat, fara_text, esuat), `status_message`, `studied_at` | Sergiu |
 | `material_pages` | text extras pe pagini (pentru citări „pagina N”) | Sergiu |
 | `conversations`, `messages` | istoricul asistentului; `messages.metadata` jsonb (citări, propuneri, test) | Sergiu |
-| `quizzes`, `quiz_attempts` | teste grilă (`questions` jsonb = `QuizSchema`) și încercări (`score`, `total`, `topic_breakdown`) | Sergiu |
+| `quizzes`, `quiz_attempts` | teste grilă (`questions` jsonb = `QuizSchema`) și încercări (`score`, `total`, `topic_breakdown`, `duration_seconds` pentru timpul de învățare) | Sergiu |
 | `ai_proposals` | propuneri AI: `kind` (task / study_sessions), `payload` jsonb (`ProposalPayloadSchema`), `status` (pending, confirmed, rejected, expired), `expires_at` (24 h) | creare: Sergiu · confirmare: David |
 | `ai_usage` | evidența consumului AI pentru limite (fără update/delete pentru utilizator) | Sergiu |
 
@@ -34,7 +34,7 @@ RLS este activ pe **toate** tabelele. Modelul comun:
 
 ## Storage
 
-Bucket privat `materials`: `public = false`, limită de 20 MB, doar `application/pdf`. Calea este `{user_id}/{subject_id}/{material_id}.pdf`, iar politicile permit `select`, `insert` și `delete` numai când primul segment al căii este `auth.uid()`. Previzualizarea se face cu URL-uri semnate de scurtă durată (`createSignedUrl`, ex. 60 s), niciodată cu linkuri publice.
+Bucket privat `materials`: `public = false`, limită de 20 MB, doar `application/pdf`, `image/jpeg`, `image/png`, `image/webp`. Calea este `{user_id}/{subject_id}/{material_id}.{pdf|jpg|png|webp}`, iar politicile permit `select`, `insert` și `delete` numai când primul segment al căii este `auth.uid()`. Previzualizarea se face cu URL-uri semnate de scurtă durată (`createSignedUrl`, ex. 60 s), niciodată cu linkuri publice.
 
 ## Funcții
 

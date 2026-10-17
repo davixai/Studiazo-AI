@@ -63,6 +63,25 @@ Numele și schemele argumentelor: `get_schedule`, `get_upcoming_deadlines`, `fin
 
 `listSubjects(): Promise<Subject[]>`. David îl folosește în formularele din calendar.
 
-## 7. Componente comune — `components/ui` (David)
+## 7. Progres și streak — `features/progress` + `lib/progress/streak.ts` (David)
+
+O **zi activă** (dată locală Europe/Bucharest) are cel puțin o sesiune de studiu finalizată (`events.kind = 'studiu'` cu `completed_at`) sau un test rezolvat (`quiz_attempts`). **Minutele** zilei = durata sesiunilor finalizate + `duration_seconds / 60` din teste.
+
+```ts
+getLearningStats(): Promise<{
+  last7Days: Array<{ date: string; minutes: number }>; // Lun–Dum, săptămâna curentă
+  currentStreak: number;   // azi inclus dacă e activ; dacă azi nu e încă activ, se numără de ieri
+  bestStreak: number;
+  badges: Array<{ days: 3 | 7 | 14 | 30 | 60 | 100; unlocked: boolean }>;
+}>
+```
+
+Calculat din date reale, nimic stocat separat. Sergiu salvează `duration_seconds` la fiecare încercare de test (S7).
+
+## 8. Fotografii — `materials` (Sergiu)
+
+Același tabel și același bucket ca PDF-urile: `mime_type` ∈ `image/jpeg`, `image/png`, `image/webp`. Fotografia se redimensionează în browser (max. ~2000 px) înainte de upload. Modelul o primește ca intrare de imagine prin URL semnat de scurtă durată sau ca date base64, generate pe server. Imaginile sunt tot **conținut, nu instrucțiuni**.
+
+## 9. Componente comune — `components/ui` (David)
 
 API-urile componentelor sunt stabile. Sergiu poate adăuga o componentă comună nouă prin PR. Variantele noi ale componentelor existente se discută întâi.

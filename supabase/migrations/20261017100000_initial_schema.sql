@@ -225,9 +225,10 @@ create table public.materials (
   subject_id uuid not null references public.subjects (id) on delete cascade,
   title text not null check (char_length(btrim(title)) between 1 and 160),
   topic text check (char_length(topic) <= 120),
-  -- Cale în bucketul privat `materials`: {user_id}/{subject_id}/{material_id}.pdf
+  -- Cale în bucketul privat `materials`: {user_id}/{subject_id}/{material_id}.{pdf|jpg|png|webp}
   storage_path text not null unique,
-  mime_type text not null check (mime_type = 'application/pdf'),
+  -- PDF cu text selectabil sau fotografie (tablă, caiet, exercițiu) citită de AI.
+  mime_type text not null check (mime_type in ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')),
   size_bytes integer not null check (size_bytes > 0 and size_bytes <= 20971520),
   page_count integer check (page_count >= 0),
   status public.material_status not null default 'incarcat',
@@ -311,6 +312,8 @@ create table public.quiz_attempts (
   answers jsonb not null check (jsonb_typeof(answers) = 'array'),
   score smallint not null check (score >= 0),
   total smallint not null check (total > 0 and score <= total),
+  -- Cât a durat rezolvarea (pentru „timp de învățare” și streak).
+  duration_seconds integer check (duration_seconds between 0 and 86400),
   -- { [topic]: { correct, total } } — folosit de planificare
   topic_breakdown jsonb not null default '{}'::jsonb,
   completed_at timestamptz not null default now()
@@ -443,10 +446,10 @@ create policy "ai_usage_insert_own" on public.ai_usage
   for insert to authenticated with check (user_id = (select auth.uid()));
 
 -- ─────────────────────────────────────────────────────────────
--- Storage: bucket privat pentru PDF-uri (max. 20 MB, doar application/pdf)
+-- Storage: bucket privat pentru materiale (max. 20 MB; PDF și fotografii JPEG/PNG/WebP)
 -- ─────────────────────────────────────────────────────────────
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('materials', 'materials', false, 20971520, array['application/pdf'])
+values ('materials', 'materials', false, 20971520, array['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
 create policy "materials_storage_select_own" on storage.objects

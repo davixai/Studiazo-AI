@@ -74,6 +74,7 @@ Duplicatele sunt prevenite de indexul unic `(proposal_id, proposal_item_index)` 
 
 ### Materiale (Sergiu)
 Încărcarea se face direct din browser în Storage (`materials/{user_id}/{subject_id}/{material_id}.pdf`), cu validare în browser și în bucket (doar PDF, max. 20 MB). Apoi o acțiune pe server extrage textul pe pagini cu `unpdf` și îl salvează în `material_pages`. Dacă PDF-ul nu are text selectabil, statusul devine `fara_text`, cu un mesaj clar. Textul extras se salvează o singură dată.
+Fotografiile (JPEG/PNG/WebP) merg în același bucket. Sunt redimensionate în browser, iar în chat se trimit modelului ca intrare de imagine (`gpt-6-luna` acceptă text + imagine). Fiecare materie are chatul ei (`conversations.subject_id`), care folosește doar materialele materiei.
 
 ## Decizii
 

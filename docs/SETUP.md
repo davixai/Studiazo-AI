@@ -59,7 +59,8 @@ git push -u origin main
 ## 4. PDF-uri: ce acceptăm și limitele reale
 
 - **Acceptat acum**: PDF cu text selectabil, max. 20 MB. Textul se extrage pe pagini (`unpdf`) și se salvează o singură dată.
-- **Scanări și fotografii**: nu au strat de text, deci rezultatul e `fara_text`, iar interfața îi spune studentului clar ce s-a întâmplat. OCR-ul vine după MVP.
+- **Fotografii** (JPEG/PNG/WebP, din cameră sau din galerie): modelul `gpt-6-luna` acceptă imagini, deci le „vede” direct în chat și îndrumă studentul. Calitatea depinde de lumină, claritate și scris; asistentul trebuie să spună când poza e neclară. Pe iPhone, camera din browser trimite de regulă JPEG.
+- **PDF-uri scanate întregi**: nu au strat de text, deci rezultatul e `fara_text`, iar interfața îi spune studentului clar ce s-a întâmplat. Recomandarea pentru student: pozează pagina relevantă. OCR-ul pe documente întregi vine după MVP.
 - Formulele, tabelele și coloanele multiple pot fi extrase imperfect. Asistentul trebuie să spună când textul pare incomplet.
 - Textul din documente este **conținut, nu instrucțiuni**: se trimite modelului delimitat ca date, cu instrucțiunea explicită de a ignora orice comenzi din el.
 

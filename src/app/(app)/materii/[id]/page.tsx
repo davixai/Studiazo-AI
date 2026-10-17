@@ -9,6 +9,8 @@ import { SubjectTabs } from "@/features/subjects/components/subject-tabs";
 import { getSubject } from "@/features/subjects/queries";
 import { NotesPanel } from "@/features/notes/components/notes-panel";
 import { formatRelativeTime } from "@/features/notes/format";
+import { formatWeekdayShort } from "@/lib/time/format";
+import { toDateKey } from "@/lib/time/zone";
 import { listNotes } from "@/features/notes/queries";
 import type { Note } from "@/features/notes/types";
 import { MaterialsPanel } from "@/features/materials/components/materials-panel";
@@ -97,5 +99,12 @@ function lastActivity(materials: Material[], notes: Note[], now: Date) {
     ...notes.map((n) => ({ title: n.title, at: n.updatedAt })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const latest = items[0];
-  return latest ? { title: latest.title, label: formatRelativeTime(new Date(latest.at), now) } : null;
+  if (!latest) return null;
+  const at = new Date(latest.at);
+  return {
+    title: latest.title,
+    label: formatRelativeTime(at, now),
+    day: String(Number(toDateKey(at).slice(8, 10))),
+    weekday: formatWeekdayShort(at).replace(".", ""),
+  };
 }

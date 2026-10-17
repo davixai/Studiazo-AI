@@ -23,6 +23,8 @@ export type SubjectStats = Subject & {
   studiedCount: number;
   /** Pagini cu text din PDF-urile procesate (ce poate citi asistentul). */
   readyPages: number;
+  /** PDF-uri procesate (cu text, gata pentru asistent). */
+  readyPdfs: number;
 };
 
 export type RecentItem = {
@@ -35,8 +37,21 @@ export type RecentItem = {
 
 export type LibraryOverview = {
   subjects: SubjectStats[];
-  totals: { subjects: number; pdfs: number; photos: number; notes: number; studied: number; readyPages: number };
+  totals: {
+    subjects: number;
+    pdfs: number;
+    photos: number;
+    notes: number;
+    studied: number;
+    readyPages: number;
+    readyPdfs: number;
+    /** Materii cu cel puțin un material sau o notiță. */
+    subjectsWithContent: number;
+  };
   recent: RecentItem[];
+  /** Momentele de activitate (materiale adăugate, notițe modificate), pentru graficul pe săptămâni. */
+  materialDates: string[];
+  noteDates: string[];
 };
 
 export function buildOverview(
@@ -47,7 +62,7 @@ export function buildOverview(
 ): LibraryOverview {
   const byId = new Map(subjects.map((s) => [s.id, s]));
   const stats = new Map<string, SubjectStats>(
-    subjects.map((s) => [s.id, { ...s, pdfCount: 0, photoCount: 0, noteCount: 0, studiedCount: 0, readyPages: 0 }]),
+    subjects.map((s) => [s.id, { ...s, pdfCount: 0, photoCount: 0, noteCount: 0, studiedCount: 0, readyPages: 0, readyPdfs: 0 }]),
   );
 
   // Materialele și notițele materiilor arhivate nu intră în calcule.
@@ -62,7 +77,10 @@ export function buildOverview(
     }
     s.pdfCount++;
     if (m.studied) s.studiedCount++;
-    if (m.status === "procesat") s.readyPages += m.pageCount ?? 0;
+    if (m.status === "procesat") {
+      s.readyPdfs++;
+      s.readyPages += m.pageCount ?? 0;
+    }
   }
   for (const n of activeNotes) stats.get(n.subjectId)!.noteCount++;
 
@@ -85,8 +103,12 @@ export function buildOverview(
       notes: sum((s) => s.noteCount),
       studied: sum((s) => s.studiedCount),
       readyPages: sum((s) => s.readyPages),
+      readyPdfs: sum((s) => s.readyPdfs),
+      subjectsWithContent: list.filter((s) => s.pdfCount + s.photoCount + s.noteCount > 0).length,
     },
     recent,
+    materialDates: activeMaterials.map((m) => m.createdAt),
+    noteDates: activeNotes.map((n) => n.updatedAt),
   };
 }
 

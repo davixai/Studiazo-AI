@@ -5,7 +5,7 @@ import { SUBJECT_COLOR_CLASSES } from "@/components/ui/category";
 import type { Subject } from "@/lib/contracts/domain";
 import { cn } from "@/lib/utils";
 import { percent, studiedShare } from "../overview";
-import { Donut, SubjectAvatar } from "./visuals";
+import { DateTile, Donut, SubjectAvatar } from "./visuals";
 
 export type SubjectNumbers = { pdfs: number; photos: number; notes: number; readyPages: number; studied: number };
 
@@ -23,7 +23,7 @@ export function SubjectHeader({
   numbers: SubjectNumbers;
   actions: ReactNode;
   /** Cel mai recent material sau notiță, cu momentul relativ („acum o oră”). */
-  lastActivity: { title: string; label: string } | null;
+  lastActivity: { title: string; label: string; day: string; weekday: string } | null;
 }) {
   const color = SUBJECT_COLOR_CLASSES[subject.color];
   const share = studiedShare(numbers.studied, numbers.pdfs);
@@ -61,11 +61,12 @@ export function SubjectHeader({
           <div className="flex shrink-0 flex-wrap gap-1 sm:-mt-1 sm:-mr-2">{actions}</div>
         </div>
 
-        <p className="flex min-w-0 items-center gap-2 rounded-md bg-surface-muted px-3 py-2 text-[13px] text-ink-muted">
-          <Clock3 className="size-3.5 shrink-0" aria-hidden="true" />
+        <p className="flex min-w-0 items-center gap-3 rounded-md bg-surface-muted px-3 py-2 text-[13px] text-ink-muted">
+          {lastActivity ? <DateTile day={lastActivity.day} weekday={lastActivity.weekday} className="size-10" /> : <Clock3 className="size-3.5 shrink-0" aria-hidden="true" />}
           {lastActivity ? (
-            <span className="min-w-0 truncate">
-              Ultima adăugare: <span className="font-medium text-ink-soft">{lastActivity.title}</span> · {lastActivity.label}
+            <span className="min-w-0">
+              <span className="block text-[11px] font-medium tracking-wide text-ink-faint uppercase">Ultima adăugare · {lastActivity.label}</span>
+              <span className="block truncate font-semibold text-ink-soft">{lastActivity.title}</span>
             </span>
           ) : (
             <span>Nimic adăugat încă. Începe cu un curs în PDF, o poză sau o notiță.</span>

@@ -35,12 +35,14 @@ describe("buildOverview", () => {
 
   it("numără pe materii, doar PDF-urile intră la „parcurs” și la pagini gata", () => {
     const s1 = overview.subjects[0];
-    expect(s1).toMatchObject({ pdfCount: 3, photoCount: 1, noteCount: 0, studiedCount: 2, readyPages: 24 });
+    expect(s1).toMatchObject({ pdfCount: 3, photoCount: 1, noteCount: 0, studiedCount: 2, readyPages: 24, readyPdfs: 1 });
     expect(overview.subjects[1]).toMatchObject({ pdfCount: 0, noteCount: 1 });
   });
 
   it("totalurile sunt suma materiilor active", () => {
-    expect(overview.totals).toEqual({ subjects: 2, pdfs: 3, photos: 1, notes: 1, studied: 2, readyPages: 24 });
+    expect(overview.totals).toEqual({ subjects: 2, pdfs: 3, photos: 1, notes: 1, studied: 2, readyPages: 24, readyPdfs: 1, subjectsWithContent: 2 });
+    expect(overview.materialDates).toHaveLength(4); // fără materia arhivată
+    expect(overview.noteDates).toEqual(["2026-10-15T10:00:00Z"]);
   });
 
   it("„adăugate recent”: cele mai noi primele, fără materii arhivate", () => {

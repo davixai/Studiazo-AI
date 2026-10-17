@@ -1,92 +1,218 @@
-import { ChevronRight, FileText, ImageIcon, LibraryBig, NotebookPen, Sparkles } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, ChevronRight, FileText, ImageIcon, LibraryBig, NotebookPen, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { ColorDot, SUBJECT_COLOR_CLASSES } from "@/components/ui/category";
 import { cn } from "@/lib/utils";
+import { weekTrend, type WeekBucket } from "../chart-math";
 import { countLabel } from "../format";
 import { contentBars, percent, studiedShare, type LibraryOverview, type RecentItem, type SubjectStats } from "../overview";
-import { Donut, FillBar, Panel, PanelHeader, SubjectAvatar } from "./visuals";
+import { AreaChart, FillBar, Panel, PanelHeader, RingStack, SubjectAvatar } from "./visuals";
 
-// Panoul „Materii”: rezumat, progres, distribuția conținutului, materiile și ce ai adăugat recent.
+// Panoul „Materii” (bento): privire de ansamblu, statistici cu mini-grafice, activitatea pe săptămâni,
+// materiile și ce ai adăugat recent. Cifrele vin din overview.ts și chart-math.ts (testate).
 
-/** Cardul principal (accent): câte materii, PDF-uri, poze, notițe și câte pagini poate citi asistentul. */
-export function LibraryHero({ totals, index }: { totals: LibraryOverview["totals"]; index: number }) {
-  const chips = [
-    { label: "PDF-uri", value: totals.pdfs, icon: FileText },
-    { label: "Poze", value: totals.photos, icon: ImageIcon },
-    { label: "Notițe", value: totals.notes, icon: NotebookPen },
+/** Cardul închis la culoare: trei inele (parcurse, gata pentru asistent, materii cu conținut). */
+export function OverviewPanel({ totals, index, className }: { totals: LibraryOverview["totals"]; index: number; className?: string }) {
+  const metrics = [
+    {
+      label: "Cursuri parcurse",
+      share: studiedShare(totals.studied, totals.pdfs),
+      detail: `${totals.studied} din ${totals.pdfs} PDF-uri`,
+      color: "teal" as const,
+      dot: "bg-cat-teal",
+    },
+    {
+      label: "Gata pentru asistent",
+      share: studiedShare(totals.readyPdfs, totals.pdfs),
+      detail: countLabel(totals.readyPages, "pagină", "pagini"),
+      color: "violet" as const,
+      dot: "bg-cat-violet",
+    },
+    {
+      label: "Materii cu conținut",
+      share: studiedShare(totals.subjectsWithContent, totals.subjects),
+      detail: `${totals.subjectsWithContent} din ${totals.subjects}`,
+      color: "blue" as const,
+      dot: "bg-cat-blue",
+    },
   ];
   return (
     <section
-      aria-labelledby="biblioteca"
-      className="stagger relative flex flex-col overflow-hidden rounded-lg bg-linear-to-br from-accent via-accent-deep to-accent-ink p-5 text-white shadow-accent sm:p-6"
+      aria-labelledby="ansamblu"
+      className={cn("stagger relative flex flex-col overflow-hidden rounded-lg bg-ink p-5 text-white shadow-lg sm:p-6", className)}
       style={{ "--i": index } as React.CSSProperties}
     >
-      <div aria-hidden="true" className="pointer-events-none absolute -top-20 -right-16 size-56 rounded-full bg-white/10" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-12 size-48 rounded-full bg-white/[0.06]" />
+      {/* Strălucire discretă în colțuri, ca în panourile întunecate moderne. */}
+      <span aria-hidden="true" className="pointer-events-none absolute -top-24 -left-20 size-64 rounded-full bg-accent/35 blur-3xl" />
+      <span aria-hidden="true" className="pointer-events-none absolute -right-16 -bottom-24 size-56 rounded-full bg-cat-teal/20 blur-3xl" />
 
       <div className="relative flex items-center justify-between gap-3">
-        <h2 id="biblioteca" className="flex items-center gap-2 text-sm font-semibold text-white/85">
-          <span className="flex size-8 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20">
+        <h2 id="ansamblu" className="flex items-center gap-2 text-sm font-semibold text-white/85">
+          <span className="flex size-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15">
             <LibraryBig className="size-4" aria-hidden="true" />
           </span>
           Biblioteca ta
         </h2>
+        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/80 ring-1 ring-white/10 tabular">
+          {countLabel(totals.subjects, "materie", "materii")}
+        </span>
       </div>
 
-      <p className="relative mt-5">
-        <span className="block text-[44px] leading-none font-extrabold tracking-[-0.04em] tabular">{totals.subjects}</span>
-        <span className="mt-1 block text-sm font-medium text-white/80">{totals.subjects === 1 ? "materie" : totals.subjects < 20 ? "materii" : "de materii"} în semestrul acesta</span>
-      </p>
+      <div className="relative mt-5 flex flex-col items-center gap-6 sm:flex-row sm:items-center">
+        <RingStack
+          rings={metrics.map((m) => ({ share: m.share, color: m.color }))}
+          label={metrics.map((m) => `${m.label}: ${m.share === null ? "fără date" : `${percent(m.share)}%`}`).join("; ")}
+        />
+        <ul className="flex w-full min-w-0 flex-col gap-4">
+          {metrics.map((m, i) => (
+            <li key={m.label} className="animate-rise-in" style={{ animationDelay: `${220 + i * 90}ms` }}>
+              <p className="flex items-baseline gap-2">
+                <span className={cn("size-2.5 shrink-0 self-center rounded-full", m.dot)} aria-hidden="true" />
+                <span className="text-[26px] leading-none font-extrabold tracking-[-0.03em] tabular">
+                  {m.share === null ? "—" : `${percent(m.share)}%`}
+                </span>
+                <span className="truncate text-[12px] font-medium text-white/60 tabular">{m.detail}</span>
+              </p>
+              <p className="mt-1 pl-[1.125rem] text-[13px] text-white/75">{m.label}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <ul className="relative mt-5 grid grid-cols-3 gap-2">
-        {chips.map(({ label, value, icon: Icon }, i) => (
-          <li
-            key={label}
-            className="animate-pop-in rounded-md bg-white/12 px-3 py-2.5 ring-1 ring-white/15 backdrop-blur-sm"
-            style={{ animationDelay: `${200 + i * 80}ms` }}
-          >
-            <Icon className="size-4 text-white/75" aria-hidden="true" />
-            <span className="mt-1.5 block text-xl leading-none font-bold tabular">{value}</span>
-            <span className="mt-1 block text-[11px] font-medium text-white/75">{label}</span>
-          </li>
-        ))}
-      </ul>
-
-      <p className="relative mt-auto flex items-center gap-2 pt-5 text-[13px] leading-5 text-white/85">
-        <Sparkles className="size-4 shrink-0" aria-hidden="true" />
-        {totals.readyPages > 0
-          ? `${countLabel(totals.readyPages, "pagină", "pagini")} din cursuri, gata pentru asistent`
-          : "Încarcă un PDF cu text ca asistentul să-l poată citi."}
+      <p className="relative mt-auto flex items-center gap-2 pt-5 text-[12px] leading-5 text-white/70">
+        <Sparkles className="size-3.5 shrink-0" aria-hidden="true" />
+        {totals.readyPages > 0 ? "Asistentul explică din aceste pagini, cu numărul paginii." : "Încarcă un PDF cu text ca asistentul să-l poată citi."}
       </p>
     </section>
   );
 }
 
-export function StudiedPanel({ studied, total, index, className }: { studied: number; total: number; index: number; className?: string }) {
-  const share = studiedShare(studied, total);
+/** Statistică cu mini-grafic (ultimele 8 săptămâni) și eticheta de trend față de săptămâna trecută. */
+export function SparkStat({
+  id,
+  title,
+  total,
+  weeks,
+  color,
+  index,
+  className,
+}: {
+  id: string;
+  title: string;
+  total: number;
+  weeks: WeekBucket[];
+  color: "accent" | "teal";
+  index: number;
+  className?: string;
+}) {
+  const trend = weekTrend(weeks);
+  const thisWeek = weeks[weeks.length - 1]?.count ?? 0;
   return (
-    <Panel index={index} aria-labelledby="parcurse" className={className}>
-      <PanelHeader id="parcurse" title="Cursuri parcurse" description="PDF-urile marcate „Parcurs”" />
-      <div className="flex flex-1 flex-col items-center justify-center gap-4">
-        <Donut share={share} label={share === null ? "Niciun PDF încă" : `${percent(share)}% parcurse`}>
-          <span className="text-[24px] leading-none font-extrabold tracking-[-0.03em] text-ink tabular">
-            {share === null ? "—" : `${percent(share)}%`}
-          </span>
-          <span className="mt-1 text-[11px] font-medium text-ink-muted">{share === null ? "fără PDF" : `${studied} din ${total}`}</span>
-        </Donut>
-        <ul className="grid w-full grid-cols-2 gap-2 text-[12px]">
-          <li className="flex items-center justify-center gap-1.5 rounded-md bg-surface-muted px-2 py-1.5">
-            <span className="size-2 shrink-0 rounded-full bg-accent" aria-hidden="true" />
-            <span className="text-ink-muted">Parcurse</span>
-            <span className="font-semibold text-ink tabular">{studied}</span>
-          </li>
-          <li className="flex items-center justify-center gap-1.5 rounded-md bg-surface-muted px-2 py-1.5">
-            <span className="size-2 shrink-0 rounded-full bg-line-strong" aria-hidden="true" />
-            <span className="whitespace-nowrap text-ink-muted">De parcurs</span>
-            <span className="font-semibold text-ink tabular">{Math.max(0, total - studied)}</span>
-          </li>
-        </ul>
+    <Panel index={index} className={cn("gap-3 overflow-hidden", className)} aria-labelledby={`${id}-titlu`}>
+      <div className="flex items-start justify-between gap-2">
+        <h2 id={`${id}-titlu`} className="text-[13px] font-semibold text-ink-muted">
+          {title}
+        </h2>
+        <TrendBadge value={trend} />
       </div>
+      <p className="flex flex-wrap items-baseline gap-x-2">
+        <span className="text-[30px] leading-none font-extrabold tracking-[-0.04em] text-ink tabular sm:text-[34px]">{total}</span>
+        <span className="text-[12px] font-medium text-ink-muted tabular">+{thisWeek} săpt. aceasta</span>
+      </p>
+      <AreaChart
+        id={id}
+        values={weeks.map((w) => w.count)}
+        color={color}
+        height={56}
+        fill
+        className="-mx-5 -mb-5"
+        label={`${title}: ${weeks.map((w) => w.count).join(", ")} în ultimele ${weeks.length} săptămâni`}
+      />
+    </Panel>
+  );
+}
+
+function TrendBadge({ value }: { value: number }) {
+  if (value === 0) {
+    return <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-semibold text-ink-muted">la fel</span>;
+  }
+  const up = value > 0;
+  const Icon = up ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular",
+        up ? "bg-success-soft text-success" : "bg-warning-soft text-warning",
+      )}
+      title="Față de săptămâna trecută"
+    >
+      <Icon className="size-3" aria-hidden="true" />
+      {up ? "+" : "−"}
+      {Math.abs(value)}
+      <span className="sr-only"> față de săptămâna trecută</span>
+    </span>
+  );
+}
+
+/** Graficul mare: ce ai adăugat (materiale + notițe) în fiecare din ultimele 8 săptămâni. */
+export function ActivityPanel({
+  weeks,
+  labels,
+  index,
+  className,
+}: {
+  weeks: WeekBucket[];
+  /** Eticheta fiecărei săptămâni („12 oct.”), calculată pe server. */
+  labels: string[];
+  index: number;
+  className?: string;
+}) {
+  const values = weeks.map((w) => w.count);
+  const total = values.reduce((a, b) => a + b, 0);
+  const max = Math.max(...values, 0);
+  const thisWeek = values[values.length - 1] ?? 0;
+  return (
+    <Panel index={index} className={cn("gap-5", className)} aria-labelledby="activitate">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PanelHeader id="activitate" title="Activitate" description="Materiale și notițe adăugate, pe săptămâni" />
+        <div className="text-right">
+          <p className="text-[26px] leading-none font-extrabold tracking-[-0.03em] text-ink tabular">{total}</p>
+          <p className="mt-1 text-[12px] text-ink-muted">în ultimele {weeks.length} săptămâni</p>
+        </div>
+      </div>
+
+      <div className="relative flex flex-1 flex-col">
+        {/* Linii de ghidaj discrete: maxim, jumătate, zero. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex flex-col justify-between">
+          {[max, max / 2, 0].map((v, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="w-5 text-right text-[10px] text-ink-faint tabular">{Number.isInteger(v) ? v : v.toFixed(1).replace(".", ",")}</span>
+              <span className="h-px flex-1 border-t border-dashed border-line" />
+            </div>
+          ))}
+        </div>
+        <div className="relative flex flex-1 flex-col pl-7">
+          <AreaChart
+            id="activitate-grafic"
+            values={values}
+            height={150}
+            fill
+            label={`Activitate: ${values.join(", ")} pe săptămână, de la cea mai veche la cea curentă`}
+          />
+          {/* Bula cu valoarea săptămânii curente. */}
+          <span className="absolute top-0 left-9 animate-pop-in rounded-md border border-line bg-surface px-2.5 py-1.5 shadow-md [animation-delay:700ms]">
+            <span className="block text-[10px] font-medium text-ink-muted">Săptămâna aceasta</span>
+            <span className="block text-[15px] leading-tight font-bold text-ink tabular">{thisWeek}</span>
+          </span>
+        </div>
+      </div>
+
+      <ol className="flex justify-between pl-7 text-[10px] font-medium text-ink-faint tabular" aria-hidden="true">
+        {labels.map((l, i) => (
+          <li key={weeks[i]?.weekKey ?? i} className={cn(i % 2 === 1 && "hidden sm:block")}>
+            {l}
+          </li>
+        ))}
+      </ol>
     </Panel>
   );
 }
@@ -168,32 +294,39 @@ export function SubjectCard({ subject }: { subject: SubjectStats }) {
 }
 
 const RECENT_ICON = { pdf: FileText, image: ImageIcon, note: NotebookPen } as const;
-const RECENT_KIND = { pdf: "PDF", image: "Poză", note: "Notiță" } as const;
+const RECENT_PILL = {
+  pdf: { label: "PDF", className: "bg-accent-soft text-accent-ink" },
+  image: { label: "Poză", className: "bg-cat-teal/10 text-cat-teal" },
+  note: { label: "Notiță", className: "bg-cat-amber/10 text-cat-amber" },
+} as const;
 
-export function RecentPanel({ items, index }: { items: Array<RecentItem & { label: string }>; index: number }) {
+/** „Adăugate recent”, ca o listă de noutăți: fâșie în culoarea materiei, eticheta tipului, titlu și momentul. */
+export function RecentPanel({ items, index, className }: { items: Array<RecentItem & { label: string }>; index: number; className?: string }) {
   return (
-    <Panel index={index} aria-labelledby="recente">
+    <Panel index={index} aria-labelledby="recente" className={className}>
       <PanelHeader id="recente" title="Adăugate recent" description="Ultimele materiale și notițe" />
       {items.length > 0 ? (
-        <ul className="-mx-2 flex flex-col">
-          {items.map((item) => {
+        <ul className="flex flex-col gap-2.5">
+          {items.map((item, i) => {
             const Icon = RECENT_ICON[item.kind];
-            const color = SUBJECT_COLOR_CLASSES[item.subject.color];
+            const pill = RECENT_PILL[item.kind];
             return (
-              <li key={`${item.kind}-${item.id}`}>
+              <li key={`${item.kind}-${item.id}`} className="animate-rise-in" style={{ animationDelay: `${150 + i * 70}ms` }}>
                 <Link
                   href={item.kind === "note" ? `/materii/${item.subject.id}?tab=notite` : `/materii/${item.subject.id}`}
-                  className="group flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-surface-muted"
+                  className="group relative flex items-center gap-3 overflow-hidden rounded-md border border-line/70 bg-surface py-3 pr-3 pl-4 transition-[border-color,box-shadow] hover:border-accent-line hover:shadow-sm"
                 >
-                  <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", color.soft, color.text)}>
-                    <Icon className="size-4" aria-hidden="true" />
-                  </span>
+                  <span aria-hidden="true" className={cn("absolute inset-y-2 left-0 w-1 rounded-r-full", SUBJECT_COLOR_CLASSES[item.subject.color].bar)} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-semibold text-ink">{item.title}</span>
-                    <span className="block truncate text-[12px] text-ink-muted">
-                      <span className="sr-only">{RECENT_KIND[item.kind]}, </span>
-                      {item.subject.name} · {item.label}
+                    <span className="flex items-center gap-2">
+                      <span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase", pill.className)}>
+                        <Icon className="size-3" aria-hidden="true" />
+                        {pill.label}
+                      </span>
+                      <span className="truncate text-[11px] text-ink-muted">{item.label}</span>
                     </span>
+                    <span className="mt-1 block truncate text-[13px] font-semibold text-ink">{item.title}</span>
+                    <span className="block truncate text-[12px] text-ink-muted">{item.subject.name}</span>
                   </span>
                   <ChevronRight className="size-4 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-ink-muted" aria-hidden="true" />
                 </Link>

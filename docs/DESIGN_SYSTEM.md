@@ -39,6 +39,10 @@ Contrast: textul `ink-muted` pe `canvas` și pe `surface` ≥ 4,5:1. `ink-faint`
 | `animate-pop-in` | o confirmare mică (insignă, bifă) |
 | `animate-grow-y` / `animate-fill-x` | grafice și bare de progres (ex. progresul unei încărcări) |
 | `lift` | carduri pe care se poate apăsa: se ridică ușor la hover |
+| `animate-page-in` | tranziția între pagini (în `app/(app)/template.tsx`, nu se adaugă manual) |
+| `reveal` | elemente din liste lungi care urcă ușor când intră în ecran la derulare (pune-l pe `<li>`, nu pe elementul cu `lift`) |
+| `animate-indicator-in` | indicatorul paginii active din bara laterală |
+| `animate-float` | doar ilustrația decorativă din paginile de autentificare |
 | `active:scale-[0.99]` | apăsare pe carduri-link și butoane mari, pe telefon |
 
 Reguli: animațiile ajută la orientare, nu decorează. 200–500 ms, `ease-out`. Fără confetti, fără mișcare continuă (excepție: flacăra streak-ului). Animă doar `opacity` și `transform`, ca să rămână fluide pe telefon.

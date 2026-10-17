@@ -20,15 +20,15 @@ export default async function ProfilePage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-8">
       <PageHeader title="Profil" description="Datele tale de student și felul în care preferi să înveți." />
 
-      <Card className="p-5 sm:p-8">
+      <Card className="stagger p-5 sm:p-8" style={{ "--i": 1 } as React.CSSProperties}>
         <ProfileForm profile={profile} mode="profile" />
       </Card>
 
-      <Card id="disponibilitate" className="scroll-mt-24 p-5 sm:p-8">
+      <Card id="disponibilitate" className="stagger scroll-mt-24 p-5 sm:p-8" style={{ "--i": 2 } as React.CSSProperties}>
         <AvailabilityForm availability={profile.availability} />
       </Card>
 
-      <Card className="divide-y divide-line">
+      <Card className="stagger divide-y divide-line" style={{ "--i": 3 } as React.CSSProperties}>
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <h2 className="text-[15px] font-semibold">Cont</h2>

@@ -38,7 +38,7 @@ export function Sidebar({ userName, userDetail }: AppNavProps) {
                 strokeWidth={2}
               />
               {label}
-              {active ? <span className="absolute inset-y-2 -left-4 w-1 rounded-r-full bg-accent" aria-hidden="true" /> : null}
+              {active ? <span className="absolute inset-y-2 -left-4 w-1 animate-indicator-in rounded-r-full bg-accent" aria-hidden="true" /> : null}
             </Link>
           );
         })}
@@ -107,7 +107,7 @@ export function MobileTabBar() {
                 <span
                   className={cn(
                     "flex h-7 w-12 items-center justify-center rounded-full transition-all duration-300",
-                    active && "bg-accent-soft",
+                    active && "animate-pop-in bg-accent-soft",
                   )}
                 >
                   <Icon className="size-5" strokeWidth={active ? 2.3 : 1.9} />

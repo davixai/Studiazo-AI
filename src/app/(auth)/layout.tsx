@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Link href="/autentificare" className="self-start rounded-md" aria-label="Studiazo AI">
           <Logo />
         </Link>
-        <main className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center py-12">
+        <main className="mx-auto flex w-full max-w-[400px] flex-1 animate-rise-in flex-col justify-center py-12">
           {isPreviewMode() ? (
             <Alert tone="warning" title="Mod previzualizare" className="mb-8">
               Supabase nu este conectat, așa că formularele nu creează conturi.{" "}
@@ -42,7 +42,7 @@ function AuthIllustration() {
   ];
   return (
     <div className="flex h-full flex-col justify-between p-14 xl:p-20">
-      <div className="max-w-md">
+      <div className="max-w-md animate-rise-in">
         <p className="font-display text-[44px] leading-[1.05] font-bold tracking-[-0.03em] text-ink xl:text-[52px]">
           Al doilea creier
           <br />
@@ -53,14 +53,14 @@ function AuthIllustration() {
         </p>
       </div>
 
-      <div className="max-w-sm rounded-xl border border-line bg-surface p-6 shadow-md">
+      <div className="max-w-sm animate-float rounded-xl border border-line bg-surface p-6 shadow-md">
         <div className="mb-5 flex items-center justify-between">
           <span className="text-[13px] font-semibold">Azi</span>
           <span className="h-2 w-16 rounded-full bg-surface-sunken" />
         </div>
         <ul className="space-y-4">
-          {rows.map((row) => (
-            <li key={row.time} className="flex items-center gap-4">
+          {rows.map((row, i) => (
+            <li key={row.time} className="stagger flex items-center gap-4" style={{ "--i": i + 3 } as React.CSSProperties}>
               <span className="w-11 text-xs text-ink-muted tabular">{row.time}</span>
               <span className={`h-8 w-0.5 rounded-full ${row.tone}`} />
               <span className="flex flex-col gap-1.5">

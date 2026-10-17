@@ -25,12 +25,12 @@ export default function ResourcesPage() {
             </h2>
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {group.items.map((item) => (
-                <li key={item.url}>
+                <li key={item.url} className="reveal">
                   <a
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex h-full items-start gap-4 rounded-lg border border-line bg-surface p-4 shadow-xs transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-sm"
+                    className="lift group flex h-full items-start gap-4 rounded-lg border border-line bg-surface p-4 shadow-xs active:scale-[0.99]"
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-ink">{item.title}</span>

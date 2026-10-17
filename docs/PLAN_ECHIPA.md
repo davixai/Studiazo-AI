@@ -60,7 +60,7 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 
 **Legătura**
 - [x] D5 · `ProposalCard` + Confirmă / Renunță; fără duplicate la dublu-click; nimic salvat fără confirmare _(logica testată; de testat pe Supabase real)_
-- [ ] D6 · Azi: sesiunea recomandată + progres recent din teste
+- [ ] D6 · Azi: sesiunea recomandată ✅ (următoarea sesiune confirmată, „Am terminat sesiunea” → streak) + progres recent din teste _(după S7)_
 - [x] D8 · Streak, insigne, timpul de învățare pe 7 zile
 
 ---

@@ -64,6 +64,8 @@ export function previewEvents(now = new Date()): CalendarEvent[] {
     event(102, { kind: "laborator", title: "Laborator POO", subjectId: poo.id, location: "Laborator C409" }, today, "12:00", "14:00"),
     event(103, { kind: "job", title: "Tură part-time" }, today, "16:00", "19:00"),
     event(104, { kind: "sport", title: "Sală" }, today, "20:00", "21:00"),
+    // O sesiune de studiu confirmată (din propunerea asistentului), pentru cardul „Următoarea sesiune”.
+    event(105, { kind: "studiu", title: "Recapitulare structuri de date", subjectId: sd.id, notes: "Capitolul 2 — arbori binari de căutare" }, shiftDateKey(today, 1), "18:00", "18:50"),
     // Orarul recurent al săptămânii.
     event(201, { kind: "curs", title: "Probabilități și statistică", subjectId: ps.id, location: "Amfiteatrul Pompeiu", recurrence: "weekly" }, monday, "10:00", "12:00"),
     event(202, { kind: "seminar", title: "Seminar baze de date", subjectId: bd.id, location: "Sala C210", recurrence: "weekly" }, shiftDateKey(monday, 1), "14:00", "16:00"),

@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpenCheck, CalendarCheck2, CalendarClock, Clock3, GraduationCap, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpenCheck, CalendarCheck2, CalendarClock, Clock3, GraduationCap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
@@ -6,10 +6,11 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AgendaRow } from "@/features/calendar/components/agenda-row";
 import { NextUpCard } from "@/features/dashboard/components/next-up";
+import { RecommendedSession, type RecommendedSessionView } from "@/features/dashboard/components/recommended-session";
 import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { StatTile } from "@/features/dashboard/components/stat-tile";
 import { UpcomingList } from "@/features/dashboard/components/upcoming-list";
-import { getTodayOverview } from "@/features/dashboard/queries";
+import { getTodayOverview, type TodayOverview } from "@/features/dashboard/queries";
 import { getProfile } from "@/features/profile/queries";
 import { BadgesGrid } from "@/features/progress/components/badges";
 import { LearningChart } from "@/features/progress/components/learning-chart";
@@ -170,22 +171,7 @@ export default async function TodayPage() {
         </Card>
 
         <Card aria-labelledby="sesiune-recomandata" className="stagger overflow-hidden lg:col-span-5" style={delay(9)}>
-          <div className="flex h-full flex-col gap-4 p-5 sm:p-6">
-            <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-md bg-accent-soft text-accent">
-                <Sparkles className="size-[18px]" strokeWidth={2} aria-hidden="true" />
-              </span>
-              <h2 id="sesiune-recomandata" className="text-[15px] font-bold">
-                Sesiunea de studiu recomandată
-              </h2>
-            </div>
-            <p className="text-sm leading-6 text-ink-muted">
-              Asistentul găsește golurile din program și îți propune sesiuni. Tu confirmi ce intră în calendar.
-            </p>
-            <ButtonLink href="/asistent" className="mt-auto self-start">
-              Planifică studiul
-            </ButtonLink>
-          </div>
+          <RecommendedSession session={toSessionView(overview.nextStudySession)} now={now.toISOString()} />
         </Card>
       </div>
     </div>
@@ -196,4 +182,19 @@ function endOf(item: AgendaItem) {
   if (item.type === "event") return item.occurrence.end;
   const due = new Date(item.task.dueAt);
   return item.task.durationMinutes ? new Date(due.getTime() + item.task.durationMinutes * 60_000) : due;
+}
+
+function toSessionView(next: TodayOverview["nextStudySession"]): RecommendedSessionView | null {
+  if (!next) return null;
+  const { event, start, end, occurrenceDate } = next.occurrence;
+  return {
+    eventId: event.id,
+    occurrenceDate,
+    title: event.title,
+    focus: event.notes,
+    start: start.toISOString(),
+    end: end.toISOString(),
+    recurring: event.recurrence !== "none",
+    subject: next.subject ? { name: next.subject.name, color: next.subject.color } : null,
+  };
 }

@@ -33,10 +33,10 @@ function rawValues(formData: FormData) {
   return Object.fromEntries([...formData.entries()].map(([k, v]) => [k, String(v)]));
 }
 
-function done(): never {
+function done(returnTo: "/calendar" | "/azi" = "/calendar"): never {
   revalidatePath("/calendar");
   revalidatePath("/azi");
-  redirect("/calendar");
+  redirect(returnTo);
 }
 
 /** Creează sau modifică o activitate. La suprapunere întoarce un avertisment; „Salvează oricum” trimite allowOverlap=1. */
@@ -155,7 +155,7 @@ export async function setEventCompleted(input: unknown): Promise<ActionResult> {
     .select("id");
   if (error || !data?.length) return { ok: false, message: "Nu am putut actualiza activitatea. Încearcă din nou." };
 
-  done();
+  done(parsed.data.returnTo);
 }
 
 /** Creează sau modifică o temă, un proiect sau un examen. */

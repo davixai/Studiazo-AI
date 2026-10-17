@@ -1,7 +1,7 @@
 import "server-only";
 import { getOccurrencesBetween, getTasksBetween, getUpcomingTasks } from "@/features/calendar/queries";
 import { listSubjects } from "@/features/subjects/queries";
-import type { AgendaItem, Subject, Task } from "@/lib/contracts/domain";
+import type { AgendaItem, EventOccurrence, Subject, Task } from "@/lib/contracts/domain";
 import { APP_TIMEZONE, dayBounds, toDateKey } from "@/lib/time/zone";
 
 export type TodayOverview = {
@@ -9,13 +9,18 @@ export type TodayOverview = {
   agenda: AgendaItem[];
   upcoming: Array<{ task: Task; subject: Subject | null }>;
   subjects: Subject[];
+  /** Următoarea sesiune de studiu confirmată și nefinalizată (inclusiv cea în desfășurare), din 14 zile. */
+  nextStudySession: { occurrence: EventOccurrence; subject: Subject | null } | null;
 };
+
+const STUDY_LOOKAHEAD_DAYS = 14;
 
 /** Datele paginii „Azi”: programul zilei locale și următoarele termene. */
 export async function getTodayOverview(now = new Date(), tz = APP_TIMEZONE): Promise<TodayOverview> {
   const today = dayBounds(toDateKey(now, tz), tz);
-  const [occurrences, dueToday, upcoming, subjects] = await Promise.all([
+  const [occurrences, ahead, dueToday, upcoming, subjects] = await Promise.all([
     getOccurrencesBetween(today),
+    getOccurrencesBetween({ start: now, end: new Date(now.getTime() + STUDY_LOOKAHEAD_DAYS * 86_400_000) }),
     getTasksBetween(today),
     getUpcomingTasks({ now, days: 30, limit: 6 }),
     listSubjects(),
@@ -34,6 +39,10 @@ export async function getTodayOverview(now = new Date(), tz = APP_TIMEZONE): Pro
     agenda,
     upcoming: upcoming.map((task) => ({ task, subject: subjectOf(task.subjectId) })),
     subjects,
+    nextStudySession: (() => {
+      const next = ahead.find((o) => o.event.kind === "studiu" && !o.event.completedAt && o.end > now);
+      return next ? { occurrence: next, subject: subjectOf(next.event.subjectId) } : null;
+    })(),
   };
 }
 

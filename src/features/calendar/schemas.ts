@@ -43,7 +43,12 @@ export const DeleteEventSchema = z.discriminatedUnion("scope", [
   z.object({ id: z.uuid(), scope: z.literal("occurrence"), date: z.string().refine(isDateKey) }),
 ]);
 
-export const CompleteEventSchema = z.object({ id: z.uuid(), completed: z.boolean() });
+export const CompleteEventSchema = z.object({
+  id: z.uuid(),
+  completed: z.boolean(),
+  /** Unde revine studentul după acțiune (dialogul din calendar sau cardul de pe Azi). */
+  returnTo: z.enum(["/calendar", "/azi"]).default("/calendar"),
+});
 
 /** Starea formularului de activitate. `warning` = se suprapune; studentul poate salva totuși. */
 export type EventFormState = {

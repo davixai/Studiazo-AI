@@ -54,6 +54,7 @@
   /* Tipografie */
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-quote: var(--font-fraunces), Georgia, "Times New Roman", serif;
 
   /* Raze generoase */
   --radius-sm: 8px;
@@ -313,6 +314,122 @@
 @utility glass {
   background-color: rgb(18 24 51 / 0.72);
   backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* ─── „Gândul zilei” (pagina Azi): card-erou cu chenar luminos rotativ ─── */
+@property --quote-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.quote-frame {
+  position: relative;
+  background: conic-gradient(
+    from var(--quote-angle),
+    rgb(124 92 255 / 0.15) 0deg,
+    var(--color-accent-blue) 70deg,
+    var(--color-accent) 140deg,
+    var(--color-accent-pink) 200deg,
+    rgb(124 92 255 / 0.15) 270deg,
+    rgb(124 92 255 / 0.15) 360deg
+  );
+  animation: quote-spin 7s linear infinite;
+  box-shadow: 0 30px 70px -30px rgb(124 92 255 / 0.65), 0 0 50px -20px rgb(61 139 255 / 0.45);
+}
+
+.quote-card {
+  background:
+    radial-gradient(120% 140% at 0% 0%, #241a5c 0%, transparent 55%),
+    radial-gradient(120% 140% at 100% 100%, #0f2a5e 0%, transparent 55%),
+    linear-gradient(135deg, #120f33 0%, #0b1030 50%, #0a1638 100%);
+  isolation: isolate;
+}
+
+.quote-blob {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 9999px;
+  filter: blur(60px);
+  animation: aurora 20s ease-in-out infinite;
+}
+
+/* Textură fină de „film”, ca să nu pară un gradient plat */
+.quote-grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.12;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Lumina care urmărește cursorul */
+.quote-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms var(--ease-out);
+  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgb(188 173 255 / 0.18), transparent 65%);
+}
+.quote-card:hover .quote-spotlight {
+  opacity: 1;
+}
+
+/* Steluțe care sclipesc */
+.quote-stars {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 78%, white, transparent),
+    radial-gradient(1px 1px at 28% 18%, white, transparent),
+    radial-gradient(1.5px 1.5px at 46% 88%, white, transparent),
+    radial-gradient(1px 1px at 63% 12%, white, transparent),
+    radial-gradient(2px 2px at 78% 30%, white, transparent),
+    radial-gradient(1px 1px at 88% 72%, white, transparent),
+    radial-gradient(1.5px 1.5px at 94% 14%, white, transparent);
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+.quote-mark {
+  z-index: -1;
+  background-image: linear-gradient(160deg, var(--color-accent-blue), var(--color-accent) 50%, var(--color-accent-pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  opacity: 0.35;
+  filter: drop-shadow(0 0 30px rgb(124 92 255 / 0.5));
+}
+
+/* Citatul apare cuvânt cu cuvânt, din ceață */
+.quote-word {
+  display: inline-block;
+  white-space: pre;
+  text-shadow: 0 0 28px rgb(124 92 255 / 0.45);
+  animation: quote-word-in 700ms var(--ease-out) both;
+  animation-delay: calc(var(--w, 0) * 55ms + 80ms);
+}
+.quote-author {
+  animation: quote-word-in 700ms var(--ease-out) both;
+  animation-delay: calc(var(--w, 0) * 55ms + 200ms);
+}
+
+@keyframes quote-spin {
+  to { --quote-angle: 360deg; }
+}
+@keyframes quote-word-in {
+  from { opacity: 0; filter: blur(8px); transform: translateY(10px); }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
 }
 
 @utility tabular {

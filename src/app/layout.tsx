@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin", "latin-ext"], display: "swap" });
+// Serif expresiv, doar pentru citatul „Gândul zilei”
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin", "latin-ext"], style: ["normal", "italic"], display: "swap" });
 
 // Toate paginile depind de sesiune sau de configurarea de la rulare: nu se prerandează nimic
 // (evită ca o pagină privată sau o stare de configurare să fie „înghețată” la build).
@@ -26,7 +28,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ro" className={`${jakarta.variable} h-full`}>
+    <html lang="ro" className={`${jakarta.variable} ${fraunces.variable} h-full`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

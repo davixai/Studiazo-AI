@@ -69,3 +69,14 @@ export async function getUpcomingTasks({ days = 30, limit = 8, now = new Date() 
   const tasks = await getTasksBetween({ start: now, end: new Date(now.getTime() + days * 86_400_000) });
   return tasks.slice(0, limit);
 }
+
+/** Un termen după id (pentru editare); null dacă nu există sau nu e al utilizatorului. */
+export async function getTask(id: string): Promise<Task | null> {
+  if (!UUID_RE.test(id)) return null;
+  if (isPreviewMode()) return previewTasks().find((t) => t.id === id) ?? null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("tasks").select(TASK_COLUMNS).eq("id", id).maybeSingle();
+  if (error) throw new Error(`Nu am putut citi termenul: ${error.message}`);
+  return data ? toTask(data) : null;
+}

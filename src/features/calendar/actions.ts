@@ -15,10 +15,15 @@ import { conflictRange, firstConflicts } from "./conflicts";
 import { getOccurrencesBetween } from "./queries";
 import {
   CompleteEventSchema,
+  CompleteTaskSchema,
   DeleteEventSchema,
   EventFormSchema,
+  IdSchema,
+  TaskFormSchema,
+  TIMED_TASK_KINDS,
   type ActionResult,
   type EventFormState,
+  type TaskFormState,
 } from "./schemas";
 
 const PREVIEW_MESSAGE = "Modul previzualizare nu salvează date. Conectează Supabase pentru a salva activitatea.";
@@ -149,6 +154,74 @@ export async function setEventCompleted(input: unknown): Promise<ActionResult> {
     .eq("recurrence", "none")
     .select("id");
   if (error || !data?.length) return { ok: false, message: "Nu am putut actualiza activitatea. Încearcă din nou." };
+
+  done();
+}
+
+/** Creează sau modifică o temă, un proiect sau un examen. */
+export async function saveTask(_prev: TaskFormState, formData: FormData): Promise<TaskFormState> {
+  if (isPreviewMode()) return { status: "error", message: PREVIEW_MESSAGE.replace("activitatea", "termenul") };
+  await requireUser();
+
+  const values = rawValues(formData);
+  const id = values.id ? z.uuid().safeParse(values.id) : null;
+  if (id && !id.success) return { status: "error", message: "Termenul nu mai există.", values };
+
+  const parsed = TaskFormSchema.safeParse(values);
+  if (!parsed.success) return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error), values };
+  const v = parsed.data;
+  const timed = TIMED_TASK_KINDS.includes(v.kind);
+
+  const columns = {
+    kind: v.kind,
+    title: v.title,
+    subject_id: v.subjectId,
+    location: timed ? v.location : null,
+    notes: v.notes,
+    due_at: fromLocal(v.date, v.time).toISOString(),
+    duration_minutes: timed ? v.durationMinutes : null,
+    estimated_minutes: v.estimatedMinutes,
+  };
+
+  const supabase = await createClient();
+  const taskId = id?.data ?? null;
+  const { data, error } = taskId
+    ? await supabase.from("tasks").update(columns).eq("id", taskId).select("id")
+    : await supabase.from("tasks").insert(columns).select("id");
+  if (error) return { status: "error", message: "Nu am putut salva termenul. Încearcă din nou.", values };
+  if (!data?.length) return { status: "error", message: "Termenul nu mai există.", values };
+
+  done();
+}
+
+export async function deleteTask(input: unknown): Promise<ActionResult> {
+  if (isPreviewMode()) return { ok: false, message: PREVIEW_MESSAGE };
+  await requireUser();
+
+  const parsed = IdSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Nu am putut șterge termenul." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("tasks").delete().eq("id", parsed.data.id);
+  if (error) return { ok: false, message: "Nu am putut șterge termenul. Încearcă din nou." };
+
+  done();
+}
+
+/** Bifează un termen ca făcut (dispare din termenele viitoare) sau îl redeschide. */
+export async function setTaskCompleted(input: unknown): Promise<ActionResult> {
+  if (isPreviewMode()) return { ok: false, message: PREVIEW_MESSAGE };
+  await requireUser();
+
+  const parsed = CompleteTaskSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Nu am putut actualiza termenul." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ completed_at: parsed.data.completed ? new Date().toISOString() : null })
+    .eq("id", parsed.data.id)
+    .select("id");
+  if (error || !data?.length) return { ok: false, message: "Nu am putut actualiza termenul. Încearcă din nou." };
 
   done();
 }

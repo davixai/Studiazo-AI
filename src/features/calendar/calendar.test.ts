@@ -3,7 +3,7 @@ import type { CalendarEvent } from "@/lib/contracts/domain";
 import { expandEvent, expandEvents } from "@/lib/time/recurrence";
 import { fromLocal } from "@/lib/time/zone";
 import { conflictRange, firstConflicts } from "./conflicts";
-import { EventFormSchema } from "./schemas";
+import { EventFormSchema, TaskFormSchema } from "./schemas";
 
 const form = (overrides: Record<string, string> = {}) => ({
   kind: "curs",
@@ -111,5 +111,35 @@ describe("suprapuneri", () => {
     const range = conflictRange(candidate);
     const conflicts = firstConflicts(expandEvent(candidate, range), expandEvents([afterChange], range));
     expect(conflicts.map((c) => c.event.id)).toEqual(["curs"]);
+  });
+});
+
+describe("TaskFormSchema", () => {
+  const task = (overrides: Record<string, string> = {}) => ({
+    kind: "examen",
+    title: "Examen Analiză",
+    subjectId: "",
+    location: "",
+    notes: "",
+    date: "2026-11-02",
+    time: "09:00",
+    durationMinutes: "120",
+    estimatedMinutes: "",
+    ...overrides,
+  });
+
+  it("acceptă un examen cu durată și fără estimare", () => {
+    expect(TaskFormSchema.parse(task())).toMatchObject({ kind: "examen", durationMinutes: 120, estimatedMinutes: null });
+  });
+
+  it("respinge durate în afara limitelor din baza de date", () => {
+    expect(TaskFormSchema.safeParse(task({ durationMinutes: "700" })).success).toBe(false);
+    expect(TaskFormSchema.safeParse(task({ estimatedMinutes: "1" })).success).toBe(false);
+  });
+
+  it("cere titlu, dată și oră valide", () => {
+    expect(TaskFormSchema.safeParse(task({ title: "" })).success).toBe(false);
+    expect(TaskFormSchema.safeParse(task({ date: "2 noiembrie" })).success).toBe(false);
+    expect(TaskFormSchema.safeParse(task({ time: "25:00" })).success).toBe(false);
   });
 });

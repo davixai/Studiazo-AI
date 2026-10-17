@@ -8,11 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea, describedBy } from "@/components/ui/field";
 import { Segmented } from "@/components/ui/segmented";
-import { EVENT_KINDS, EVENT_KIND_LABELS, type CalendarEvent, type RecurrenceKind, type Subject } from "@/lib/contracts/domain";
+import {
+  EVENT_KINDS,
+  EVENT_KIND_LABELS,
+  type CalendarEvent,
+  type EventKind,
+  type RecurrenceKind,
+  type Subject,
+} from "@/lib/contracts/domain";
 import { formatDayLong } from "@/lib/time/format";
 import { dayBounds, toDateKey, toTimeOfDay } from "@/lib/time/zone";
-import { cn } from "@/lib/utils";
 import { deleteEvent, saveEvent, setEventCompleted } from "../actions";
+import { KindPicker } from "./kind-picker";
 import { initialEventFormState, type ActionResult, type EventFormState } from "../schemas";
 
 type EventDialogProps = {
@@ -166,25 +173,15 @@ export function EventDialog({ event, subjects, occurrenceDate, defaults }: Event
           </Alert>
         ) : null}
 
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium text-ink">Tip</legend>
-          <div className="grid grid-cols-4 gap-1.5">
-            {EVENT_KINDS.map((kind) => (
-              <label
-                key={kind}
-                className={cn(
-                  "flex h-10 cursor-pointer items-center justify-center rounded-md border border-line-strong bg-surface px-1 text-[13px] font-medium text-ink-soft transition-colors",
-                  "hover:border-ink-faint has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent-ink",
-                  "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
-                )}
-              >
-                <input type="radio" name="kind" value={kind} defaultChecked={initial.kind === kind} className="sr-only" />
-                {EVENT_KIND_LABELS[kind]}
-              </label>
-            ))}
-          </div>
-          {e.kind ? <p className="mt-1.5 text-[13px] font-medium text-danger">{e.kind}</p> : null}
-        </fieldset>
+        <KindPicker
+          name="kind"
+          legend="Tip"
+          kinds={EVENT_KINDS}
+          labels={EVENT_KIND_LABELS}
+          defaultValue={initial.kind as EventKind}
+          error={e.kind}
+          className="grid-cols-4"
+        />
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field id="title" label="Titlu" error={e.title}>

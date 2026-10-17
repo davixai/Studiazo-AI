@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EVENT_KINDS, RECURRENCE_KINDS } from "@/lib/contracts/domain";
+import { EVENT_KINDS, RECURRENCE_KINDS, TASK_KINDS, type TaskKind } from "@/lib/contracts/domain";
 import { isDateKey, isTimeOfDay } from "@/lib/time/zone";
 
 const optionalText = (max: number) =>
@@ -57,3 +57,30 @@ export type EventFormState = {
 export const initialEventFormState: EventFormState = { status: "idle" };
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
+
+const optionalMinutes = (min: number, max: number, message: string) =>
+  z.preprocess(emptyToNull, z.coerce.number().int().min(min, message).max(max, message).nullable());
+
+/** Teme, proiecte, examene: un termen (dată + oră) și, pentru probe, durata. */
+export const TaskFormSchema = z.object({
+  kind: z.enum(TASK_KINDS, { error: "Alege tipul." }),
+  title: z.string().trim().min(1, "Scrie ce ai de predat sau de susținut.").max(160, "Maximum 160 de caractere."),
+  subjectId: z.preprocess(emptyToNull, z.uuid("Materie invalidă.").nullable()),
+  location: optionalText(160),
+  notes: optionalText(4000),
+  date: z.string().refine(isDateKey, "Alege data."),
+  time: z.string().refine(isTimeOfDay, "Alege ora."),
+  durationMinutes: optionalMinutes(5, 600, "Între 5 minute și 10 ore."),
+  estimatedMinutes: optionalMinutes(5, 6000, "Între 5 minute și 100 de ore."),
+});
+
+export type TaskFormValues = z.infer<typeof TaskFormSchema>;
+
+/** Probele (examen, colocviu, test) au durată și loc; temele și proiectele au doar termen. */
+export const TIMED_TASK_KINDS: readonly TaskKind[] = ["examen", "colocviu", "test"];
+
+export const IdSchema = z.object({ id: z.uuid() });
+export const CompleteTaskSchema = z.object({ id: z.uuid(), completed: z.boolean() });
+
+export type TaskFormState = Omit<EventFormState, "conflicts" | "status"> & { status: "idle" | "error" };
+export const initialTaskFormState: TaskFormState = { status: "idle" };

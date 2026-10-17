@@ -1,4 +1,5 @@
 import { BookOpenText, ClipboardList, FolderKanban, GraduationCap, type LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { TASK_KIND_COLOR } from "@/components/ui/category";
 import { IconBadge } from "@/components/ui/icon-badge";
 import { TASK_KIND_LABELS, type Subject, type Task, type TaskKind } from "@/lib/contracts/domain";
@@ -25,7 +26,11 @@ export function UpcomingList({ items, now }: UpcomingListProps) {
         const days = daysBetween(toDateKey(now), toDateKey(due));
         const tone = days <= 1 ? "danger" : days <= 7 ? "warning" : "neutral";
         return (
-          <li key={task.id} className="flex items-center gap-3 rounded-md border border-line/70 p-3 transition-colors hover:bg-surface-muted/60">
+          <li key={task.id}>
+            <Link
+              href={`/calendar?termen=${task.id}`}
+              className="flex items-center gap-3 rounded-md border border-line/70 p-3 transition-[background-color,transform] duration-150 hover:bg-surface-muted/60 active:scale-[0.99]"
+            >
             <IconBadge icon={KIND_ICON[task.kind]} color={subject?.color ?? TASK_KIND_COLOR[task.kind]} size="sm" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-ink">{task.title}</p>
@@ -44,6 +49,7 @@ export function UpcomingList({ items, now }: UpcomingListProps) {
             >
               {formatRelativeDay(due, now)}
             </span>
+            </Link>
           </li>
         );
       })}

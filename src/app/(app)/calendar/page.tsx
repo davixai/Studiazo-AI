@@ -1,14 +1,14 @@
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, ListChecks, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
-import { Alert } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AgendaRow } from "@/features/calendar/components/agenda-row";
 import { EventDialog } from "@/features/calendar/components/event-dialog";
-import { getEvent, getOccurrencesBetween, getTasksBetween } from "@/features/calendar/queries";
+import { TaskDialog } from "@/features/calendar/components/task-dialog";
+import { getEvent, getOccurrencesBetween, getTask, getTasksBetween } from "@/features/calendar/queries";
 import { listSubjects } from "@/features/subjects/queries";
-import type { AgendaItem } from "@/lib/contracts/domain";
+import { TASK_KINDS, type AgendaItem, type TaskKind } from "@/lib/contracts/domain";
 import { formatDayLong } from "@/lib/time/format";
 import { dayBounds, shiftDateKey, toDateKey, toTimeOfDay } from "@/lib/time/zone";
 
@@ -17,22 +17,26 @@ export const metadata: Metadata = { title: "Calendar" };
 const DAYS = 14;
 
 const NEW_EVENT_HREF = "/calendar?adauga=activitate";
+const NEW_TASK_HREF = "/calendar?adauga=tema";
 
-// Agenda pe 14 zile. ?adauga=activitate deschide formularul nou; ?activitate=<id>&zi=<data> deschide editarea.
-// Vederile zi/săptămână (D4) și formularele de teme/examene (D3) urmează.
+// Agenda pe 14 zile. ?adauga=activitate | tema | examen | … deschide formularul nou;
+// ?activitate=<id>&zi=<data> și ?termen=<id> deschid editarea. Vederile zi/săptămână (D4) urmează.
 export default async function CalendarPage({ searchParams }: PageProps<"/calendar">) {
   const params = await searchParams;
   const adding = one(params.adauga);
   const editingId = one(params.activitate);
+  const editingTaskId = one(params.termen);
+  const newTaskKind = TASK_KINDS.find((k) => k === adding);
   const now = new Date();
   const todayKey = toDateKey(now);
   const range = { start: dayBounds(todayKey).start, end: dayBounds(shiftDateKey(todayKey, DAYS - 1)).end };
 
-  const [occurrences, tasks, subjects, editing] = await Promise.all([
+  const [occurrences, tasks, subjects, editing, editingTask] = await Promise.all([
     getOccurrencesBetween(range),
     getTasksBetween(range),
     listSubjects(),
     editingId ? getEvent(editingId) : Promise.resolve(null),
+    editingTaskId ? getTask(editingTaskId) : Promise.resolve(null),
   ]);
   const byId = new Map(subjects.map((s) => [s.id, s]));
   const subjectOf = (id: string | null) => (id ? (byId.get(id) ?? null) : null);
@@ -52,10 +56,16 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
         title="Calendar"
         description={`Agenda pentru următoarele ${DAYS} zile. Apasă pe o activitate ca s-o modifici.`}
         actions={
-          <ButtonLink href={NEW_EVENT_HREF} scroll={false} className="w-full sm:w-auto">
-            <Plus aria-hidden="true" />
-            Adaugă activitate
-          </ButtonLink>
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+            <ButtonLink href={NEW_TASK_HREF} scroll={false} variant="secondary">
+              <ListChecks aria-hidden="true" />
+              Temă / examen
+            </ButtonLink>
+            <ButtonLink href={NEW_EVENT_HREF} scroll={false}>
+              <Plus aria-hidden="true" />
+              Activitate
+            </ButtonLink>
+          </div>
         }
       />
 
@@ -69,10 +79,13 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
         />
       ) : null}
 
-      {adding === "examen" || adding === "tema" ? (
-        <Alert tone="info" title="Adăugarea din calendar urmează">
-          Formularul pentru teme, examene și activități este în lucru. Până atunci, programul existent apare mai jos.
-        </Alert>
+      {newTaskKind || editingTask ? (
+        <TaskDialog
+          key={editingTask?.id ?? newTaskKind}
+          task={editingTask}
+          subjects={subjects}
+          defaults={newTaskDefaults(newTaskKind ?? "tema", now)}
+        />
       ) : null}
 
       {sortedDays.length === 0 ? (
@@ -109,7 +122,11 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                           key={item.type === "event" ? `${item.occurrence.event.id}-${dateKey}` : item.task.id}
                           item={item}
                           now={now}
-                          href={item.type === "event" ? `/calendar?activitate=${item.occurrence.event.id}&zi=${dateKey}` : undefined}
+                          href={
+                            item.type === "event"
+                              ? `/calendar?activitate=${item.occurrence.event.id}&zi=${dateKey}`
+                              : `/calendar?termen=${item.task.id}`
+                          }
                         />
                       ))}
                   </ul>
@@ -134,6 +151,12 @@ function newEventDefaults(now: Date) {
     startTime: `${pad(start)}:00`,
     endTime: `${pad(start + 2)}:00`,
   };
+}
+
+/** Temele și proiectele: peste o săptămână, până la miezul nopții; probele: peste două săptămâni, la 9. */
+function newTaskDefaults(kind: TaskKind, now: Date) {
+  const timed = kind === "examen" || kind === "colocviu" || kind === "test";
+  return { kind, date: shiftDateKey(toDateKey(now), timed ? 14 : 7), time: timed ? "09:00" : "23:59" };
 }
 
 function one(value: string | string[] | undefined) {

@@ -56,6 +56,21 @@ git push -u origin main
 4. Costul orientativ cu `gpt-6-luna` ($0,10 / 1M tokeni la intrare, $0,50 / 1M la ieșire): o explicație cu ~6.000 de tokeni de context și ~800 de tokeni de răspuns costă ≈ $0,001.
 5. Fără cheie, asistentul afișează „Asistentul AI nu este disponibil momentan”. Restul aplicației funcționează. Nu există răspunsuri simulate.
 
+## 3b. Google Classroom (opțional)
+
+Pagina `/classroom` importă cursurile (→ materii), temele cu termen (→ teme în calendar), PDF-urile și Google Docs/Slides/Sheets (→ materiale, exportate ca PDF) și anunțurile (→ o notiță „Din Google Classroom” pe materie). Accesul e doar de citire; tokenul Google stă într-un cookie httpOnly, legat de contul Studiazo, și expiră după ~1 oră. Nu salvăm refresh token.
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → proiect nou `studiazo`.
+2. *APIs & Services → Library*: activați **Google Classroom API** și **Google Drive API**.
+3. *OAuth consent screen* (Google Auth Platform): tip **External**, nume „Studiazo AI”, emailul vostru. La *Data access* adăugați scopurile:
+   `classroom.courses.readonly`, `classroom.coursework.me.readonly`, `classroom.courseworkmaterials.readonly`, `classroom.announcements.readonly`, `drive.readonly`.
+4. *Audience*: lăsați aplicația în **Testing** și adăugați la *Test users* conturile Google cu care testați (max. 100). În Testing nu e nevoie de verificarea Google.
+5. *Credentials → Create credentials → OAuth client ID* → **Web application**:
+   - *Authorized redirect URIs*: `http://localhost:3000/api/classroom/callback` (și `https://<domeniu>/api/classroom/callback` în producție).
+6. Copiați *Client ID* și *Client secret* în `.env.local` ca `GOOGLE_CLIENT_ID` și `GOOGLE_CLIENT_SECRET`, apoi reporniți `npm run dev`.
+
+Limite cunoscute: fișierele Office (.docx, .pptx) nu se pot exporta direct din Drive și sunt sărite (cu mesaj); exportul Google Docs → PDF are limita de 10 MB; conturile instituționale pot avea aplicațiile externe blocate de administrator. Duplicatele se evită după nume, deci importul se poate repeta.
+
 ## 4. PDF-uri: ce acceptăm și limitele reale
 
 - **Acceptat acum**: PDF cu text selectabil, max. 20 MB. Textul se extrage pe pagini (`unpdf`) și se salvează o singură dată.

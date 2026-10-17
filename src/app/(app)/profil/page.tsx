@@ -1,8 +1,9 @@
-import { LogOut } from "lucide-react";
+import { GraduationCap, LogOut } from "lucide-react";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { IconBadge } from "@/components/ui/icon-badge";
 import { signOut } from "@/features/auth/actions";
 import { AvailabilityForm } from "@/features/profile/components/availability-form";
 import { DeleteAccount } from "@/features/profile/components/delete-account";
@@ -28,7 +29,20 @@ export default async function ProfilePage() {
         <AvailabilityForm availability={profile.availability} />
       </Card>
 
-      <Card className="stagger divide-y divide-line" style={{ "--i": 3 } as React.CSSProperties}>
+      <Card className="stagger flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" style={{ "--i": 3 } as React.CSSProperties}>
+        <div className="flex items-start gap-4">
+          <IconBadge icon={GraduationCap} color="green" />
+          <div>
+            <h2 className="text-[15px] font-semibold">Google Classroom</h2>
+            <p className="mt-1 max-w-md text-sm leading-6 text-ink-muted">Importă cursurile, temele și documentele. Asistentul AI le poate citi imediat.</p>
+          </div>
+        </div>
+        <ButtonLink href="/classroom" variant="secondary">
+          Conectează
+        </ButtonLink>
+      </Card>
+
+      <Card className="stagger divide-y divide-line" style={{ "--i": 4 } as React.CSSProperties}>
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <h2 className="text-[15px] font-semibold">Cont</h2>

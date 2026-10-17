@@ -42,3 +42,5 @@ Cont → adaugă examen → încarcă material → primește explicație → com
 - Notificări push, integrare cu Google Calendar.
 - Replanificarea automată a sesiunilor ratate (în MVP: propunere la cerere).
 - Site de prezentare (separat, același brand).
+
+Viziunea pe termen lung (orar din poză, Google Classroom, modul financiar, agenți multipli, costuri și ROI) este în `docs/VIZIUNE.md`.

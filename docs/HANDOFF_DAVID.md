@@ -1,7 +1,7 @@
 # Predare — David (continuare)
 
 **Când:** după ce fundația e pe GitHub (`main`) și proiectul Supabase e creat (SETUP.md §1–2).
-**Ramura:** `david/<task>` pentru fiecare task (ex. `david/supabase-conectare`, `david/calendar-formular`).
+**Ramura:** `main` (lucrați amândoi pe ea: `git pull` → lucru → commit → `git pull` → `git push`).
 
 ## Prompt de copiat în Claude Code
 
@@ -19,9 +19,9 @@ Principiu: simplu, funcțional, verificat, premium. Nimic peste ce cere taskul. 
 Proprietatea mea (pot modifica): components/ui, components/layout, globals.css, layouturile, lib/time, lib/supabase, lib/auth,
 lib/contracts/domain.ts, features/auth|profile|dashboard|calendar|tasks|proposals, rutele azi, calendar, profil, bun-venit, migrațiile mele.
 NU modific: features/subjects|materials|notes|assistant|quizzes, lib/ai, lib/contracts/quiz.ts|ai-tools.ts (ale lui Sergiu).
-lib/contracts/proposals.ts se schimbă doar prin PR aprobat de amândoi.
+lib/contracts/proposals.ts se schimbă doar cu acordul amândurora.
 
-Taskuri, în ordine. Unul pe ramură, cu PR. Te oprești după fiecare cu raportul de predare:
+Taskuri, în ordine. Lucrăm pe main: git pull înainte, commit + git pull + git push după fiecare task, niciodată --force. Te oprești după fiecare cu raportul de predare:
 D1. Conectare Supabase reală: verifică .env.local, aplică/verifică migrația, testează înregistrare → email → /bun-venit → /azi,
     autentificare, recuperarea parolei, deconectare, ștergerea contului. Testează izolarea cu 2 conturi. Corectează ce nu merge.
 D2. Calendar: formular în Dialog (foaie de jos pe mobil) pentru activități: tip, materie (listSubjects), titlu, loc,

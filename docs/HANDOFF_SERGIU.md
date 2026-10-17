@@ -11,7 +11,7 @@ cp .env.example .env.local   # valorile Supabase de la David + cheia ta OpenAI (
 npm run check
 ```
 
-**Ramura:** `sergiu/<task>` (ex. `sergiu/materii-crud`, `sergiu/pdf-upload`, `sergiu/chat`).
+**Ramura:** `main` (lucrați amândoi pe ea: `git pull` → lucru → commit → `git pull` → `git push`).
 
 ## Prompt de copiat în Claude Code
 
@@ -31,7 +31,7 @@ Principiu: simplu, funcțional, verificat, premium. Nimic peste ce cere taskul. 
 Proprietatea mea (pot modifica): features/subjects|materials|notes|assistant|quizzes, rutele materii (inclusiv materii/[id]),
 asistent, app/api/ai/*, lib/ai/*, lib/contracts/quiz.ts și ai-tools.ts, migrațiile pentru tabelele mele (minute impare în marcaj).
 NU modific: components/ui, layouturile, lib/time, lib/supabase, lib/auth, features ale lui David. Dacă îmi trebuie ceva acolo,
-scriu cererea (issue) și lucrez cu un adaptor local. lib/contracts/proposals.ts se schimbă doar prin PR aprobat de amândoi.
+scriu cererea (issue) și lucrez cu un adaptor local. lib/contracts/proposals.ts se schimbă doar cu acordul amândurora.
 
 Reguli AI (obligatorii):
 - Apelurile OpenAI doar pe server (lib/ai/client.ts: getOpenAI, describeAiError). Model din OPENAI_MODEL (implicit gpt-6-luna),
@@ -49,7 +49,7 @@ Reguli AI (obligatorii):
   computeFreeSlots() (cod), datele cu decalaj prin fromLocal(). Asistentul spune „ți-am pregătit o propunere”, nu „am salvat”.
   Afișarea + confirmarea sunt ale lui David (<ProposalCard>, confirmProposal). Până le livrează, afișează un rezumat temporar fără salvare.
 
-Taskuri, în ordine. Unul pe ramură, cu PR. Te oprești după fiecare cu raportul de predare:
+Taskuri, în ordine. Lucrăm pe main: git pull înainte, commit + git pull + git push după fiecare task, niciodată --force. Te oprești după fiecare cu raportul de predare:
 S1. Materii: creare/editare/arhivare (Dialog + Server Actions + Zod), pagina /materii/[id] cu tab-uri Materiale / Notițe.
 S2. Notițe pe materie: creare, editare, ștergere.
 S3. PDF: încărcare direct în Storage din browser (bucket materials, cale {user_id}/{subject_id}/{material_id}.pdf), validare

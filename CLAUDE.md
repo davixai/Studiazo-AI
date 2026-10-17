@@ -1,6 +1,6 @@
 # Instrucțiuni pentru Claude Code — Studiazo AI
 
-Lucrezi la Studiazo AI, o aplicație pentru studenții din Iași. Echipa: **David** și **Sergiu**, fiecare cu sesiunea lui de Claude Code și ramura lui.
+Lucrezi la Studiazo AI, o aplicație pentru studenții din Iași. Echipa: **David** și **Sergiu**, fiecare cu sesiunea lui de Claude Code, lucrând amândoi pe ramura `main`.
 
 ## Principiul de bază
 
@@ -9,7 +9,7 @@ Aplicația trebuie să fie **simplă, funcțională, verificată și premium**. 
 ## Înainte de orice modificare
 
 1. Citește `docs/TASKS.md` și documentul relevant pentru zona ta (`docs/CONTRACTS.md`, `docs/DATABASE.md`, `docs/DESIGN_SYSTEM.md`, `docs/ARCHITECTURE.md`).
-2. Verifică în `docs/COLLABORATION.md` cine deține fișierele pe care vrei să le modifici. Nu modifica modulele colegului; propune schimbarea separat (issue/PR).
+2. Verifică în `docs/COLLABORATION.md` cine deține fișierele pe care vrei să le modifici. Nu modifica modulele colegului; spune-i colegului ce îți trebuie (chat/issue).
 3. Next.js 16.4 are schimbări față de ce știi: `proxy.ts` în loc de `middleware.ts`, API-uri async (`await params`, `await searchParams`, `await cookies()`). Documentația exactă este în `node_modules/next/dist/docs/`. Citește ghidul relevant înainte de a folosi un API Next.
 
 ## Reguli de cod
@@ -36,6 +36,7 @@ Aplicația trebuie să fie **simplă, funcțională, verificată și premium**. 
 
 ## Git
 
-- Lucrează pe ramura ta (`david/...` sau `sergiu/...`). Fără push direct pe `main` și fără force push.
-- Commituri mici și clare, în română sau engleză, consecvent. PR către `main`, revizuit de colegul tău.
+- Amândoi lucrați direct pe `main`. Ordinea: `git pull` înainte de lucru → commit → `git pull` → `git push`. `git config pull.rebase true` o dată.
+- **Niciodată** `git push --force`. Dacă push-ul e respins: `git pull`, apoi `git push`. La conflict: rezolvă-l păstrând munca amândurora, apoi `git rebase --continue`.
+- Commituri mici și dese (la 20–40 min), cu `npm run check` trecut înainte de push. Nu lucrați în același fișier în același timp.
 - La finalul fiecărui task, raportează: ce s-a terminat, ce fișiere s-au modificat, cum s-a verificat, ce probleme au rămas și care e următorul task.

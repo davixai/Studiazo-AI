@@ -10,6 +10,7 @@ import type {
   Task,
   TaskKind,
 } from "@/lib/contracts/domain";
+import { ProposalPayloadSchema, type Proposal, type ProposalStatus } from "@/lib/contracts/proposals";
 
 // Conversii rând SQL (snake_case) → tip de domeniu (camelCase). Coloanele selectate sunt exportate
 // ca liste, ca toate interogările să ceară exact câmpurile mapate aici.
@@ -85,5 +86,21 @@ export function toTask(r: Row): Task {
     durationMinutes: (r.duration_minutes as number | null) ?? null,
     estimatedMinutes: (r.estimated_minutes as number | null) ?? null,
     completedAt: (r.completed_at as string | null) ?? null,
+  };
+}
+
+export const PROPOSAL_COLUMNS = "id, conversation_id, status, payload, created_at, expires_at";
+
+/** Propunerile cu payload invalid (ex. modificat manual) nu se afișează: întoarce null. */
+export function toProposal(r: Row): Proposal | null {
+  const payload = ProposalPayloadSchema.safeParse(r.payload);
+  if (!payload.success) return null;
+  return {
+    id: r.id as string,
+    conversationId: (r.conversation_id as string | null) ?? null,
+    status: r.status as ProposalStatus,
+    payload: payload.data,
+    createdAt: r.created_at as string,
+    expiresAt: r.expires_at as string,
   };
 }

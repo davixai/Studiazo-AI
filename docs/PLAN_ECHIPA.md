@@ -59,7 +59,7 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 - [ ] S8 · Plan de studiu pe examene + teme slabe, cu avertisment când nu încape
 
 **Legătura**
-- [ ] D5 · `ProposalCard` + Confirmă / Renunță; fără duplicate la dublu-click; nimic salvat fără confirmare
+- [x] D5 · `ProposalCard` + Confirmă / Renunță; fără duplicate la dublu-click; nimic salvat fără confirmare _(logica testată; de testat pe Supabase real)_
 - [ ] D6 · Azi: sesiunea recomandată + progres recent din teste
 - [x] D8 · Streak, insigne, timpul de învățare pe 7 zile
 

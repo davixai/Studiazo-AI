@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseBlocks } from "./components/message-content";
+import { parseBlocks, plainMath } from "./components/message-content";
 
 describe("parseBlocks", () => {
   it("împarte în paragrafe și liste", () => {
@@ -14,5 +14,19 @@ describe("parseBlocks", () => {
 
   it("transformă titlurile în text îngroșat", () => {
     expect(parseBlocks("## Recapitulare")).toEqual([{ type: "p", lines: ["**Recapitulare**"] }]);
+  });
+});
+
+describe("plainMath", () => {
+  it("transformă LaTeX-ul uzual în text cu simboluri", () => {
+    expect(plainMath("Ce obții pentru \\(2\\times x\\)?")).toBe("Ce obții pentru 2× x?");
+    expect(plainMath("$\\frac{a}{b} \\le \\sqrt{x}$")).toBe("(a)/(b) ≤ √(x)");
+  });
+
+  it("se aplică în text, dar nu în blocurile de cod", () => {
+    expect(parseBlocks("Avem \\(x^{2}\\).\n```\necho $HOME $PATH\n```")).toEqual([
+      { type: "p", lines: ["Avem x^(2)."] },
+      { type: "code", text: "echo $HOME $PATH" },
+    ]);
   });
 });

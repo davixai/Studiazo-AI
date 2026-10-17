@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import type { ResponseInputItem } from "openai/resources/responses/responses";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -15,7 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PROPOSAL_COLUMNS, toProposal } from "@/lib/supabase/mappers";
 import { runAssistant } from "./engine";
 import { buildInstructions } from "./prompt";
-import { toChatMessage, type ChatMessage } from "./queries";
+import { imagePathOf, toChatMessage, type ChatMessage } from "./queries";
 import { executeTool } from "./tools";
 
 /** Poză redimensionată în browser (JPEG/PNG/WebP), ca data URL; limita de 1 MB a Server Actions o acoperă. */
@@ -24,12 +25,15 @@ const MAX_IMAGE_CHARS = 900_000;
 
 const SendSchema = z.object({
   subjectId: z.uuid().nullable(),
+  /** Conversația deschisă; null = ultima conversație a chatului sau, cu newConversation, una nouă. */
+  conversationId: z.uuid().nullable().default(null),
+  newConversation: z.boolean().default(false),
   text: z.string().trim().max(AI_LIMITS.maxUserMessageChars, "Mesajul e prea lung."),
   image: z.string().max(MAX_IMAGE_CHARS, "Poza e prea mare.").regex(IMAGE_DATA_URL, "Poza nu este validă.").nullable(),
 });
 
 export type SendResult =
-  | { ok: true; messages: ChatMessage[]; proposals: Proposal[] }
+  | { ok: true; conversationId: string; messages: ChatMessage[]; proposals: Proposal[] }
   | { ok: false; message: string; retryable: boolean };
 
 /**
@@ -43,7 +47,7 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
   const user = await requireUser();
   const parsed = SendSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Mesaj invalid.", retryable: false };
-  const { subjectId, text, image } = parsed.data;
+  const { subjectId, text, image, conversationId: requestedConversation, newConversation } = parsed.data;
   if (!text && !image) return { ok: false, message: "Scrie o întrebare sau atașează o poză.", retryable: false };
 
   const config = getAiConfig();
@@ -60,8 +64,9 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
   const subject = subjectId ? (subjects.find((s) => s.id === subjectId) ?? null) : null;
   if (subjectId && !subject) return { ok: false, message: "Materia nu mai există.", retryable: false };
 
-  const conversationId = await currentConversation(subjectId, subject?.name ?? null, text);
-  if (!conversationId) return { ok: false, message: "Nu am putut porni conversația. Încearcă din nou.", retryable: true };
+  const conversation = await resolveConversation({ subjectId, requested: requestedConversation, newConversation, title: text || subject?.name || "Poză" });
+  if (!conversation.ok) return { ok: false, message: conversation.message, retryable: conversation.retryable };
+  const conversationId = conversation.id;
 
   const { data: historyRows } = await supabase
     .from("messages")
@@ -106,6 +111,9 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
     output_tokens: turn.usage.outputTokens,
   });
 
+  // Poza rămâne în istoric: o păstrăm privat în Storage. Dacă nu reușim, mesajul se salvează oricum, fără ea.
+  const imagePath = image ? await storeChatImage(user.id, image) : null;
+
   // Ore explicite: ambele rânduri se inserează în aceeași tranzacție și ar avea același now().
   const answeredAt = Date.now();
   const { data: saved, error } = await supabase
@@ -115,7 +123,7 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
         conversation_id: conversationId,
         role: "user",
         content: question,
-        metadata: image ? { image: true } : {},
+        metadata: image ? { image: true, ...(imagePath ? { imagePath } : {}) } : {},
         created_at: new Date(answeredAt - 1).toISOString(),
       },
       {
@@ -138,33 +146,70 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
 
   return {
     ok: true,
-    messages: (saved ?? []).map(toChatMessage).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    conversationId,
+    messages: (saved ?? []).map((r) => toChatMessage(r)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     proposals,
   };
 }
 
-/** „Conversație nouă”: chatul materiei pornește de la zero; cele vechi rămân în baza de date. */
-export async function startNewConversation(input: unknown): Promise<{ ok: boolean }> {
-  if (isPreviewMode()) return { ok: false };
+/** Șterge o conversație din istoric, cu mesajele și pozele ei. Propunerile deja salvate rămân în calendar. */
+export async function deleteConversation(input: unknown): Promise<{ ok: true } | { ok: false; message: string }> {
+  if (isPreviewMode()) return { ok: false, message: "Modul previzualizare nu salvează date." };
   await requireUser();
-  const parsed = z.object({ subjectId: z.uuid().nullable() }).safeParse(input);
-  if (!parsed.success) return { ok: false };
+  const parsed = z.object({ id: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Conversația nu există." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("conversations").insert({ subject_id: parsed.data.subjectId, title: "Conversație nouă" });
+  const { data: rows } = await supabase.from("messages").select("metadata").eq("conversation_id", parsed.data.id);
+  const paths = (rows ?? []).map((r) => imagePathOf(r.metadata)).filter((p): p is string => p !== null);
+  if (paths.length > 0) await supabase.storage.from("materials").remove(paths);
+
+  const { error } = await supabase.from("conversations").delete().eq("id", parsed.data.id);
+  if (error) return { ok: false, message: "Nu am putut șterge conversația. Încearcă din nou." };
   revalidatePath("/asistent");
-  return { ok: !error };
+  return { ok: true };
 }
 
-/** Ultima conversație a chatului sau una nouă, intitulată după prima întrebare. */
-async function currentConversation(subjectId: string | null, subjectName: string | null, text: string) {
-  const supabase = await createClient();
-  let query = supabase.from("conversations").select("id").order("updated_at", { ascending: false }).limit(1);
-  query = subjectId ? query.eq("subject_id", subjectId) : query.is("subject_id", null);
-  const { data: existing } = await query.maybeSingle();
-  if (existing) return existing.id as string;
+type ResolvedConversation = { ok: true; id: string } | { ok: false; message: string; retryable: boolean };
 
-  const title = (text || subjectName || "Conversație nouă").slice(0, 80);
-  const { data } = await supabase.from("conversations").insert({ subject_id: subjectId, title }).select("id").single();
-  return (data?.id as string | undefined) ?? null;
+/** Conversația în care scriem: cea deschisă (verificată că e a acestui chat), una nouă sau ultima. */
+async function resolveConversation({
+  subjectId,
+  requested,
+  newConversation,
+  title,
+}: {
+  subjectId: string | null;
+  requested: string | null;
+  newConversation: boolean;
+  title: string;
+}): Promise<ResolvedConversation> {
+  const supabase = await createClient();
+  if (requested) {
+    const { data } = await supabase.from("conversations").select("id, subject_id").eq("id", requested).maybeSingle();
+    if (!data || (data.subject_id ?? null) !== subjectId) {
+      return { ok: false, message: "Conversația nu mai există. Deschide-o din nou din istoric.", retryable: false };
+    }
+    return { ok: true, id: data.id as string };
+  }
+  if (!newConversation) {
+    let query = supabase.from("conversations").select("id").order("updated_at", { ascending: false }).limit(1);
+    query = subjectId ? query.eq("subject_id", subjectId) : query.is("subject_id", null);
+    const { data: existing } = await query.maybeSingle();
+    if (existing) return { ok: true, id: existing.id as string };
+  }
+  const { data } = await supabase.from("conversations").insert({ subject_id: subjectId, title: title.slice(0, 80) }).select("id").single();
+  return data ? { ok: true, id: data.id as string } : { ok: false, message: "Nu am putut porni conversația. Încearcă din nou.", retryable: true };
+}
+
+/** Salvează poza din chat în bucketul privat (doar folderul propriu, prin RLS). */
+async function storeChatImage(userId: string, dataUrl: string): Promise<string | null> {
+  const match = IMAGE_DATA_URL.exec(dataUrl);
+  if (!match) return null;
+  const extension = match[1] === "jpeg" ? "jpg" : match[1];
+  const path = `${userId}/chat/${randomUUID()}.${extension}`;
+  const bytes = Buffer.from(dataUrl.slice(dataUrl.indexOf(",") + 1), "base64");
+  const supabase = await createClient();
+  const { error } = await supabase.storage.from("materials").upload(path, bytes, { contentType: `image/${match[1]}`, upsert: false });
+  return error ? null : path;
 }

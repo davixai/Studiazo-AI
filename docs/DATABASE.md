@@ -36,6 +36,8 @@ RLS este activ pe **toate** tabelele. Modelul comun:
 
 Bucket privat `materials`: `public = false`, limită de 20 MB, doar `application/pdf`, `image/jpeg`, `image/png`, `image/webp`. Calea este `{user_id}/{subject_id}/{material_id}.{pdf|jpg|png|webp}`, iar politicile permit `select`, `insert` și `delete` numai când primul segment al căii este `auth.uid()`. Previzualizarea se face cu URL-uri semnate de scurtă durată (`createSignedUrl`, ex. 60 s), niciodată cu linkuri publice.
 
+Pozele trimise în chat stau în același bucket, la `{user_id}/chat/{uuid}.jpg`; mesajul le reține în `messages.metadata.imagePath`. Ștergerea unei conversații le șterge și pe ele; ștergerea contului golește tot folderul utilizatorului.
+
 În aplicație: PDF-urile se salvează ca `{material_id}.pdf`, iar pozele mereu ca `{material_id}.jpg` (micșorate în browser), cu o miniatură alături, `{material_id}.thumb.jpg` (480 px). Ruta `/materii/[id]/fisier/[materialId]` verifică sesiunea și creează URL-ul semnat la fiecare deschidere (5 min pentru PDF, 60 s pentru poze; `?v=thumb` pentru miniatură). Ștergerea unui material șterge fișierul și miniatura, apoi rândul (paginile extrase dispar prin cascadă).
 
 ## Funcții

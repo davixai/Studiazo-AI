@@ -1,12 +1,12 @@
 import { ChevronLeft, ChevronRight, MessagesSquare } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Alert } from "@/components/ui/alert";
 import { SUBJECT_COLOR_CLASSES } from "@/components/ui/category";
 import { ChatView } from "@/features/assistant/components/chat-view";
-import { getChatThread } from "@/features/assistant/queries";
+import { getChatThread, listConversations, NEW_CONVERSATION } from "@/features/assistant/queries";
 import { listSubjects } from "@/features/subjects/queries";
 import { getAiStatus } from "@/lib/ai/config";
 import type { Subject } from "@/lib/contracts/domain";
@@ -25,7 +25,10 @@ export default async function AssistantPage({ searchParams }: PageProps<"/asiste
 
   const subject = selected && selected !== GENERAL ? (subjects.find((s) => s.id === selected) ?? null) : null;
   if (selected && selected !== GENERAL && !subject) notFound();
-  const thread = await getChatThread(subject?.id ?? null);
+  const conversation = typeof params.conversatie === "string" ? params.conversatie : null;
+  const [thread, conversations] = await Promise.all([getChatThread(subject?.id ?? null, conversation), listConversations(subject?.id ?? null)]);
+  // Conversație ștearsă sau din alt chat: revenim la ultima conversație a chatului.
+  if (!thread) redirect(`/asistent?materie=${subject?.id ?? GENERAL}`);
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,12 +61,15 @@ export default async function AssistantPage({ searchParams }: PageProps<"/asiste
             </Link>
           ) : null}
           <ChatView
-            key={subject?.id ?? GENERAL}
+            key={`${subject?.id ?? GENERAL}-${conversation ?? "ultima"}`}
             subject={subject}
             subjects={subjects}
             initialMessages={thread.messages}
             initialProposals={thread.proposals}
             aiAvailable={status.available && !isPreviewMode()}
+            conversationId={thread.conversationId}
+            isNew={conversation === NEW_CONVERSATION}
+            conversations={conversations}
           />
         </section>
       </div>

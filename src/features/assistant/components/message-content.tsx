@@ -8,18 +8,55 @@ type Block =
   | { type: "ul" | "ol"; items: string[] }
   | { type: "code"; text: string };
 
+const LATEX_SYMBOLS: Record<string, string> = {
+  times: "×",
+  cdot: "·",
+  div: "÷",
+  pm: "±",
+  le: "≤",
+  leq: "≤",
+  ge: "≥",
+  geq: "≥",
+  neq: "≠",
+  ne: "≠",
+  approx: "≈",
+  infty: "∞",
+  pi: "π",
+  alpha: "α",
+  beta: "β",
+  lambda: "λ",
+  sum: "∑",
+  int: "∫",
+  to: "→",
+  rightarrow: "→",
+  in: "∈",
+};
+
+/** Rezervă pentru când modelul scrie totuși LaTeX: scoate delimitatorii și transformă comenzile uzuale în simboluri. */
+export function plainMath(text: string) {
+  return text
+    .replace(/\\[()[\]]/g, "")
+    .replace(/\$\$?([^$\n]+)\$\$?/g, "$1")
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
+    .replace(/\\sqrt\{([^{}]+)\}/g, "√($1)")
+    .replace(/\^\{([^{}]+)\}/g, "^($1)")
+    .replace(/\\([a-zA-Z]+)/g, (match, name: string) => LATEX_SYMBOLS[name] ?? match);
+}
+
 export function parseBlocks(text: string): Block[] {
   const blocks: Block[] = [];
   const lines = text.replace(/\r\n/g, "\n").split("\n");
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (line.trim().startsWith("```")) {
+    const raw = lines[i];
+    if (raw.trim().startsWith("```")) {
       const code: string[] = [];
       for (i++; i < lines.length && !lines[i].trim().startsWith("```"); i++) code.push(lines[i]);
       blocks.push({ type: "code", text: code.join("\n") });
       continue;
     }
-    if (line.trim() === "") continue;
+    if (raw.trim() === "") continue;
+    // Curățarea LaTeX doar în text, nu în blocurile de cod ($HOME, \n etc.).
+    const line = plainMath(raw);
     const bullet = /^\s*[-*•]\s+(.*)$/.exec(line);
     const numbered = /^\s*\d+[.)]\s+(.*)$/.exec(line);
     const last = blocks[blocks.length - 1];

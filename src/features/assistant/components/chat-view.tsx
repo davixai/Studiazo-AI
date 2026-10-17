@@ -1,17 +1,20 @@
 "use client";
 
-import { ArrowUp, Camera, ImageIcon, ListChecks, RotateCcw, Sparkles, SquarePen, X } from "lucide-react";
+import { ArrowUp, Camera, History, ImageIcon, ListChecks, RotateCcw, Sparkles, SquarePen, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { ProposalCard } from "@/features/proposals/components/proposal-card";
 import { createQuiz } from "@/features/quizzes/actions";
 import type { Subject } from "@/lib/contracts/domain";
 import type { Proposal } from "@/lib/contracts/proposals";
 import { cn } from "@/lib/utils";
-import { sendMessage, startNewConversation } from "../actions";
-import type { ChatMessage } from "../queries";
+import { formatDayShort, formatRelativeDay } from "@/lib/time/format";
+import { deleteConversation, sendMessage } from "../actions";
+import type { ChatMessage, ConversationSummary } from "../queries";
 import { MessageContent } from "./message-content";
 
 type ChatViewProps = {
@@ -20,7 +23,14 @@ type ChatViewProps = {
   initialMessages: ChatMessage[];
   initialProposals: Record<string, Proposal>;
   aiAvailable: boolean;
+  /** Conversația deschisă (null = încă nu există: se creează la primul mesaj). */
+  conversationId: string | null;
+  /** true când studentul a ales „Conversație nouă”. */
+  isNew: boolean;
+  conversations: ConversationSummary[];
 };
+
+const NETWORK_ERROR = "Nu am putut contacta serverul. Verifică conexiunea și încearcă din nou.";
 
 const MAX_IMAGE_SIDE = 1280;
 
@@ -36,9 +46,21 @@ const subjectExamples = (name: string) => [
   `Fă-mi un plan de recapitulare pentru ${name} săptămâna asta.`,
 ];
 
-export function ChatView({ subject, subjects, initialMessages, initialProposals, aiAvailable }: ChatViewProps) {
+export function ChatView({
+  subject,
+  subjects,
+  initialMessages,
+  initialProposals,
+  aiAvailable,
+  conversationId: initialConversationId,
+  isNew,
+  conversations,
+}: ChatViewProps) {
   const router = useRouter();
-  // localImage: poza trimisă în această sesiune rămâne vizibilă (în DB nu păstrăm pozele din chat).
+  const chatKey = subject?.id ?? "general";
+  const [conversationId, setConversationId] = useState(initialConversationId);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  // localImage: poza trimisă în această sesiune se arată imediat, fără să așteptăm URL-ul semnat.
   const [messages, setMessages] = useState<Array<ChatMessage & { localImage?: string }>>(initialMessages);
   const [proposals, setProposals] = useState(initialProposals);
   const [draft, setDraft] = useState("");
@@ -47,7 +69,6 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
   const [error, setError] = useState<{ message: string; retryable: boolean } | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
-  const [resetting, startResetting] = useTransition();
   const [creatingQuiz, startCreatingQuiz] = useTransition();
   const endRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -65,9 +86,25 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
     setDraft("");
     setImage(null);
     startSending(async () => {
-      const result = await sendMessage({ subjectId: subject?.id ?? null, text: question, image: attached });
+      let result: Awaited<ReturnType<typeof sendMessage>>;
+      try {
+        result = await sendMessage({
+          subjectId: subject?.id ?? null,
+          conversationId,
+          newConversation: isNew && conversationId === null,
+          text: question,
+          image: attached,
+        });
+      } catch {
+        result = { ok: false, message: NETWORK_ERROR, retryable: true };
+      }
       setPendingQuestion(null);
       if (result.ok) {
+        if (result.conversationId !== conversationId) {
+          // Conversația nouă primește adresa ei, ca reîncărcarea paginii să o redeschidă.
+          setConversationId(result.conversationId);
+          window.history.replaceState(null, "", `/asistent?materie=${chatKey}&conversatie=${result.conversationId}`);
+        }
         setMessages((prev) => [
           ...prev,
           ...result.messages.map((m) => (m.role === "user" && attached ? { ...m, localImage: attached } : m)),
@@ -83,25 +120,17 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
     });
   };
 
-  const reset = () => {
-    startResetting(async () => {
-      const result = await startNewConversation({ subjectId: subject?.id ?? null });
-      if (result.ok) {
-        setMessages([]);
-        setProposals({});
-        setError(null);
-        router.refresh();
-      }
-    });
-  };
-
   const quiz = () => {
     if (!subject) return;
     setError(null);
     startCreatingQuiz(async () => {
-      const result = await createQuiz({ subjectId: subject.id, questionCount: 5 });
-      if (result.ok) router.push(`/asistent/test/${result.quizId}`);
-      else setError({ message: result.message, retryable: false });
+      try {
+        const result = await createQuiz({ subjectId: subject.id, questionCount: 5 });
+        if (result.ok) router.push(`/asistent/test/${result.quizId}`);
+        else setError({ message: result.message, retryable: false });
+      } catch {
+        setError({ message: NETWORK_ERROR, retryable: false });
+      }
     });
   };
 
@@ -138,14 +167,39 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
               Test grilă
             </Button>
           ) : null}
-          {messages.length > 0 ? (
-            <Button variant="ghost" size="sm" onClick={reset} loading={resetting} disabled={sending} aria-label="Conversație nouă">
-              <SquarePen aria-hidden="true" />
-              <span className="hidden sm:inline">Conversație nouă</span>
+          {conversations.length > 0 ? (
+            <Button variant="ghost" size="sm" onClick={() => setHistoryOpen(true)} disabled={sending} aria-label="Istoricul conversațiilor">
+              <History aria-hidden="true" />
+              <span className="hidden sm:inline">Istoric</span>
             </Button>
+          ) : null}
+          {messages.length > 0 ? (
+            <ButtonLink
+              href={`/asistent?materie=${chatKey}&conversatie=nou`}
+              variant="ghost"
+              size="sm"
+              aria-label="Conversație nouă"
+              aria-disabled={sending || undefined}
+            >
+              <SquarePen aria-hidden="true" />
+              <span className="hidden sm:inline">Nouă</span>
+            </ButtonLink>
           ) : null}
         </div>
       </div>
+
+      <HistoryDialog
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        chatKey={chatKey}
+        conversations={conversations}
+        currentId={conversationId}
+        onDeleted={(id) => {
+          setHistoryOpen(false);
+          if (id === conversationId) router.replace(`/asistent?materie=${chatKey}`);
+          else router.refresh();
+        }}
+      />
 
       <div className="flex flex-1 flex-col gap-6 py-6" aria-live="polite" aria-busy={sending}>
         {empty ? (
@@ -176,7 +230,7 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
 
         {messages.map((m) =>
           m.role === "user" ? (
-            <UserBubble key={m.id} text={m.content} hasImage={m.hasImage} image={m.localImage} />
+            <UserBubble key={m.id} text={m.content} hasImage={m.hasImage} image={m.localImage ?? m.imageUrl} />
           ) : (
             <div key={m.id} className="flex flex-col gap-3">
               <AssistantMessage text={m.content} />
@@ -306,6 +360,94 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
         </div>
       </form>
     </div>
+  );
+}
+
+function HistoryDialog({
+  open,
+  onClose,
+  chatKey,
+  conversations,
+  currentId,
+  onDeleted,
+}: {
+  open: boolean;
+  onClose: () => void;
+  chatKey: string;
+  conversations: ConversationSummary[];
+  currentId: string | null;
+  onDeleted: (id: string) => void;
+}) {
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [deleting, startDeleting] = useTransition();
+  const now = new Date();
+
+  const remove = (id: string) => {
+    setFailure(null);
+    startDeleting(async () => {
+      try {
+        const result = await deleteConversation({ id });
+        if (result.ok) {
+          setConfirmId(null);
+          onDeleted(id);
+        } else setFailure(result.message);
+      } catch {
+        setFailure(NETWORK_ERROR);
+      }
+    });
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} title="Istoricul conversațiilor" description="Redeschide o conversație și continu-o de unde ai rămas.">
+      {failure ? (
+        <Alert tone="danger" className="mb-3">
+          {failure}
+        </Alert>
+      ) : null}
+      <ul className="flex flex-col gap-1.5">
+        {conversations.map((c) => {
+          const updated = new Date(c.updatedAt);
+          const isCurrent = c.id === currentId;
+          return (
+            <li
+              key={c.id}
+              className={cn("flex items-center gap-2 rounded-md border px-3 py-2.5", isCurrent ? "border-accent-line bg-accent-soft" : "border-line/70")}
+            >
+              {confirmId === c.id ? (
+                <div className="flex w-full flex-wrap items-center gap-2 animate-fade-in">
+                  <p className="min-w-0 flex-1 text-sm text-ink">Ștergi definitiv conversația?</p>
+                  <Button size="sm" variant="secondary" onClick={() => setConfirmId(null)} disabled={deleting}>
+                    Renunță
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={() => remove(c.id)} loading={deleting}>
+                    Șterge
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Link href={`/asistent?materie=${chatKey}&conversatie=${c.id}`} onClick={onClose} className="min-w-0 flex-1">
+                    <span className={cn("block truncate text-sm font-semibold", isCurrent ? "text-accent-ink" : "text-ink")}>{c.title}</span>
+                    <span className="block text-xs text-ink-muted first-letter:uppercase">
+                      {formatRelativeDay(updated, now)} · {formatDayShort(updated)}
+                      {isCurrent ? " · deschisă acum" : ""}
+                    </span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmId(c.id)}
+                    className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                    aria-label={`Șterge conversația „${c.title}”`}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </Dialog>
   );
 }
 

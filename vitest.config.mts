@@ -12,6 +12,8 @@ export default defineConfig({
   test: {
     include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
     environment: "node",
+    // Pe Windows, cu multe procese în paralel, primul import al unui modul poate depăși 5 s.
+    testTimeout: 15_000,
     // Testele rulează mereu în același fus ca serverul de producție tipic (UTC), ca să prindă erorile de fus orar.
     env: { TZ: "UTC" },
   },

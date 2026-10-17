@@ -8,6 +8,8 @@ import { Logo } from "@/components/brand/logo";
 import { LiveClockCard, LiveClockCompact } from "./live-clock";
 import { NAV_ITEMS, isActive } from "./nav-items";
 
+const MOBILE_ITEMS = NAV_ITEMS.filter((i) => i.mobile);
+
 type AppNavProps = { userName: string; userDetail: string | null };
 
 /** Bara laterală (≥ lg). */
@@ -91,8 +93,8 @@ export function MobileTabBar() {
       aria-label="Navigare principală"
       className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-surface/90 shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.6)] backdrop-blur-xl lg:hidden"
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-5 px-1">
-        {NAV_ITEMS.filter((i) => i.mobile).map(({ href, label, icon: Icon }) => {
+      <ul className="mx-auto grid max-w-xl px-1" style={{ gridTemplateColumns: `repeat(${MOBILE_ITEMS.length}, minmax(0, 1fr))` }}>
+        {MOBILE_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
             <li key={href}>
@@ -100,13 +102,13 @@ export function MobileTabBar() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors",
+                  "flex h-16 flex-col items-center justify-center gap-1 text-[10.5px] font-semibold transition-colors",
                   active ? "text-accent" : "text-ink-muted hover:text-ink",
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-7 w-12 items-center justify-center rounded-full transition-all duration-300",
+                    "flex h-7 w-11 max-w-full items-center justify-center rounded-full transition-all duration-300",
                     active && "animate-pop-in bg-accent-soft",
                   )}
                 >

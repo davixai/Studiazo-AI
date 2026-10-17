@@ -48,6 +48,10 @@
   --color-cat-violet: #a78bfa;
   --color-cat-slate: #94a3c4;
 
+  /* Grafice cu două serii (Buget: venituri / cheltuieli). Validate pe --color-surface: CVD ΔE 18, contrast ≥ 3:1 */
+  --color-viz-income: #14a38b;
+  --color-viz-expense: #8b6cf0;
+
   /* Panou de contrast (mai închis decât cardurile) */
   --color-night: #050714;
 
@@ -430,6 +434,69 @@
 @keyframes twinkle {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
+}
+
+/* ─── Lumina discretă care urmărește cursorul (components/layout/cursor-effects.tsx) ─── */
+.cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 380px;
+  height: 380px;
+  margin: -190px 0 0 -190px;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, rgb(143 116 255 / 0.06), rgb(61 139 255 / 0.025) 55%, transparent);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+  transition: opacity 400ms var(--ease-out);
+}
+html[data-cursor="on"] .cursor-glow {
+  opacity: 1;
+}
+@media not ((hover: hover) and (pointer: fine)) {
+  .cursor-glow { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cursor-glow { display: none; }
+}
+
+/* ─── Bandă care alunecă continuu (panoul din autentificare) ─── */
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 1.25rem;
+  padding: 0.75rem 0;
+  animation: marquee 48s linear infinite;
+}
+.marquee-reverse {
+  animation-direction: reverse;
+  animation-duration: 56s;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+/* Cardul de sub cursor se înclină spre el (unghiurile vin din marquee-follow.tsx) */
+.marquee-card {
+  transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 350ms var(--ease-out), box-shadow 300ms var(--ease-out), border-color 300ms var(--ease-out);
+}
+.marquee-card:hover {
+  border-color: var(--color-accent-line);
+  box-shadow: var(--shadow-md), 0 18px 40px -18px rgb(124 92 255 / 0.6);
+}
+@keyframes marquee {
+  /* -50% minus jumătate din spațiul dintre carduri: copia ajunge exact în locul originalului */
+  to { transform: translateX(calc(-50% - 0.625rem)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
 }
 
 @utility tabular {

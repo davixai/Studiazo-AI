@@ -13,6 +13,9 @@ const PAGES = [
   ["materie", "/materii/00000000-0000-4000-8000-0000000000a1"],
   ["materie-notite", "/materii/00000000-0000-4000-8000-0000000000a1?tab=notite"],
   ["asistent", "/asistent"],
+  ["buget", "/buget"],
+  ["joburi", "/joburi"],
+  ["classroom", "/classroom"],
   ["resurse", "/resurse"],
   ["profil", "/profil"],
   ["bun-venit", "/bun-venit"],
@@ -36,6 +39,7 @@ for (const width of WIDTHS) {
     timezoneId: "Europe/Bucharest",
   });
   const page = await context.newPage();
+  page.on("pageerror", (error) => problems.push(`${width}px ${page.url()}: eroare în pagină: ${error.message}`));
   await mkdir(`screenshots/${width}`, { recursive: true });
 
   for (const [name, path] of PAGES) {

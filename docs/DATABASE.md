@@ -16,7 +16,8 @@ Migrația inițială: `supabase/migrations/20261017100000_initial_schema.sql`. P
 | `conversations`, `messages` | istoricul asistentului; `messages.metadata` jsonb (citări, propuneri, test) | David |
 | `quizzes`, `quiz_attempts` | teste grilă (`questions` jsonb = `QuizSchema`) și încercări (`score`, `total`, `topic_breakdown`, `duration_seconds` pentru timpul de învățare) | David |
 | `ai_proposals` | propuneri AI: `kind` (task / study_sessions), `payload` jsonb (`ProposalPayloadSchema`), `status` (pending, confirmed, rejected, expired), `expires_at` (24 h) | David |
-| `ai_usage` | evidența consumului AI pentru limite (fără update/delete pentru utilizator) | David |
+| `ai_usage` | evidența consumului AI pentru limite (fără update/delete pentru utilizator); `kind` include `finance` (sfaturile din Buget) | David |
+| `finance_entries` | Buget (`/buget`, migrația `20261017205000_finance.sql`): `kind` (venit, cheltuiala), `category` (lista din `src/features/finance/categories.ts`), `amount` numeric(10,2) > 0, `note` ≤ 120, `month` = prima zi a lunii. Statisticile se calculează în aplicație; sfaturile AI nu se salvează. Până la aplicarea migrației, pagina afișează un mesaj, fără erori. | David |
 
 Toate cheile externe către utilizator au `on delete cascade`, deci ștergerea contului șterge tot. Materia ștearsă lasă activitățile și termenele fără materie (`set null`), dar șterge notițele, materialele și testele ei.
 

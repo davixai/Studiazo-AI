@@ -1,0 +1,68 @@
+# Contracte între module
+
+Contractele sunt codul din `src/lib/contracts/`. Acest document explică cine produce și cine consumă fiecare. **O schimbare de contract = PR separat, aprobat de amândoi.** Adăugările compatibile (un câmp opțional nou) se pot face de oricine, cu notificarea colegului.
+
+## 1. Propunerile AI — `lib/contracts/proposals.ts`
+
+| | Responsabil |
+| --- | --- |
+| Generare (instrumentele `propose_task`, `propose_study_sessions`) | Sergiu |
+| Validare la creare (`ProposalPayloadSchema.safeParse` + `checkProposalTiming`) și inserare în `ai_proposals` cu status `pending` | Sergiu |
+| Afișare (`<ProposalCard proposal={…} />`): exact ce se va salva + butoanele Confirmă / Renunță | David |
+| Confirmare (`confirmProposal(id)` → `ConfirmProposalResult`) și respingere (`rejectProposal(id)`) | David |
+
+Formatul (versiunea 1):
+
+```ts
+// kind: "task" — 1–5 elemente
+{ version: 1, kind: "task", explanation: string,
+  items: [{ kind: "tema"|"proiect"|"examen"|"colocviu"|"test"|"altul", title, subjectId: uuid|null,
+            dueAt: "2026-10-23T10:00:00+03:00", notes: string|null }] }
+
+// kind: "study_sessions" — 1–10 sesiuni, 15–240 min fiecare
+{ version: 1, kind: "study_sessions", explanation: string, warnings: string[], fitsAvailableTime: boolean,
+  items: [{ title, subjectId: uuid|null, startsAt, endsAt, focus: string }] }
+```
+
+Reguli obligatorii:
+
+- Datele sunt ISO 8601 **cu decalaj** (`+03:00` / `+02:00`). Sergiu le produce cu `fromLocal()` din `lib/time/zone.ts`, nu le lasă modelului să le calculeze liber.
+- Intervalele propuse provin din `computeFreeSlots()` (cod), nu din model.
+- `fitsAvailableTime: false` + `warnings` când obiectivul nu încape realist. Interfața afișează avertismentul vizibil.
+- Confirmarea (David) **nu primește payload de la client**: citește propunerea după `id` (RLS), verifică `status = 'pending'` și `expires_at`, revalidează schema și timpul, verifică suprapunerile cu `findConflicts()` și `findInternalOverlaps()`, apoi inserează cu `proposal_id` + `proposal_item_index` (index unic, deci fără duplicate) și marchează `confirmed`.
+- Apăsări repetate sau reîncercări: a doua confirmare întoarce `{ ok: true, alreadyConfirmed: true }`, fără inserări noi.
+- Asistentul spune „am salvat” doar după `ok: true`. Până atunci spune „ți-am pregătit o propunere”.
+
+`ConfirmProposalResult` (cazul de eroare are `code`): `unauthenticated`, `not_found`, `expired`, `not_pending`, `invalid`, `conflict` (cu lista `conflicts`), `error`.
+
+## 2. Citirile calendarului — `features/calendar/queries.ts` (David)
+
+Folosite de pagina Azi, de calendar și de instrumentele AI ale lui Sergiu:
+
+```ts
+getOccurrencesBetween(range: { start: Date; end: Date }): Promise<EventOccurrence[]>
+getTasksBetween(range, { includeCompleted? }): Promise<Task[]>
+getUpcomingTasks({ days?, limit?, now? }): Promise<Task[]>
+```
+
+Nu primesc `user_id`: RLS limitează la utilizatorul curent. Semnăturile rămân stabile, iar David le poate optimiza intern.
+
+## 3. Timpul — `lib/time/*` (David)
+
+`fromLocal`, `toDateKey`, `toTimeOfDay`, `dayBounds`, `shiftDateKey`, `isoWeekday` · `expandEvent(s)` · `overlaps`, `findConflicts`, `findInternalOverlaps`, `computeFreeSlots({ range, busy, availability, minMinutes, bufferMinutes, notBefore })` · formatare în română (`formatTime`, `formatDayLong`, `formatRelativeDay`, …). Acoperite de teste. Orice schimbare de comportament vine cu test.
+
+## 4. Testele grilă — `lib/contracts/quiz.ts` (Sergiu)
+
+`QuizSchema` (3–10 întrebări, 4 variante, `correctIndex`, `explanation`, `topic`, `source { materialId, page }`), `scoreAttempt()` și `weakTopics()`. David citește `QuizAttemptSummary` pentru cardul „Progres recent” de pe pagina Azi, printr-o funcție exportată de Sergiu din `features/quizzes/queries.ts` (`getRecentAttempts(limit)`).
+
+## 5. Instrumentele AI — `lib/contracts/ai-tools.ts` (Sergiu)
+
+Numele și schemele argumentelor: `get_schedule`, `get_upcoming_deadlines`, `find_free_slots`, `get_subject_material`, `propose_task`, `propose_study_sessions`, `generate_quiz`. Limitele sunt în `AI_LIMITS` (max. 4 pași de instrumente, 12 mesaje de istoric, 24.000 de caractere de material). Argumentele se validează cu Zod înainte de execuție. Niciun instrument nu primește `user_id`, nu rulează SQL arbitrar și nu scrie direct în calendar.
+
+## 6. Materii — `features/subjects/queries.ts` (Sergiu)
+
+`listSubjects(): Promise<Subject[]>`. David îl folosește în formularele din calendar.
+
+## 7. Componente comune — `components/ui` (David)
+
+API-urile componentelor sunt stabile. Sergiu poate adăuga o componentă comună nouă prin PR. Variantele noi ale componentelor existente se discută întâi.

@@ -1,0 +1,64 @@
+# Taskuri
+
+Legendă: ✅ gata și verificat · 🟡 demonstrativ sau parțial · ⬜ de făcut. Starea reală este pe GitHub. Actualizați acest fișier în PR-ul care schimbă starea.
+
+## Etapa 1 — Fundația comună (David + Claude) ✅
+
+| Ce | Stare | Verificare |
+| --- | --- | --- |
+| Next.js 16.4, TypeScript, Tailwind 4, npm, ESLint, Vitest | ✅ | `npm run check`, `npm run build` |
+| Design system (tokeni, Geist + Newsreader, componente, `/sistem-design`) | ✅ | capturi 360–1440 px |
+| Shell responsive: bară laterală / bară de jos, zone sigure, „Sari la conținut” | ✅ | capturi, fără derulare orizontală |
+| Supabase: clienți SSR, `proxy.ts`, `requireUser`, callback pentru emailuri | ✅ cod · ⬜ testat pe proiect real | — |
+| Autentificare: înregistrare, autentificare, recuperare, parolă nouă, deconectare | ✅ cod · ⬜ testat pe proiect real | capturi |
+| Configurare inițială + profil + ștergerea contului | ✅ cod · ⬜ testat pe proiect real | capturi |
+| Migrația SQL: toate tabelele MVP, RLS, Storage privat, `delete_my_account` | ✅ scrisă · ⬜ aplicată | — |
+| Contracte: domeniu, propuneri AI, teste grilă, instrumente AI | ✅ | teste |
+| Timp: fus București, recurență (inclusiv 25.10.2026), intervale libere, suprapuneri | ✅ | 28 de teste |
+| Pagina Azi (programul de azi, termene, acțiuni rapide) | ✅ citire · 🟡 sesiunea recomandată și progresul sunt stări goale | capturi |
+| Calendar: agendă pe 14 zile (doar citire) | 🟡 | capturi |
+| Materii (listă), Asistent (pagina de pornire), Resurse Iași (linkuri verificate pe 17.10.2026) | 🟡 / ✅ | capturi |
+| Modul AI: configurare `OPENAI_MODEL`, client cu timeout și reîncercări, mesaje de eroare | ✅ schelet | — |
+| PWA: manifest, iconițe, fără service worker | ✅ | build |
+| Documentație + prompturi de predare | ✅ | — |
+
+## Manual (David) — înainte de etapa 2
+
+- ⬜ Repo GitHub privat, push pe `main`, Sergiu adăugat ca colaborator (SETUP.md §1).
+- ⬜ Proiect Supabase (regiunea Frankfurt), migrația aplicată, emailurile de autentificare configurate (SETUP.md §2).
+- ⬜ `.env.local` pe ambele calculatoare. Cheia OpenAI se creează separat de ChatGPT Pro (SETUP.md §3).
+- ⬜ Test: două conturi; fiecare își vede doar datele lui.
+
+## Etapa 2 — În paralel
+
+### David
+| # | Task | Criteriu de finalizare |
+| --- | --- | --- |
+| D1 | Conectare Supabase reală + verificarea fluxurilor de autentificare | înregistrare → email → bun-venit → azi; recuperarea parolei funcționează |
+| D2 | Calendar: formular pentru activitate (Dialog), recurență, editare, ștergere, finalizare | salvat în DB; după reîncărcare rămâne; validare Zod; suprapunerea e semnalată |
+| D3 | Teme și examene: creare, editare, finalizare; `?adauga=examen\|tema` deschide formularul | apar pe pagina Azi și în agendă |
+| D4 | Calendar: vederea săptămână (desktop) + zi; agenda rămâne implicită pe mobil | capturi 360/768/1440 |
+| D5 | `features/proposals`: `ProposalCard`, `confirmProposal`, `rejectProposal` | teste: fără confirmare nu se salvează nimic; dublu-click nu dublează; suprapunerea este respinsă; altă persoană nu poate confirma |
+| D6 | Azi: „Sesiunea recomandată” (următoarea sesiune de studiu confirmată) + „Progres recent” (de la Sergiu) | date reale |
+| D7 | Disponibilitatea în profil (intervale pe zile) | salvată în `profiles.availability` |
+
+### Sergiu
+| # | Task | Criteriu de finalizare |
+| --- | --- | --- |
+| S1 | Materii: creare, editare, arhivare; pagina `/materii/[id]` | RLS verificat cu 2 conturi |
+| S2 | Notițe pe materie | creare, editare, ștergere |
+| S3 | Încărcare PDF (Storage direct, validare 20 MB / PDF) + extragere text pe pagini (`unpdf`) + stări | PDF cu text → `procesat`; scanat → `fara_text`, cu mesaj clar; previzualizare cu URL semnat; ștergere |
+| S4 | Chat: conversații, istoric, Responses API, limite, erori, timeout | AI indisponibil → mesaj clar, restul aplicației merge |
+| S5 | Instrumentele AI (`ai-tools.ts`), cu validare și max. 4 pași | „Am examen vineri. Găsește-mi trei intervale.” → propunere `pending` |
+| S6 | Explicații din material, cu citare de pagină; „nu apare în materiale” când e cazul | test cu PDF real |
+| S7 | Teste grilă: generare (structured output), rezolvare, scor, istoric, teme slabe | `getRecentAttempts()` pentru David |
+| S8 | Propunerile de studiu țin cont de testele slabe și de examene | avertisment când nu încape |
+
+## Etapa 3 — Integrare și verificare
+⬜ Fluxul din DEMO.md cap-coadă · ⬜ izolarea datelor (2 conturi) · ⬜ refuzul salvării fără confirmare · ⬜ suprapuneri și duplicate · ⬜ OpenAI indisponibil · ⬜ telefon real (iOS și Android) + desktop.
+
+## Etapa 4 — Simplu
+⬜ Resurse Iași: mai multe linkuri oficiale verificate (burse, voluntariat), cu data verificării.
+
+## Etapa 5 — După stabilizare
+⬜ Finisaj · ⬜ site de prezentare (separat) · ⬜ fotografii și PDF-uri scanate (OCR).

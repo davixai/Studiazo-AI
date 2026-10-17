@@ -1,0 +1,31 @@
+# dependențe
+/node_modules
+
+# teste
+/coverage
+/test-results
+/playwright-report
+/screenshots
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# diverse
+.DS_Store
+*.pem
+npm-debug.log*
+
+# variabile de mediu: nu se versionează niciodată, cu excepția exemplului
+.env*
+!.env.example
+
+# supabase CLI local
+/supabase/.temp
+/supabase/.branches
+
+# vercel
+.vercel

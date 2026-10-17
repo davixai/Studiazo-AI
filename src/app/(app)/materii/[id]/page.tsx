@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, NotebookPen, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,6 +11,9 @@ import { ArchiveSubject } from "@/features/subjects/components/archive-subject";
 import { SubjectDialog } from "@/features/subjects/components/subject-dialog";
 import { SubjectTabs } from "@/features/subjects/components/subject-tabs";
 import { getSubject } from "@/features/subjects/queries";
+import { NotesPanel } from "@/features/notes/components/notes-panel";
+import { formatRelativeTime } from "@/features/notes/format";
+import { listNotes } from "@/features/notes/queries";
 
 export async function generateMetadata({ params }: PageProps<"/materii/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -22,6 +25,8 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const subject = await getSubject(id);
   if (!subject) notFound();
+  const notes = await listNotes(subject.id);
+  const now = new Date();
 
   return (
     <div className="flex flex-col gap-8">
@@ -67,13 +72,10 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
           </Card>
         }
         notes={
-          <Card>
-            <EmptyState
-              icon={<NotebookPen />}
-              title="Nicio notiță încă"
-              description="Aici vor apărea notițele tale la această materie."
-            />
-          </Card>
+          <NotesPanel
+            subjectId={subject.id}
+            notes={notes.map((n) => ({ ...n, updatedLabel: formatRelativeTime(new Date(n.updatedAt), now) }))}
+          />
         }
       />
     </div>

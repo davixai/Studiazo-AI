@@ -17,9 +17,9 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 - [ ] Testat cu 2 conturi: fiecare își vede doar materiile lui
 
 **S2 · Notițe**
-- [ ] Creare, editare, ștergere (cu confirmare); max. 50.000 de caractere, cu contor
-- [ ] Lista sortată după ultima modificare, cu data relativă („acum 2 ore”)
-- [ ] Stare goală prietenoasă cu pasul următor
+- [x] Creare, editare, ștergere (cu confirmare); max. 50.000 de caractere, cu contor
+- [x] Lista sortată după ultima modificare, cu data relativă („acum 2 ore”)
+- [x] Stare goală prietenoasă cu pasul următor
 
 **S3 · PDF-uri**
 - [ ] Încărcare direct în Storage (`materials/{user_id}/{subject_id}/{material_id}.pdf`), cu bară de progres; drag & drop pe laptop, alegere de fișier pe telefon

@@ -145,3 +145,19 @@ describe("selectPages (pentru asistent)", () => {
     expect(searchTerms("Explică-mi și BFS-ul, te rog")).toEqual(["bfs", "rog"]);
   });
 });
+
+describe("poze", () => {
+  it("micșorează la latura mare de 2000 px, păstrând proporțiile, fără mărire", async () => {
+    const { fitWithin } = await import("./image-prep");
+    expect(fitWithin(4032, 3024, 2000)).toEqual({ width: 2000, height: 1500 }); // telefon, peisaj
+    expect(fitWithin(3024, 4032, 2000)).toEqual({ width: 1500, height: 2000 }); // telefon, portret
+    expect(fitWithin(800, 600, 2000)).toEqual({ width: 800, height: 600 }); // mică: rămâne la fel
+    expect(fitWithin(10000, 10, 480)).toEqual({ width: 480, height: 1 }); // panoramă extremă: minimum 1 px
+  });
+  it("acceptă pozele până la 50 MB (se micșorează) și respinge altceva", () => {
+    expect(checkFile({ name: "IMG_1.HEIC", type: "image/heic", size: 4_000_000 }, "image")).toBeNull();
+    expect(checkFile({ name: "mare.png", type: "image/png", size: 30 * 1024 * 1024 }, "image")).toBeNull();
+    expect(checkFile({ name: "imensă.png", type: "image/png", size: 51 * 1024 * 1024 }, "image")).toMatch(/50 MB/);
+    expect(checkFile({ name: "doc.pdf", type: "application/pdf", size: 10 }, "image")).toMatch(/nu este o poză/);
+  });
+});

@@ -22,6 +22,8 @@ export type UploadItem = {
   message: string | null;
   /** Mesajul final, când PDF-ul s-a încărcat, dar fără text sau cu probleme. */
   warning: boolean;
+  /** Fals pentru fișierele invalide (alt format, prea mari): reîncercarea n-ar schimba nimic. */
+  retryable: boolean;
 };
 
 /** Ce trimitem efectiv: PDF-ul ca atare; pozele sunt pregătite în browser (S3b). */
@@ -60,9 +62,10 @@ export function useUploadQueue(subjectId: string, prepareImage?: Preparer) {
       const { file, kind } = job;
       let materialId: string | null = null;
       let uploaded = false;
+      let prepared: PreparedUpload | null = null;
       try {
-        patch(key, { phase: "preparing", progress: 0, message: null, warning: false });
-        const prepared = kind === "pdf" ? await preparePdf(file) : await (prepareImage ?? preparePdf)(file);
+        patch(key, { phase: "preparing", progress: 0, message: null, warning: false, retryable: true });
+        prepared = kind === "pdf" ? await preparePdf(file) : await (prepareImage ?? preparePdf)(file);
 
         const start = await startUpload({ subjectId, kind, size: prepared.body.size });
         if (!start.ok) throw new UploadError(start.message);
@@ -95,7 +98,7 @@ export function useUploadQueue(subjectId: string, prepareImage?: Preparer) {
       } catch (error) {
         if (uploaded && materialId) await discardUpload({ subjectId, materialId, kind }).catch(() => {});
         const message = error instanceof UploadError ? error.message : "Ceva nu a mers. Încearcă din nou.";
-        patch(key, { phase: "error", message });
+        patch(key, { phase: "error", message, retryable: prepared !== null });
       } finally {
         abort.current = null;
       }
@@ -118,7 +121,7 @@ export function useUploadQueue(subjectId: string, prepareImage?: Preparer) {
         const key = `u${++counter.current}`;
         files.current.set(key, { file, kind });
         pending.current.push(key);
-        return { key, file, kind, phase: "waiting" as Phase, progress: 0, message: null, warning: false };
+        return { key, file, kind, phase: "waiting" as Phase, progress: 0, message: null, warning: false, retryable: true };
       });
       setItems((current) => [...current, ...fresh]);
       void pump();
@@ -219,7 +222,7 @@ export function UploadQueue({
                     Anulează
                   </Button>
                 ) : null}
-                {failed ? (
+                {failed && it.retryable ? (
                   <Button variant="secondary" size="sm" onClick={() => onRetry(it.key)}>
                     <RotateCw aria-hidden="true" />
                     Încearcă din nou

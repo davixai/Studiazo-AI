@@ -48,5 +48,5 @@ export function previewImageSvg(id: string) {
 <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ede9fe"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
 <pattern id="p" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#7c3aed" stroke-opacity=".12" stroke-width="2"/></pattern></defs>
 <rect width="100%" height="100%" fill="url(#g)"/><rect width="100%" height="100%" fill="url(#p)"/>
-<text x="50%" y="50%" text-anchor="middle" font-family="sans-serif" font-size="${Math.round(Math.min(w, h) / 9)}" fill="#4c1d95" fill-opacity=".55">${w} × ${h} (demo)</text></svg>`;
+<text x="50%" y="50%" text-anchor="middle" font-family="sans-serif" font-size="${Math.round(w / 14)}" fill="#4c1d95" fill-opacity=".55">${w} × ${h} (demo)</text></svg>`;
 }

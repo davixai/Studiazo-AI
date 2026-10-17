@@ -30,10 +30,10 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 - [x] **Exportă pentru David** din `features/materials/queries.ts`: `listMaterials(subjectId)` și `getMaterialPages(subjectId, { query?, maxChars })` (text pe pagini, pentru asistent)
 
 **S3b · Fotografii**
-- [ ] „Fă o poză” (camera din spate pe telefon) + „Alege din galerie”; JPEG/PNG/WebP
-- [ ] Redimensionare în browser (max. ~2000 px, JPEG ~0.85) înainte de upload
-- [ ] Miniaturi în grilă, previzualizare mare la apăsare, ștergere
-- [ ] **Exportă pentru David**: `getMaterialImageUrl(materialId)` (URL semnat, pentru chat)
+- [x] „Fă o poză” (camera din spate pe telefon) + „Alege din galerie”; JPEG/PNG/WebP
+- [x] Redimensionare în browser (max. ~2000 px, JPEG ~0.85) înainte de upload
+- [x] Miniaturi în grilă, previzualizare mare la apăsare, ștergere
+- [x] **Exportă pentru David**: `getMaterialImageUrl(materialId)` (URL semnat, pentru chat)
 
 **La fiecare task (Sergiu)**
 - [ ] Arată bine la 360, 390, 768, 1280 și 1440 px, fără derulare orizontală (`npm run screenshots`, `npm run check:layout`)

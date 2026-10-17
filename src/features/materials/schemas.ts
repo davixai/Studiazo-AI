@@ -38,15 +38,20 @@ export function cleanTitle(title: string, fallback: string) {
   return (t || fallback).slice(0, MATERIAL_TITLE_MAX);
 }
 
-/** Prima verificare, în browser și pe server: tipul și mărimea. Întoarce mesajul de eroare sau null. */
+/** Pozele se micșorează în browser, deci originalul poate fi mai mare decât limita de stocare. */
+export const IMAGE_INPUT_MAX_BYTES = 50 * 1024 * 1024;
+
+/** Prima verificare, în browser: tipul și mărimea. Întoarce mesajul de eroare sau null. */
 export function checkFile(file: { name: string; type: string; size: number }, kind: MaterialKind): string | null {
   if (file.size === 0) return "Fișierul e gol.";
-  if (file.size > MAX_FILE_BYTES) return `„${file.name}” depășește 20 MB. Încearcă o variantă comprimată.`;
   if (kind === "pdf") {
+    if (file.size > MAX_FILE_BYTES) return `„${file.name}” depășește 20 MB. Încearcă o variantă comprimată.`;
     const looksPdf = file.type === PDF_MIME || (file.type === "" && /\.pdf$/i.test(file.name));
     return looksPdf ? null : `„${file.name}” nu este PDF. Aici acceptăm doar fișiere PDF.`;
   }
-  return null; // pozele se verifică la decodare (și HEIC de pe iPhone e acceptat dacă browserul îl poate citi)
+  if (file.size > IMAGE_INPUT_MAX_BYTES) return `„${file.name}” depășește 50 MB.`;
+  // Restul se verifică la decodare (și HEIC de pe iPhone merge, dacă browserul îl poate citi).
+  return file.type === "" || file.type.startsWith("image/") ? null : `„${file.name}” nu este o poză.`;
 }
 
 /** Semnătura de la începutul fișierului: nu ne bazăm doar pe extensie sau pe tipul raportat de browser. */

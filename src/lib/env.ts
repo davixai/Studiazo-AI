@@ -14,10 +14,10 @@ export function isSupabaseConfigured() {
 }
 
 /**
- * Modul previzualizare: interfața rulează cu date demonstrative, fără Supabase.
- * Activ doar când Supabase lipsește ȘI STUDIA_PREVIEW=1 (variabilă de server).
- * Folosit pentru revizuirea designului și capturi de ecran, niciodată în producție reală.
+ * Modul previzualizare: interfața rulează cu date demonstrative, fără autentificare și fără Supabase.
+ * Activ doar cu STUDIA_PREVIEW=1 (variabilă de server, citită la pornire). Doar pentru design și capturi;
+ * NU se setează niciodată pe hostingul de producție.
  */
 export function isPreviewMode() {
-  return !isSupabaseConfigured() && process.env.STUDIA_PREVIEW === "1";
+  return process.env.STUDIA_PREVIEW === "1";
 }

@@ -33,7 +33,11 @@ export async function updateSession(request: NextRequest) {
   const isSignedIn = Boolean(data?.claims?.sub);
   const { pathname } = request.nextUrl;
 
-  if (!isSignedIn && !isPublicRoute(pathname)) {
+  // Link din email ajuns pe Site URL (/?code=…): pagina principală îl trimite la /auth/callback.
+  const isEmailLinkOnRoot =
+    pathname === "/" && (request.nextUrl.searchParams.has("code") || request.nextUrl.searchParams.has("token_hash"));
+
+  if (!isSignedIn && !isPublicRoute(pathname) && !isEmailLinkOnRoot) {
     const url = request.nextUrl.clone();
     url.pathname = "/autentificare";
     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;

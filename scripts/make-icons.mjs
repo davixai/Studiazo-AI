@@ -1,4 +1,4 @@
-// Generează iconițele PNG pentru PWA din semnul StudIA (rulat o singură dată; rezultatul e versionat).
+// Generează iconițele PNG pentru PWA din semnul Studiazo AI (rulat o singură dată; rezultatul e versionat).
 import { chromium } from "@playwright/test";
 import { writeFile } from "node:fs/promises";
 

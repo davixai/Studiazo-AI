@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
       <div className="flex flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-10">
-        <Link href="/autentificare" className="self-start rounded-md" aria-label="StudIA">
+        <Link href="/autentificare" className="self-start rounded-md" aria-label="Studiazo AI">
           <Logo />
         </Link>
         <main className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center py-12">
@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           ) : null}
           {children}
         </main>
-        <p className="text-center text-xs text-ink-faint lg:text-left">StudIA · pentru studenții din Iași</p>
+        <p className="text-center text-xs text-ink-faint lg:text-left">Studiazo AI · pentru studenții din Iași</p>
       </div>
 
       <aside className="relative hidden overflow-hidden border-l border-line bg-surface-muted lg:block" aria-hidden="true">

@@ -1,4 +1,4 @@
-# StudIA
+# Studiazo AI
 
 > Al doilea creier al studentului ieșean.
 

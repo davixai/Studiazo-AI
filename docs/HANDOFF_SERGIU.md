@@ -4,8 +4,8 @@
 
 **Pregătire (o singură dată):**
 ```bash
-git clone https://github.com/<cont>/studia.git
-cd studia
+git clone https://github.com/<cont>/studiazo.git
+cd studiazo
 npm install
 cp .env.example .env.local   # valorile Supabase de la David + cheia ta OpenAI (docs/SETUP.md §3)
 npm run check
@@ -16,7 +16,7 @@ npm run check
 ## Prompt de copiat în Claude Code
 
 ```text
-Ești dezvoltatorul pentru partea lui Sergiu în StudIA (Next.js 16.4 + Supabase + OpenAI).
+Ești dezvoltatorul pentru partea lui Sergiu în Studiazo AI (Next.js 16.4 + Supabase + OpenAI).
 Fundația comună (etapa 1) este gata pe main. David lucrează în paralel la calendar, teme, examene și confirmarea propunerilor AI.
 
 Înainte de orice:

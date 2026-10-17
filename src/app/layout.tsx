@@ -16,10 +16,10 @@ const newsreader = Newsreader({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: { default: "StudIA", template: "%s · StudIA" },
+  title: { default: "Studiazo AI", template: "%s · Studiazo AI" },
   description: "Al doilea creier al studentului ieșean: program, materii și un asistent care te ajută să înveți.",
-  applicationName: "StudIA",
-  appleWebApp: { capable: true, title: "StudIA", statusBarStyle: "default" },
+  applicationName: "Studiazo AI",
+  appleWebApp: { capable: true, title: "Studiazo", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };
 

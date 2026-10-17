@@ -1,6 +1,6 @@
-# Instrucțiuni pentru Claude Code — StudIA
+# Instrucțiuni pentru Claude Code — Studiazo AI
 
-Lucrezi la StudIA, o aplicație pentru studenții din Iași. Echipa: **David** și **Sergiu**, fiecare cu sesiunea lui de Claude Code și ramura lui.
+Lucrezi la Studiazo AI, o aplicație pentru studenții din Iași. Echipa: **David** și **Sergiu**, fiecare cu sesiunea lui de Claude Code și ramura lui.
 
 ## Principiul de bază
 

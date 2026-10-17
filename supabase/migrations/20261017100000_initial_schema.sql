@@ -1,4 +1,4 @@
--- StudIA — schema inițială (MVP)
+-- Studiazo AI — schema inițială (MVP)
 -- Reguli: nu modifica această migrație după ce a fost aplicată. Orice schimbare = migrație nouă.
 -- Toate tabelele private au RLS activ; accesul se face numai pentru auth.uid().
 

@@ -13,7 +13,7 @@ export function Sidebar({ userName, userDetail }: AppNavProps) {
   const pathname = usePathname();
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-canvas px-4 py-5 lg:flex">
-      <Link href="/azi" className="mx-2 mb-8 rounded-md" aria-label="StudIA — Azi">
+      <Link href="/azi" className="mx-2 mb-8 rounded-md" aria-label="Studiazo AI — Azi">
         <Logo />
       </Link>
       <nav aria-label="Navigare principală" className="flex flex-col gap-0.5">
@@ -60,7 +60,7 @@ export function MobileTopBar({ userName }: { userName: string }) {
   return (
     <header className="pt-safe sticky top-0 z-30 border-b border-line/80 bg-canvas/90 backdrop-blur-md supports-[backdrop-filter]:bg-canvas/80 lg:hidden">
       <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-        <Link href="/azi" className="rounded-md" aria-label="StudIA — Azi">
+        <Link href="/azi" className="rounded-md" aria-label="Studiazo AI — Azi">
           <Logo />
         </Link>
         <Link href="/profil" className="rounded-full" aria-label="Profilul meu">

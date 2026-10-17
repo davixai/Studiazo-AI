@@ -1,6 +1,6 @@
 # Produs
 
-**StudIA** — „Al doilea creier al studentului ieșean.”
+**Studiazo AI** — „Al doilea creier al studentului ieșean.”
 
 Studentul își pune orarul, temele și examenele, își încarcă cursurile pe materii, iar asistentul AI îl ajută să înțeleagă materia, îl testează și îi propune sesiuni de studiu în golurile reale din program.
 

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** Semnul StudIA: o filă de caiet cu un punct de accent. */
+/** Semnul Studiazo AI: o filă de caiet cu un punct de accent. */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("size-8", className)} aria-hidden="true">
@@ -17,7 +17,7 @@ export function Logo({ className }: { className?: string }) {
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <LogoMark className="size-7" />
       <span className="text-[17px] font-semibold tracking-[-0.02em] text-ink">
-        Stud<span className="text-accent">IA</span>
+        Studiazo <span className="text-accent">AI</span>
       </span>
     </span>
   );

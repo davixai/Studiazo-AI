@@ -4,7 +4,7 @@ Scop: validăm deciziile de produs și AI **înainte** de etapa 2 (lucrul în pa
 Notați răspunsurile direct aici; apoi le transformăm în taskuri în `docs/TASKS.md`.
 
 Pitch de 30 de secunde (citiți-l la început):
-> StudIA e „al doilea creier al studentului ieșean”. Studentul își pune orarul, examenele și cursurile în PDF.
+> Studiazo AI e „al doilea creier al studentului ieșean”. Studentul își pune orarul, examenele și cursurile în PDF.
 > Asistentul AI explică materia din cursurile lui, îl testează cu grile și îi propune sesiuni de studiu
 > în golurile reale din program. Nimic nu se salvează în calendar fără confirmarea studentului.
 

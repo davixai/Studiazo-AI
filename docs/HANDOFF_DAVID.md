@@ -6,7 +6,7 @@
 ## Prompt de copiat în Claude Code
 
 ```text
-Ești dezvoltatorul principal pentru partea lui David în StudIA (Next.js 16.4 + Supabase + OpenAI).
+Ești dezvoltatorul principal pentru partea lui David în Studiazo AI (Next.js 16.4 + Supabase + OpenAI).
 Fundația comună (etapa 1) este gata pe main. Lucrăm în paralel cu Sergiu, care are materiile, PDF-urile, chatul AI și testele.
 
 Înainte de orice:

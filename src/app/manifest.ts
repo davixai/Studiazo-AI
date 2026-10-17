@@ -4,8 +4,8 @@ import type { MetadataRoute } from "next";
 // deci nicio dată privată nu rămâne în cache-ul dispozitivului. Vezi docs/ARCHITECTURE.md.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "StudIA",
-    short_name: "StudIA",
+    name: "Studiazo AI",
+    short_name: "Studiazo",
     description: "Al doilea creier al studentului ieșean.",
     lang: "ro",
     start_url: "/azi",

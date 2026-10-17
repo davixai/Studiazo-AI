@@ -25,17 +25,17 @@ Nu folosim cheia **secret / service role** a Supabase. Nu o puneți nicăieri.
 ## 1. GitHub (David)
 
 ```bash
-git remote add origin https://github.com/<cont>/studia.git
+git remote add origin https://github.com/<cont>/studiazo.git
 git push -u origin main
 ```
-1. Pe github.com: *New repository* → `studia`, **Private**, fără README (există deja).
+1. Pe github.com: *New repository* → `studiazo`, **Private**, fără README (există deja).
 2. Settings → Collaborators → adăugați-l pe Sergiu.
 3. Settings → Branches → *Add rule* pentru `main`: „Require a pull request before merging”.
 4. Sergiu: `git clone …`, `npm install`, creează `.env.local`.
 
 ## 2. Supabase (David)
 
-1. supabase.com → *New project*: nume `studia`, regiune **Central EU (Frankfurt)**, parolă DB puternică (salvată în managerul de parole).
+1. supabase.com → *New project*: nume `studiazo`, regiune **Central EU (Frankfurt)**, parolă DB puternică (salvată în managerul de parole).
 2. **Migrația**: SQL Editor → *New query* → copiați tot conținutul din `supabase/migrations/20261017100000_initial_schema.sql` → *Run*. Verificați în Table Editor că tabelele au RLS activ (iconița de lacăt) și în Storage că bucketul `materials` este *Private*.
    - Alternativ, cu CLI: `npx supabase login`, `npx supabase link --project-ref <ref>`, `npx supabase db push`.
 3. **Auth → URL Configuration**:
@@ -52,7 +52,7 @@ git push -u origin main
 
 1. platform.openai.com → autentificare → *Settings → Organization → Billing* → adăugați o metodă de plată și credit (ex. 5–10 $ ajung pentru dezvoltare cu `gpt-6-luna`).
 2. *Settings → Limits*: setați o **limită lunară de buget** (ex. 10 $) și o alertă.
-3. *API keys* → *Create new secret key* (de preferat câte o cheie pe persoană, într-un *Project* `studia`). Puneți-o **doar** în `.env.local` → `OPENAI_API_KEY=…`.
+3. *API keys* → *Create new secret key* (de preferat câte o cheie pe persoană, într-un *Project* `studiazo`). Puneți-o **doar** în `.env.local` → `OPENAI_API_KEY=…`.
 4. Costul orientativ cu `gpt-6-luna` ($0,10 / 1M tokeni la intrare, $0,50 / 1M la ieșire): o explicație cu ~6.000 de tokeni de context și ~800 de tokeni de răspuns costă ≈ $0,001.
 5. Fără cheie, asistentul afișează „Asistentul AI nu este disponibil momentan”. Restul aplicației funcționează. Nu există răspunsuri simulate.
 
@@ -72,8 +72,8 @@ git push -u origin main
 
 | Variantă | Exemplu | Plus | Minus |
 | --- | --- | --- | --- |
-| A. Două domenii | `studia.website` (prezentare) + `studia.online` (aplicație) | separare clară | două reînnoiri anuale, două configurări DNS |
-| B. Un domeniu + subdomeniu (**recomandat**) | `studia.online` (prezentare) + `app.studia.online` (aplicație) | o singură reînnoire, un singur DNS, brand unitar | — |
+| A. Două domenii | `studiazo.website` (prezentare) + `studiazo.online` (aplicație) | separare clară | două reînnoiri anuale, două configurări DNS |
+| B. Un domeniu + subdomeniu (**recomandat**) | `studiazo.online` (prezentare) + `app.studiazo.online` (aplicație) | o singură reînnoire, un singur DNS, brand unitar | — |
 
 **Prețul promoțional vs. reînnoirea:** domeniile `.online` / `.website` au frecvent un preț foarte mic în primul an, iar reînnoirea poate costa de multe ori mai mult. Înainte de cumpărare, comparați la registrar **prețul de reînnoire** (și de transfer), nu doar prețul din primul an.
 

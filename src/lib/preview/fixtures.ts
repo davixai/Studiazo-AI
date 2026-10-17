@@ -4,7 +4,7 @@ import { APP_TIMEZONE, fromLocal, shiftDateKey, startOfWeekKey, toDateKey } from
 // Date DEMONSTRATIVE pentru modul previzualizare (STUDIA_PREVIEW=1, fără Supabase).
 // Interfața le etichetează vizibil. Nu se folosesc niciodată când Supabase este configurat.
 
-export const PREVIEW_USER = { id: "00000000-0000-4000-8000-000000000001", email: "demo@studia.local" };
+export const PREVIEW_USER = { id: "00000000-0000-4000-8000-000000000001", email: "demo@studiazo.local" };
 
 export const PREVIEW_PROFILE: Profile = {
   id: PREVIEW_USER.id,

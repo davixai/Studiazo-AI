@@ -10,6 +10,8 @@ const PAGES = [
   ["azi", "/azi"],
   ["calendar", "/calendar"],
   ["materii", "/materii"],
+  ["materie", "/materii/00000000-0000-4000-8000-0000000000a1"],
+  ["materie-notite", "/materii/00000000-0000-4000-8000-0000000000a1?tab=notite"],
   ["asistent", "/asistent"],
   ["resurse", "/resurse"],
   ["profil", "/profil"],

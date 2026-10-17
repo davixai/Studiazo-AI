@@ -9,11 +9,11 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 ## Sergiu — materii și fișiere
 
 **S1 · Materii**
-- [ ] Buton „Adaugă materie” → Dialog (nume, culoare din paletă); validare Zod pe server; nume duplicat → mesaj clar
-- [ ] Editare și arhivare (cu confirmare); materia arhivată dispare din listă
-- [ ] Cardurile din `/materii` arată numărul real de materiale și notițe; card întreg apăsabil (`lift`, intrare `stagger`)
-- [ ] Pagina `/materii/[id]`: antet cu culoarea materiei, tab-uri **Materiale / Notițe**, buton „Întreabă despre materie” → `/asistent?materie=<id>`
-- [ ] Materie inexistentă sau a altcuiva → `notFound()`
+- [x] Buton „Adaugă materie” → Dialog (nume, culoare din paletă); validare Zod pe server; nume duplicat → mesaj clar
+- [x] Editare și arhivare (cu confirmare); materia arhivată dispare din listă (și se poate restaura din „Materii arhivate”)
+- [x] Cardurile din `/materii` arată numărul real de materiale și notițe; card întreg apăsabil (`lift`, intrare `stagger`)
+- [x] Pagina `/materii/[id]`: antet cu culoarea materiei, tab-uri **Materiale / Notițe**, buton „Întreabă despre materie” → `/asistent?materie=<id>`
+- [x] Materie inexistentă sau a altcuiva → `notFound()`
 - [ ] Testat cu 2 conturi: fiecare își vede doar materiile lui
 
 **S2 · Notițe**

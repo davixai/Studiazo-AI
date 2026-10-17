@@ -56,7 +56,7 @@ Legendă: ✅ gata și verificat · 🟡 demonstrativ sau parțial · ⬜ de fă
 ### Sergiu — materii și fișiere
 | # | Task | Criteriu de finalizare |
 | --- | --- | --- |
-| S1 | Materii: creare, editare, arhivare; pagina `/materii/[id]` | RLS verificat cu 2 conturi |
+| S1 | Materii: creare, editare, arhivare; pagina `/materii/[id]` — ✅ cod, capturi, tastatură · ⬜ test cu 2 conturi | RLS verificat cu 2 conturi |
 | S2 | Notițe pe materie | creare, editare, ștergere |
 | S3 | Încărcare PDF (Storage direct, validare 20 MB / PDF) + extragere text pe pagini (`unpdf`) + stări | PDF cu text → `procesat`; scanat → `fara_text`, cu mesaj clar; previzualizare cu URL semnat; ștergere |
 | S3b | **Fotografii**: „Fă o poză” (`<input accept="image/*" capture="environment">` pe telefon) sau încărcare JPEG/PNG/WebP; redimensionare în browser (max. ~2000 px) înainte de upload; status `procesat` | poza apare la materie, se poate previzualiza și șterge |

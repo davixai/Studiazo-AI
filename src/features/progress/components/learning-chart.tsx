@@ -47,7 +47,7 @@ export function LearningChart({ stats }: { stats: LearningStats }) {
                     style={{ height: h, animationDelay: `${120 + i * 60}ms` }}
                   />
                   {/* Tooltip la hover */}
-                  <span className="pointer-events-none absolute bottom-full z-10 mb-1 rounded-md bg-ink px-2 py-1 text-[11px] font-semibold whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+                  <span className="pointer-events-none absolute bottom-full z-10 mb-1 rounded-md bg-night px-2 py-1 text-[11px] font-semibold whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
                     {d.minutes > 0 ? formatDuration(d.minutes) : "0 min"}
                   </span>
                 </div>

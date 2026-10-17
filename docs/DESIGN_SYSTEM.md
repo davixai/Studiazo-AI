@@ -1,6 +1,6 @@
 # Sistem de design
 
-Direcție: **prietenos, luminos, premium**. Lavandă și violet, carduri albe cu colțuri moi, umbre fine, animații scurte. Un produs care pare făcut cu grijă, nu un panou generic. Referința vie: pagina **Azi** (`src/app/(app)/azi/page.tsx`) și `/sistem-design` (în dezvoltare și în modul previzualizare).
+Direcție: **dark, modern, premium**. Fundal bleumarin adânc cu o „aurora” violet–albastră care se mișcă lent, carduri albastru-noapte cu margine luminoasă fină, accent albastru → violet (`bg-brand`), animații scurte.
 
 ## Fundamente
 
@@ -8,11 +8,11 @@ Direcție: **prietenos, luminos, premium**. Lavandă și violet, carduri albe cu
 
 | Rol | Token | Folosire |
 | --- | --- | --- |
-| Fundal pagină | `canvas` `#f5f5fb` | lavandă foarte deschis |
-| Suprafețe | `surface` (alb), `surface-muted`, `surface-sunken` | carduri, câmpuri, zone secundare |
+| Fundal pagină | `canvas` `#080b1a` | bleumarin adânc + aurora din `body::before/after` |
+| Suprafețe | `surface` (albastru-noapte), `surface-muted`, `surface-sunken` (câmpuri), `night` (panouri de contrast) | carduri, câmpuri, zone secundare |
 | Contururi | `line`, `line-strong` | 1px, discrete (`border-line/70` pe carduri) |
 | Text | `ink` > `ink-soft` > `ink-muted` > `ink-faint` | ierarhie prin ton, nu prin mărime |
-| Accent unic | `accent` `#5b4be0` (violet), `accent-hover`, `accent-soft`, `accent-line`, `accent-ink`, `accent-deep` | acțiunea principală, starea activă, focus, cardurile-erou |
+| Accent | `accent` `#7c5cff` (violet), `accent-blue`, `accent-pink`, gradientul `bg-brand`, `accent-hover`, `accent-soft`, `accent-line`, `accent-ink`, `accent-deep` | acțiunea principală, starea activă, focus, cardurile-erou |
 | Stări | `success`, `warning`, `danger` (+ `-soft`) | doar pentru a comunica o stare |
 | Categorii | `cat-blue/teal/green/amber/rose/violet/slate` | materii și tipuri de activități: `SUBJECT_COLOR_CLASSES` (punct, pastilă, fundal soft) |
 

@@ -13,7 +13,7 @@ const base =
   "[&_svg]:size-4 [&_svg]:shrink-0";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-white shadow-sm hover:bg-accent-hover",
+  primary: "bg-accent bg-brand text-white shadow-accent hover:brightness-110",
   secondary: "border border-line-strong bg-surface text-ink shadow-xs hover:border-ink-faint hover:bg-surface-muted",
   ghost: "text-ink-soft hover:bg-surface-sunken/70 hover:text-ink",
   danger: "bg-danger text-white shadow-sm hover:bg-danger-hover",

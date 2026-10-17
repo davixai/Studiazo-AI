@@ -38,7 +38,7 @@ export function OverviewPanel({ totals, index, className }: { totals: LibraryOve
   return (
     <section
       aria-labelledby="ansamblu"
-      className={cn("stagger relative flex flex-col overflow-hidden rounded-lg bg-ink p-5 text-white shadow-lg sm:p-6", className)}
+      className={cn("stagger relative flex flex-col overflow-hidden rounded-lg border border-line bg-night p-5 text-white shadow-lg sm:p-6", className)}
       style={{ "--i": index } as React.CSSProperties}
     >
       {/* Strălucire discretă în colțuri, ca în panourile întunecate moderne. */}

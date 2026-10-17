@@ -187,7 +187,7 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
           className="h-2 flex-1 overflow-hidden rounded-full bg-surface-sunken"
         >
           <div
-            className="h-full origin-left rounded-full bg-accent transition-transform duration-500 ease-[var(--ease-out)]"
+            className="bg-brand h-full origin-left rounded-full transition-transform duration-500 ease-[var(--ease-out)]"
             style={{ transform: `scaleX(${(index + 1) / STEPS.length})` }}
           />
         </div>

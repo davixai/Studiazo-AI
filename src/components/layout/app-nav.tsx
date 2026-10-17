@@ -84,7 +84,7 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label="Navigare principală"
-      className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-surface/90 shadow-[0_-8px_24px_-16px_rgb(23_22_43/0.2)] backdrop-blur-xl lg:hidden"
+      className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-surface/90 shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.6)] backdrop-blur-xl lg:hidden"
     >
       <ul className="mx-auto grid max-w-xl grid-cols-5 px-1">
         {NAV_ITEMS.filter((i) => i.mobile).map(({ href, label, icon: Icon }) => {
@@ -122,7 +122,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
     <span
       aria-hidden="true"
       className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#7b6cf5] to-[#4f3fd6] text-[12px] font-bold tracking-wide text-white ring-2 ring-white",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-[12px] font-bold tracking-wide text-white ring-2 ring-surface",
         className,
       )}
     >

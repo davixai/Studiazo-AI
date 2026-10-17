@@ -301,7 +301,7 @@ export function ChatView({
             <button
               type="button"
               onClick={() => setImage(null)}
-              className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-ink text-white shadow-sm"
+              className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-night text-white ring-1 ring-line-strong shadow-sm"
               aria-label="Scoate poza"
             >
               <X className="size-3.5" />

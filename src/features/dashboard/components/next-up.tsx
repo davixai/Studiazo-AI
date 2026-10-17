@@ -10,7 +10,7 @@ export function NextUpCard({ agenda, now }: { agenda: AgendaItem[]; now: Date })
   return (
     <Link
       href="/calendar"
-      className="stagger relative block overflow-hidden rounded-lg bg-linear-to-br from-[#6e5ff2] via-[#5b4be0] to-[#4433c4] p-5 text-white shadow-accent transition-transform active:scale-[0.99]"
+      className="stagger relative block overflow-hidden rounded-lg bg-brand p-5 text-white shadow-accent transition-transform active:scale-[0.99]"
     >
       <span aria-hidden="true" className="pointer-events-none absolute -top-12 -right-12 size-40 rounded-full bg-white/10" />
       {next ? (

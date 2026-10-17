@@ -23,7 +23,7 @@ export function StreakCard({ stats, index = 0 }: { stats: LearningStats; index?:
   return (
     <section
       aria-labelledby="streak-title"
-      className="stagger relative overflow-hidden rounded-lg bg-linear-to-br from-[#6e5ff2] via-[#5b4be0] to-[#4433c4] p-6 text-white shadow-accent"
+      className="stagger relative overflow-hidden rounded-lg bg-brand p-6 text-white shadow-accent"
       style={{ "--i": index } as React.CSSProperties}
     >
       <div aria-hidden="true" className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-white/10" />

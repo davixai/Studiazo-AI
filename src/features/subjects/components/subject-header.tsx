@@ -93,7 +93,7 @@ export function SubjectHeader({
       {/* Progresul și scurtătura către chat, într-un singur card violet (înălțimea se potrivește cu profilul). */}
       <section
         aria-labelledby="materie-progres"
-        className="stagger relative flex flex-col overflow-hidden rounded-lg bg-linear-to-br from-accent via-accent-deep to-accent-ink p-5 text-white shadow-accent sm:p-6 lg:col-span-4"
+        className="stagger relative flex flex-col overflow-hidden rounded-lg bg-brand p-5 text-white shadow-accent sm:p-6 lg:col-span-4"
         style={{ "--i": 1 } as React.CSSProperties}
       >
         <span aria-hidden="true" className="pointer-events-none absolute -top-16 -right-14 size-44 rounded-full bg-white/10" />

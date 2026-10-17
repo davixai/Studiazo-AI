@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const control =
-  "w-full rounded-md border border-line-strong bg-surface text-ink shadow-xs placeholder:text-ink-faint " +
+  "w-full rounded-md border border-line-strong bg-surface-sunken text-ink shadow-xs placeholder:text-ink-faint " +
   "transition-[border-color,box-shadow] duration-150 " +
   "hover:border-ink-faint focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/15 " +
   "disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-ink-muted " +

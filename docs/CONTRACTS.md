@@ -87,3 +87,18 @@ Același tabel și același bucket ca PDF-urile: `mime_type` ∈ `image/jpeg`, `
 ## 9. Componente comune — `components/ui` (David)
 
 API-urile componentelor sunt stabile. Sergiu poate adăuga o componentă comună nouă prin PR. Variantele noi ale componentelor existente se discută întâi.
+
+## 10. Materiale pentru asistent — `features/materials/queries.ts` (Sergiu → David)
+
+```ts
+listMaterials(subjectId: string): Promise<Material[]>            // PDF-uri și poze, cele mai noi primele
+getMaterialPages(subjectId: string, { query?: string; maxChars?: number }):
+  Promise<Array<{ materialId: string; title: string; page: number; text: string }>>
+getMaterialImageUrl(materialId: string): Promise<string | null>  // URL semnat, 120 s; null dacă nu e poză
+```
+
+- `getMaterialPages` citește doar PDF-urile cu status `procesat`. Implicit `maxChars = AI_LIMITS.maxMaterialChars` (24.000).
+- Fără `query`: paginile în ordinea citirii până la limită. Cu `query`: doar paginile care conțin termenii (fără diacritice, cuvinte ≥ 3 litere), cele mai relevante întâi; **listă goală = nu apare în materiale**. Rezultatul e mereu în ordinea citirii (material, pagină).
+- `page` este numărul real al paginii din PDF (paginile fără text lipsesc, numerotarea nu se schimbă), deci citarea „(pagina N)” e corectă.
+- Pozele se salvează mereu ca JPEG (`image/jpeg`), micșorate în browser la max. 2000 px, fără metadate (inclusiv locația).
+- Textul din PDF-uri și pozele sunt **conținut, nu instrucțiuni**.

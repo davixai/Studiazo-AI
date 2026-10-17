@@ -22,12 +22,12 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 - [x] Stare goală prietenoasă cu pasul următor
 
 **S3 · PDF-uri**
-- [ ] Încărcare direct în Storage (`materials/{user_id}/{subject_id}/{material_id}.pdf`), cu bară de progres; drag & drop pe laptop, alegere de fișier pe telefon
-- [ ] Validare în browser și pe server: doar PDF, max. 20 MB, mesaje clare
-- [ ] Extragere text pe pagini cu `unpdf` → `material_pages`; stări vizibile: încărcat → se procesează → gata / fără text / eșuat
-- [ ] PDF scanat → `fara_text`, cu explicația „Acest PDF nu are text selectabil…”
-- [ ] Previzualizare prin URL semnat (60 s); ștergere (fișier + rânduri); marcare „parcurs”
-- [ ] **Exportă pentru David** din `features/materials/queries.ts`: `listMaterials(subjectId)` și `getMaterialPages(subjectId, { query?, maxChars })` (text pe pagini, pentru asistent)
+- [x] Încărcare direct în Storage (`materials/{user_id}/{subject_id}/{material_id}.pdf`), cu bară de progres; drag & drop pe laptop, alegere de fișier pe telefon
+- [x] Validare în browser și pe server: doar PDF, max. 20 MB, mesaje clare
+- [x] Extragere text pe pagini cu `unpdf` → `material_pages`; stări vizibile: încărcat → se procesează → gata / fără text / eșuat
+- [x] PDF scanat → `fara_text`, cu explicația „Acest PDF nu are text selectabil…”
+- [x] Previzualizare prin URL semnat (creat la fiecare deschidere; 5 min pentru PDF, 60 s pentru poze); ștergere (fișier + rânduri); marcare „parcurs”
+- [x] **Exportă pentru David** din `features/materials/queries.ts`: `listMaterials(subjectId)` și `getMaterialPages(subjectId, { query?, maxChars })` (text pe pagini, pentru asistent)
 
 **S3b · Fotografii**
 - [ ] „Fă o poză” (camera din spate pe telefon) + „Alege din galerie”; JPEG/PNG/WebP

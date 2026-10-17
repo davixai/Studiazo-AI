@@ -1,12 +1,10 @@
-import { ArrowLeft, FileText, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ColorDot } from "@/components/ui/category";
-import { EmptyState } from "@/components/ui/empty-state";
 import { ArchiveSubject } from "@/features/subjects/components/archive-subject";
 import { SubjectDialog } from "@/features/subjects/components/subject-dialog";
 import { SubjectTabs } from "@/features/subjects/components/subject-tabs";
@@ -14,6 +12,11 @@ import { getSubject } from "@/features/subjects/queries";
 import { NotesPanel } from "@/features/notes/components/notes-panel";
 import { formatRelativeTime } from "@/features/notes/format";
 import { listNotes } from "@/features/notes/queries";
+import { MaterialsPanel } from "@/features/materials/components/materials-panel";
+import { listMaterials } from "@/features/materials/queries";
+
+/** Un PDF rămas „în procesare” mai mult de atât poate fi reluat manual. */
+const STALE_PROCESSING_MS = 3 * 60_000;
 
 export async function generateMetadata({ params }: PageProps<"/materii/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -25,7 +28,7 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const subject = await getSubject(id);
   if (!subject) notFound();
-  const notes = await listNotes(subject.id);
+  const [notes, materials] = await Promise.all([listNotes(subject.id), listMaterials(subject.id)]);
   const now = new Date();
 
   return (
@@ -63,13 +66,14 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
       <SubjectTabs
         initial={query.tab === "notite" ? "notite" : "materiale"}
         materials={
-          <Card>
-            <EmptyState
-              icon={<FileText />}
-              title="Niciun material încă"
-              description="Aici vor apărea cursurile în PDF și pozele încărcate la această materie. Formate: PDF cu text selectabil, JPEG, PNG sau WebP, maximum 20 MB."
-            />
-          </Card>
+          <MaterialsPanel
+            subjectId={subject.id}
+            materials={materials.map((m) => ({
+              ...m,
+              addedLabel: formatRelativeTime(new Date(m.createdAt), now),
+              stale: now.getTime() - new Date(m.updatedAt).getTime() > STALE_PROCESSING_MS,
+            }))}
+          />
         }
         notes={
           <NotesPanel

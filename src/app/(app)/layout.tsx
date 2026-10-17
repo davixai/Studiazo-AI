@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { MobileTabBar, MobileTopBar, Sidebar } from "@/components/layout/app-nav";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { SetupRequired } from "@/components/layout/setup-required";
 import { AiDock } from "@/features/assistant/components/ai-dock";
 import { getProfile } from "@/features/profile/queries";
@@ -36,10 +37,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         ) : null}
         <main
           id="continut"
-          className="mx-auto w-full max-w-6xl flex-1 px-4 pt-7 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pt-12 lg:pb-16"
+          className="mx-auto w-full max-w-6xl flex-1 px-4 pt-7 pb-4 sm:px-6 lg:px-10 lg:pt-12 lg:pb-4"
         >
           {children}
         </main>
+        <SiteFooter />
       </div>
       <MobileTabBar />
       <AiDock subjects={await listSubjects()} aiAvailable={getAiStatus().available && !isPreviewMode()} />

@@ -20,6 +20,9 @@ import { MessageContent } from "./message-content";
 // Folosește același `sendMessage` ca pagina /asistent (cu instrumentele lui: program, termene, intervale libere,
 // materiale, teme slabe, propuneri de teme și sesiuni). Pe pagina unei materii răspunde din materialele ei.
 
+/** Evenimentul cu care alte părți ale paginii (ex. „Suport online” din subsol) deschid asistentul. */
+export const OPEN_ASSISTANT_EVENT = "studiazo:deschide-asistent";
+
 const NETWORK_ERROR = "Nu am putut contacta serverul. Verifică conexiunea și încearcă din nou.";
 const SUBJECT_PATH = /^\/materii\/([0-9a-f-]{36})/i;
 const MAX_IMAGE_SIDE = 1280;
@@ -98,6 +101,12 @@ export function AiDock({ subjects, aiAvailable }: { subjects: Subject[]; aiAvail
   useEffect(() => {
     if (open) endRef.current?.scrollIntoView({ block: "end" });
   }, [open, thread.messages.length, pending, error, creatingQuiz]);
+
+  useEffect(() => {
+    const openDock = () => setOpen(true);
+    window.addEventListener(OPEN_ASSISTANT_EVENT, openDock);
+    return () => window.removeEventListener(OPEN_ASSISTANT_EVENT, openDock);
+  }, []);
 
   useEffect(() => {
     if (!open) return;

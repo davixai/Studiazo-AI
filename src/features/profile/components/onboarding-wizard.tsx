@@ -915,7 +915,7 @@ function PrimaryButton({ children, ...props }: React.ComponentProps<"button">) {
     <button
       type="button"
       {...props}
-      className={buttonStyles({ size: "lg", className: "group h-14 w-full rounded-full text-[16px] font-semibold shadow-accent" })}
+      className={buttonStyles({ size: "lg", className: "shine group h-14 w-full rounded-full text-[16px] font-semibold shadow-accent" })}
     >
       {children}
       <ArrowRight className="transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />

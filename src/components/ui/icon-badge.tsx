@@ -28,7 +28,7 @@ export function IconBadge({
     <span
       aria-hidden="true"
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-md",
+        "icon-badge inline-flex shrink-0 items-center justify-center rounded-md",
         size === "sm" && "size-8 [&_svg]:size-4",
         size === "md" && "size-10 [&_svg]:size-[18px]",
         size === "lg" && "size-12 [&_svg]:size-5",

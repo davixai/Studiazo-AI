@@ -21,6 +21,8 @@ import { getRecentAttempts } from "@/features/quizzes/queries";
 import type { AgendaItem } from "@/lib/contracts/domain";
 import { formatDayLong, formatDuration, formatRelativeDay, greetingFor } from "@/lib/time/format";
 import { daysBetween, toDateKey } from "@/lib/time/zone";
+import { MotivationalQuote } from "@/features/dashboard/components/motivational-quote";
+import { QUOTES } from "@/features/dashboard/quotes";
 import { firstName } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Azi" };
@@ -47,6 +49,8 @@ export default async function TodayPage() {
         </h1>
         <p className="text-sm text-ink-muted">Hai să facem ziua de azi una productivă.</p>
       </header>
+
+      <MotivationalQuote initialIndex={Math.floor(now.getTime() / 1000) % QUOTES.length} />
 
       {/* Mobil: ce urmează + streak + scurtături */}
       <div className="flex min-w-0 flex-col gap-4 lg:hidden">

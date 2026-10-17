@@ -202,6 +202,34 @@
   }
 }
 
+/* Micro-animații la hover: iconițele din linkuri și butoane „prind viață”, săgețile alunecă înainte,
+   pătrățelele cu iconițe din carduri se ridică cu o strălucire în culoarea lor. Doar pe dispozitive cu mouse. */
+:where(a, button) svg {
+  transition: transform 320ms var(--ease-spring), color 200ms var(--ease-out);
+}
+.icon-badge {
+  transition: transform 380ms var(--ease-spring), box-shadow 300ms var(--ease-out), background-color 200ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  :where(a, button):not(:disabled):not([aria-disabled="true"]):hover > svg,
+  :where(a, button):not(:disabled):not([aria-disabled="true"]):hover > span > svg:only-child {
+    transform: scale(1.15) rotate(-8deg);
+  }
+  :where(a, button):hover :is(.lucide-arrow-right, .lucide-chevron-right, .lucide-arrow-up-right) {
+    transform: translateX(3px);
+  }
+  :where(a, button):hover .lucide-chevron-left {
+    transform: translateX(-3px);
+  }
+  :where(a, button, .lift, .group):hover .icon-badge {
+    transform: translateY(-2px) scale(1.08) rotate(-5deg);
+    box-shadow: 0 10px 22px -10px currentColor;
+  }
+  :where(a, button, .lift, .group):hover .icon-badge svg {
+    transform: scale(1.08);
+  }
+}
+
 /* Respectă preferința pentru animații reduse */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -226,6 +254,23 @@
     transform: translateY(-3px);
     box-shadow: var(--shadow-md), 0 18px 40px -20px rgb(124 92 255 / 0.55);
     border-color: var(--color-accent-line);
+  }
+}
+
+/* Luciu care trece peste butoanele principale la hover */
+@utility shine {
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.32) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 750ms var(--ease-out);
+  }
+  &:hover::after {
+    transform: translateX(120%);
   }
 }
 

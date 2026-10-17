@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn, initials } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
+import { LiveClockCard, LiveClockCompact } from "./live-clock";
 import { NAV_ITEMS, isActive } from "./nav-items";
 
 type AppNavProps = { userName: string; userDetail: string | null };
@@ -14,9 +15,10 @@ export function Sidebar({ userName, userDetail }: AppNavProps) {
   const pathname = usePathname();
   return (
     <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line/70 bg-surface px-4 py-6 lg:flex">
-      <Link href="/azi" className="mx-2 mb-9 rounded-md" aria-label="Studiazo AI — Azi">
+      <Link href="/azi" className="mx-2 mb-5 rounded-md" aria-label="Studiazo AI — Azi">
         <Logo />
       </Link>
+      <LiveClockCard className="mb-7" />
       <p className="mb-2 px-3 text-[11px] font-semibold tracking-[0.08em] text-ink-faint uppercase">Meniu</p>
       <nav aria-label="Navigare principală" className="flex flex-col gap-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -70,9 +72,12 @@ export function MobileTopBar({ userName }: { userName: string }) {
         <Link href="/azi" className="rounded-md" aria-label="Studiazo AI — Azi">
           <Logo />
         </Link>
-        <Link href="/profil" className="rounded-full" aria-label="Profilul meu">
-          <Avatar name={userName} />
-        </Link>
+        <div className="flex items-center gap-3">
+          <LiveClockCompact />
+          <Link href="/profil" className="rounded-full" aria-label="Profilul meu">
+            <Avatar name={userName} />
+          </Link>
+        </div>
       </div>
     </header>
   );

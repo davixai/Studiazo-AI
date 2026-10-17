@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { isPreviewMode } from "@/lib/env";
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const params = await searchParams;
@@ -15,5 +16,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     redirect(`/auth/callback?${forward.toString()}`);
   }
 
-  redirect("/azi");
+  // În previzualizare, profilul demonstrativ e deja configurat; pornim totuși cu ghidul de bun venit, ca să poată fi văzut.
+  // Cu Supabase, contul nou ajunge oricum la /bun-venit (vezi app/(app)/layout.tsx).
+  redirect(isPreviewMode() ? "/bun-venit" : "/azi");
 }

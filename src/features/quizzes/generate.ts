@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { NOTES_SOURCE, pickPages, type MaterialPage } from "@/features/assistant/material-context";
-import { getOpenAI } from "@/lib/ai/client";
+import { getOpenAI, withFreeTierRetry } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import { AI_LIMITS } from "@/lib/contracts/ai-tools";
 import { QuizSchema, type Quiz } from "@/lib/contracts/quiz";
@@ -40,15 +40,36 @@ export async function generateQuiz({
     : "(Nu există materiale încărcate. Folosește programa obișnuită a materiei, la nivel universitar de început.)";
 
   const config = getAiConfig();
+  const prompt = `Materia: ${subjectName}\n${focus ? `Tema cerută: ${focus}\n` : ""}Număr de întrebări: ${questionCount}\n\n<material>\n${material}\n</material>`;
+
+  if (config.apiStyle === "chat") {
+    // Furnizori fără Responses API: cerem JSON simplu, după aceeași schemă, și îl validăm la fel.
+    const chat = await withFreeTierRetry(() =>
+      getOpenAI().chat.completions.create({
+        model: config.model,
+        messages: [
+          {
+            role: "system",
+            content: `${INSTRUCTIONS}\n\nRăspunde DOAR cu un obiect JSON valid, fără alt text, după această schemă JSON:\n${JSON.stringify(QUIZ_JSON_SCHEMA)}`,
+          },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    );
+    const raw = chat.choices[0]?.message?.content ?? "";
+    const json = raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1);
+    return {
+      quiz: QuizSchema.parse(buildQuiz(JSON.parse(json), excerpts, questionCount)),
+      fromMaterials: excerpts.length > 0,
+      usage: { inputTokens: chat.usage?.prompt_tokens ?? 0, outputTokens: chat.usage?.completion_tokens ?? 0 },
+    };
+  }
+
   const response = await getOpenAI().responses.create({
     model: config.model,
     instructions: INSTRUCTIONS,
-    input: [
-      {
-        role: "user",
-        content: `Materia: ${subjectName}\n${focus ? `Tema cerută: ${focus}\n` : ""}Număr de întrebări: ${questionCount}\n\n<material>\n${material}\n</material>`,
-      },
-    ],
+    input: [{ role: "user", content: prompt }],
     text: { format: { type: "json_schema", name: "test_grila", strict: true, schema: QUIZ_JSON_SCHEMA } },
     reasoning: { effort: "low" },
     max_output_tokens: 6000,

@@ -4,6 +4,7 @@ import type { ResponseInputItem } from "openai/resources/responses/responses";
 import { getOpenAI } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import { AI_LIMITS } from "@/lib/contracts/ai-tools";
+import { runChatAssistant } from "./engine-chat";
 import { TOOL_DEFINITIONS, type ToolResult } from "./tools";
 
 // Bucla asistentului (Responses API): modelul răspunde sau cere instrumente; codul le execută și îi dă
@@ -16,7 +17,7 @@ export type AssistantTurn = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
-type RunInput = {
+export type RunInput = {
   instructions: string;
   input: ResponseInputItem[];
   userId: string;
@@ -24,8 +25,9 @@ type RunInput = {
 };
 
 export async function runAssistant({ instructions, input, userId, execute }: RunInput): Promise<AssistantTurn> {
-  const client = getOpenAI();
   const config = getAiConfig();
+  if (config.apiStyle === "chat") return runChatAssistant({ instructions, input, userId, execute });
+  const client = getOpenAI();
   const items: ResponseInputItem[] = [...input];
   const proposalIds: string[] = [];
   const citations: AssistantTurn["citations"] = [];

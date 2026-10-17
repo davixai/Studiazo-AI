@@ -13,9 +13,13 @@ export function getAiConfig() {
   const apiKey = process.env.OPENAI_API_KEY?.trim() ?? "";
   // Furnizor compatibil OpenAI (ex. Groq, gratuit: https://api.groq.com/openai/v1). Gol = OpenAI.
   const baseURL = process.env.AI_BASE_URL?.trim() || undefined;
+  // Serviciu public fără cheie (ex. Pollinations: https://text.pollinations.ai/openai), cu AI_KEYLESS=1.
+  const keyless = process.env.AI_KEYLESS === "1" && Boolean(baseURL);
   return {
-    enabled: apiKey.length >= 20 && !apiKey.includes("EXEMPLU"),
-    apiKey,
+    enabled: keyless || (apiKey.length >= 20 && !apiKey.includes("EXEMPLU")),
+    apiKey: keyless ? "fara-cheie" : apiKey,
+    /** „responses” (OpenAI, Groq) sau „chat” (Chat Completions, pentru furnizorii care nu au Responses API). */
+    apiStyle: process.env.AI_API === "chat" ? ("chat" as const) : ("responses" as const),
     baseURL,
     /** Parametrii pe care doar OpenAI îi acceptă (store, include, prompt_cache_key, safety_identifier). */
     openaiExtras: !baseURL,

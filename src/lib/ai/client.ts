@@ -20,6 +20,25 @@ export function getOpenAI(): OpenAI {
   return cached;
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Planurile gratuite limitează ritmul (ex. un răspuns la 30 de secunde). La 402/429 așteptăm cât cere
+ * serviciul („Retry after Ns”) și reîncercăm de câteva ori, în loc să afișăm direct o eroare.
+ */
+export async function withFreeTierRetry<T>(request: () => Promise<T>, attempts = 4): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await request();
+    } catch (error) {
+      const limited = error instanceof OpenAI.APIError && (error.status === 402 || error.status === 429);
+      if (!limited || attempt >= attempts) throw error;
+      const seconds = Number(/retry after (\d+)\s*s/i.exec(error.message)?.[1] ?? 30);
+      await sleep((Math.min(seconds, 60) + 1) * 1000);
+    }
+  }
+}
+
 /** Transformă erorile SDK în mesaje pentru student (fără detalii interne). */
 export function describeAiError(error: unknown): { code: string; message: string; retryable: boolean } {
   if (error instanceof AiUnavailableError) {
@@ -31,7 +50,7 @@ export function describeAiError(error: unknown): { code: string; message: string
   if (error instanceof OpenAI.APIConnectionError) {
     return { code: "network", message: "Nu am putut contacta asistentul. Verifică conexiunea.", retryable: true };
   }
-  if (error instanceof OpenAI.RateLimitError) {
+  if (error instanceof OpenAI.RateLimitError || (error instanceof OpenAI.APIError && error.status === 402)) {
     return { code: "rate_limited", message: "Sunt prea multe cereri acum. Încearcă peste un minut.", retryable: true };
   }
   if (error instanceof OpenAI.AuthenticationError || error instanceof OpenAI.PermissionDeniedError) {

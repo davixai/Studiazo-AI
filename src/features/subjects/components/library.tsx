@@ -185,7 +185,7 @@ export function ActivityPanel({
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex flex-col justify-between">
           {[max, max / 2, 0].map((v, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="w-5 text-right text-[10px] text-ink-faint tabular">{Number.isInteger(v) ? v : v.toFixed(1).replace(".", ",")}</span>
+              <span className="w-5 text-right text-[11px] text-ink-faint tabular">{Number.isInteger(v) ? v : v.toFixed(1).replace(".", ",")}</span>
               <span className="h-px flex-1 border-t border-dashed border-line" />
             </div>
           ))}
@@ -200,13 +200,13 @@ export function ActivityPanel({
           />
           {/* Bula cu valoarea săptămânii curente. */}
           <span className="absolute top-0 left-9 animate-pop-in rounded-md border border-line bg-surface px-2.5 py-1.5 shadow-md [animation-delay:700ms]">
-            <span className="block text-[10px] font-medium text-ink-muted">Săptămâna aceasta</span>
+            <span className="block text-[11px] font-medium text-ink-muted">Săptămâna aceasta</span>
             <span className="block text-[15px] leading-tight font-bold text-ink tabular">{thisWeek}</span>
           </span>
         </div>
       </div>
 
-      <ol className="flex justify-between pl-7 text-[10px] font-medium text-ink-faint tabular" aria-hidden="true">
+      <ol className="flex justify-between pl-7 text-[11px] font-medium text-ink-faint tabular" aria-hidden="true">
         {labels.map((l, i) => (
           <li key={weeks[i]?.weekKey ?? i} className={cn(i % 2 === 1 && "hidden sm:block")}>
             {l}
@@ -319,7 +319,7 @@ export function RecentPanel({ items, index, className }: { items: Array<RecentIt
                   <span aria-hidden="true" className={cn("absolute inset-y-2 left-0 w-1 rounded-r-full", SUBJECT_COLOR_CLASSES[item.subject.color].bar)} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
-                      <span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase", pill.className)}>
+                      <span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide uppercase", pill.className)}>
                         <Icon className="size-3" aria-hidden="true" />
                         {pill.label}
                       </span>

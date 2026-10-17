@@ -270,7 +270,7 @@ export function DateTile({ day, weekday, className }: { day: string; weekday: st
     >
       <span className="pointer-events-none absolute -top-1/2 -right-1/2 size-full rounded-full bg-white/15" />
       <span className="relative text-[15px] leading-none font-extrabold tabular">{day}</span>
-      <span className="relative mt-0.5 text-[9px] font-semibold tracking-wide uppercase opacity-85">{weekday}</span>
+      <span className="relative mt-0.5 text-[10px] font-semibold tracking-wide uppercase opacity-85">{weekday}</span>
     </span>
   );
 }

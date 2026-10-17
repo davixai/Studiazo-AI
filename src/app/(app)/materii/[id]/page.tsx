@@ -38,7 +38,7 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
       <div className="flex flex-col gap-4">
         <Link
           href="/materii"
-          className="inline-flex items-center gap-1.5 self-start rounded-sm text-[13px] font-medium text-ink-muted transition-colors hover:text-ink"
+          className="-my-2.5 inline-flex items-center gap-1.5 self-start rounded-sm py-2.5 pr-2 text-[13px] font-medium text-ink-muted transition-colors hover:text-ink"
         >
           <ArrowLeft className="size-3.5" aria-hidden="true" />
           Materii

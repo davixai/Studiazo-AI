@@ -38,17 +38,20 @@ export const EventFormSchema = z
 
 export type EventFormValues = z.infer<typeof EventFormSchema>;
 
+/** Unde revine studentul după acțiune (vederea din calendar sau pagina Azi); validat în safeReturn(). */
+const returnTo = z.string().max(120).optional();
+
 export const DeleteEventSchema = z.discriminatedUnion("scope", [
-  z.object({ id: z.uuid(), scope: z.literal("series") }),
-  z.object({ id: z.uuid(), scope: z.literal("occurrence"), date: z.string().refine(isDateKey) }),
+  z.object({ id: z.uuid(), scope: z.literal("series"), returnTo }),
+  z.object({ id: z.uuid(), scope: z.literal("occurrence"), date: z.string().refine(isDateKey), returnTo }),
 ]);
 
-export const CompleteEventSchema = z.object({
-  id: z.uuid(),
-  completed: z.boolean(),
-  /** Unde revine studentul după acțiune (dialogul din calendar sau cardul de pe Azi). */
-  returnTo: z.enum(["/calendar", "/azi"]).default("/calendar"),
-});
+export const CompleteEventSchema = z.object({ id: z.uuid(), completed: z.boolean(), returnTo });
+
+/** Doar căi interne cunoscute: /calendar sau /azi, cu parametri simpli. Orice altceva → /calendar. */
+export function safeReturn(value: string | undefined) {
+  return value && /^\/(calendar|azi)(\?[a-z]+=[\w-]+(&[a-z]+=[\w-]+)*)?$/.test(value) ? value : "/calendar";
+}
 
 /** Starea formularului de activitate. `warning` = se suprapune; studentul poate salva totuși. */
 export type EventFormState = {
@@ -84,8 +87,8 @@ export type TaskFormValues = z.infer<typeof TaskFormSchema>;
 /** Probele (examen, colocviu, test) au durată și loc; temele și proiectele au doar termen. */
 export const TIMED_TASK_KINDS: readonly TaskKind[] = ["examen", "colocviu", "test"];
 
-export const IdSchema = z.object({ id: z.uuid() });
-export const CompleteTaskSchema = z.object({ id: z.uuid(), completed: z.boolean() });
+export const IdSchema = z.object({ id: z.uuid(), returnTo });
+export const CompleteTaskSchema = z.object({ id: z.uuid(), completed: z.boolean(), returnTo });
 
 export type TaskFormState = Omit<EventFormState, "conflicts" | "status"> & { status: "idle" | "error" };
 export const initialTaskFormState: TaskFormState = { status: "idle" };

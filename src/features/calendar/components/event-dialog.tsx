@@ -29,6 +29,8 @@ type EventDialogProps = {
   /** Apariția pe care s-a apăsat (pentru „Șterge doar această zi”). */
   occurrenceDate: string | null;
   defaults: { date: string; startTime: string; endTime: string };
+  /** Vederea calendarului în care revine dialogul (ex. /calendar?vedere=saptamana&data=…). */
+  returnHref: string;
 };
 
 const RECURRENCE_OPTIONS: { value: RecurrenceKind; label: string }[] = [
@@ -37,7 +39,7 @@ const RECURRENCE_OPTIONS: { value: RecurrenceKind; label: string }[] = [
   { value: "biweekly", label: "La 2 săpt." },
 ];
 
-export function EventDialog({ event, subjects, occurrenceDate, defaults }: EventDialogProps) {
+export function EventDialog({ event, subjects, occurrenceDate, defaults, returnHref }: EventDialogProps) {
   const router = useRouter();
   const formId = useId();
   const [state, action, saving] = useActionState<EventFormState, FormData>(saveEvent, initialEventFormState);
@@ -67,7 +69,7 @@ export function EventDialog({ event, subjects, occurrenceDate, defaults }: Event
   const isRecurring = event ? event.recurrence !== "none" : false;
   const busy = saving || pending;
 
-  const close = () => router.replace("/calendar", { scroll: false });
+  const close = () => router.replace(returnHref, { scroll: false });
 
   const run = (fn: () => Promise<ActionResult>) => {
     setActionError(null);
@@ -89,11 +91,11 @@ export function EventDialog({ event, subjects, occurrenceDate, defaults }: Event
         Renunță
       </Button>
       {isRecurring && occurrenceDate ? (
-        <Button variant="secondary" loading={pending} onClick={() => run(() => deleteEvent({ id: event!.id, scope: "occurrence", date: occurrenceDate }))}>
+        <Button variant="secondary" loading={pending} onClick={() => run(() => deleteEvent({ id: event!.id, scope: "occurrence", date: occurrenceDate, returnTo: returnHref }))}>
           Doar pe {formatDayLong(dayBounds(occurrenceDate).start)}
         </Button>
       ) : null}
-      <Button variant="danger" loading={pending} onClick={() => run(() => deleteEvent({ id: event!.id, scope: "series" }))}>
+      <Button variant="danger" loading={pending} onClick={() => run(() => deleteEvent({ id: event!.id, scope: "series", returnTo: returnHref }))}>
         {isRecurring ? "Toată seria" : "Șterge"}
       </Button>
     </>
@@ -110,7 +112,7 @@ export function EventDialog({ event, subjects, occurrenceDate, defaults }: Event
           variant="secondary"
           loading={pending}
           disabled={saving}
-          onClick={() => run(() => setEventCompleted({ id: event.id, completed: !event.completedAt }))}
+          onClick={() => run(() => setEventCompleted({ id: event.id, completed: !event.completedAt, returnTo: returnHref }))}
         >
           {event.completedAt ? <RotateCcw aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
           {event.completedAt ? "Redeschide" : "Marchează ca finalizată"}
@@ -156,6 +158,7 @@ export function EventDialog({ event, subjects, occurrenceDate, defaults }: Event
         className="flex flex-col gap-5"
       >
         {event ? <input type="hidden" name="id" value={event.id} /> : null}
+        <input type="hidden" name="returnTo" value={returnHref} />
         <input type="hidden" name="allowOverlap" value={overlapAcknowledged ? "1" : "0"} />
 
         {state.status === "error" && state.message ? <Alert tone="danger">{state.message}</Alert> : null}

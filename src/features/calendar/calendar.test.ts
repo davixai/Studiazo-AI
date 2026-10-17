@@ -3,7 +3,8 @@ import type { CalendarEvent } from "@/lib/contracts/domain";
 import { expandEvent, expandEvents } from "@/lib/time/recurrence";
 import { fromLocal } from "@/lib/time/zone";
 import { conflictRange, firstConflicts } from "./conflicts";
-import { EventFormSchema, TaskFormSchema } from "./schemas";
+import { hourRange, layoutLanes } from "./layout";
+import { EventFormSchema, TaskFormSchema, safeReturn } from "./schemas";
 
 const form = (overrides: Record<string, string> = {}) => ({
   kind: "curs",
@@ -141,5 +142,41 @@ describe("TaskFormSchema", () => {
     expect(TaskFormSchema.safeParse(task({ title: "" })).success).toBe(false);
     expect(TaskFormSchema.safeParse(task({ date: "2 noiembrie" })).success).toBe(false);
     expect(TaskFormSchema.safeParse(task({ time: "25:00" })).success).toBe(false);
+  });
+});
+
+describe("grila orară", () => {
+  const day = { start: new Date("2026-10-19T00:00:00Z"), end: new Date("2026-10-20T00:00:00Z") };
+  const at = (h1: number, h2: number, id: string) => ({ id, start: new Date(day.start.getTime() + h1 * 3_600_000), end: new Date(day.start.getTime() + h2 * 3_600_000) });
+
+  it("pune activitățile suprapuse pe benzi diferite și pe cele separate pe toată lățimea", () => {
+    const placed = layoutLanes([at(8, 10, "a"), at(9, 11, "b"), at(12, 13, "c")], day.start, day.end);
+    const byId = Object.fromEntries(placed.map((p) => [p.item.id, p]));
+    expect(byId.a).toMatchObject({ lane: 0, lanes: 2, startMin: 480, endMin: 600 });
+    expect(byId.b).toMatchObject({ lane: 1, lanes: 2 });
+    expect(byId.c).toMatchObject({ lane: 0, lanes: 1 });
+  });
+
+  it("refolosește banda liberă și taie ce iese din zi", () => {
+    const placed = layoutLanes([at(8, 12, "a"), at(9, 10, "b"), at(10, 11, "c"), at(23, 26, "d")], day.start, day.end);
+    const byId = Object.fromEntries(placed.map((p) => [p.item.id, p]));
+    expect(byId.c.lane).toBe(1);
+    expect(byId.d.endMin).toBe(1440);
+  });
+
+  it("extinde orele afișate doar cât e nevoie", () => {
+    expect(hourRange([])).toEqual({ start: 8, end: 20 });
+    expect(hourRange([{ startMin: 7 * 60 + 30, endMin: 22 * 60 + 15 }])).toEqual({ start: 7, end: 23 });
+  });
+});
+
+describe("safeReturn", () => {
+  it("acceptă doar vederile interne ale calendarului și pagina Azi", () => {
+    expect(safeReturn("/calendar?vedere=saptamana&data=2026-10-19")).toBe("/calendar?vedere=saptamana&data=2026-10-19");
+    expect(safeReturn("/azi")).toBe("/azi");
+    expect(safeReturn("https://exemplu.ro")).toBe("/calendar");
+    expect(safeReturn("//exemplu.ro")).toBe("/calendar");
+    expect(safeReturn("/calendar?x=<script>")).toBe("/calendar");
+    expect(safeReturn(undefined)).toBe("/calendar");
   });
 });

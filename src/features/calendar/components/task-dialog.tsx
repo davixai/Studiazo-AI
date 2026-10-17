@@ -19,12 +19,14 @@ type TaskDialogProps = {
   task: Task | null;
   subjects: Subject[];
   defaults: { kind: TaskKind; date: string; time: string };
+  /** Vederea calendarului în care revine dialogul. */
+  returnHref: string;
 };
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 150, 180];
 const ESTIMATE_OPTIONS = [30, 60, 120, 180, 300, 480, 600, 900, 1200];
 
-export function TaskDialog({ task, subjects, defaults }: TaskDialogProps) {
+export function TaskDialog({ task, subjects, defaults, returnHref }: TaskDialogProps) {
   const router = useRouter();
   const formId = useId();
   const [state, action, saving] = useActionState<TaskFormState, FormData>(saveTask, initialTaskFormState);
@@ -51,7 +53,7 @@ export function TaskDialog({ task, subjects, defaults }: TaskDialogProps) {
 
   const e = state.fieldErrors ?? {};
   const busy = saving || pending;
-  const close = () => router.replace("/calendar", { scroll: false });
+  const close = () => router.replace(returnHref, { scroll: false });
 
   const run = (fn: () => Promise<ActionResult>) => {
     setActionError(null);
@@ -66,7 +68,7 @@ export function TaskDialog({ task, subjects, defaults }: TaskDialogProps) {
       <Button variant="secondary" onClick={() => setConfirmDelete(false)} disabled={pending}>
         Renunță
       </Button>
-      <Button variant="danger" loading={pending} onClick={() => run(() => deleteTask({ id: task!.id }))}>
+      <Button variant="danger" loading={pending} onClick={() => run(() => deleteTask({ id: task!.id, returnTo: returnHref }))}>
         Șterge
       </Button>
     </>
@@ -83,7 +85,7 @@ export function TaskDialog({ task, subjects, defaults }: TaskDialogProps) {
           variant="secondary"
           loading={pending}
           disabled={saving}
-          onClick={() => run(() => setTaskCompleted({ id: task.id, completed: !task.completedAt }))}
+          onClick={() => run(() => setTaskCompleted({ id: task.id, completed: !task.completedAt, returnTo: returnHref }))}
         >
           {task.completedAt ? <RotateCcw aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
           {task.completedAt ? "Redeschide" : "Marchează ca făcut"}
@@ -114,6 +116,7 @@ export function TaskDialog({ task, subjects, defaults }: TaskDialogProps) {
       ) : null}
       <form id={formId} action={action} noValidate hidden={confirmDelete} className="flex flex-col gap-5">
         {task ? <input type="hidden" name="id" value={task.id} /> : null}
+        <input type="hidden" name="returnTo" value={returnHref} />
 
         {state.status === "error" && state.message ? <Alert tone="danger">{state.message}</Alert> : null}
         {actionError ? <Alert tone="danger">{actionError}</Alert> : null}

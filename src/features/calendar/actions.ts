@@ -21,6 +21,7 @@ import {
   IdSchema,
   TaskFormSchema,
   TIMED_TASK_KINDS,
+  safeReturn,
   type ActionResult,
   type EventFormState,
   type TaskFormState,
@@ -33,10 +34,10 @@ function rawValues(formData: FormData) {
   return Object.fromEntries([...formData.entries()].map(([k, v]) => [k, String(v)]));
 }
 
-function done(returnTo: "/calendar" | "/azi" = "/calendar"): never {
+function done(returnTo?: string): never {
   revalidatePath("/calendar");
   revalidatePath("/azi");
-  redirect(returnTo);
+  redirect(safeReturn(returnTo));
 }
 
 /** Creează sau modifică o activitate. La suprapunere întoarce un avertisment; „Salvează oricum” trimite allowOverlap=1. */
@@ -111,7 +112,7 @@ export async function saveEvent(_prev: EventFormState, formData: FormData): Prom
   if (error) return { status: "error", message: "Nu am putut salva activitatea. Încearcă din nou.", values };
   if (!data?.length) return { status: "error", message: "Activitatea nu mai există.", values };
 
-  done();
+  done(values.returnTo);
 }
 
 /** Șterge toată seria sau doar o apariție (data se adaugă la excluded_dates). */
@@ -135,7 +136,7 @@ export async function deleteEvent(input: unknown): Promise<ActionResult> {
     if (error) return { ok: false, message: "Nu am putut șterge activitatea. Încearcă din nou." };
   }
 
-  done();
+  done(parsed.data.returnTo);
 }
 
 /** Marchează o activitate unică drept finalizată (contează la streak dacă e o sesiune de studiu) sau o redeschide. */
@@ -191,7 +192,7 @@ export async function saveTask(_prev: TaskFormState, formData: FormData): Promis
   if (error) return { status: "error", message: "Nu am putut salva termenul. Încearcă din nou.", values };
   if (!data?.length) return { status: "error", message: "Termenul nu mai există.", values };
 
-  done();
+  done(values.returnTo);
 }
 
 export async function deleteTask(input: unknown): Promise<ActionResult> {
@@ -204,7 +205,7 @@ export async function deleteTask(input: unknown): Promise<ActionResult> {
   const { error } = await supabase.from("tasks").delete().eq("id", parsed.data.id);
   if (error) return { ok: false, message: "Nu am putut șterge termenul. Încearcă din nou." };
 
-  done();
+  done(parsed.data.returnTo);
 }
 
 /** Bifează un termen ca făcut (dispare din termenele viitoare) sau îl redeschide. */
@@ -223,5 +224,5 @@ export async function setTaskCompleted(input: unknown): Promise<ActionResult> {
     .select("id");
   if (error || !data?.length) return { ok: false, message: "Nu am putut actualiza termenul. Încearcă din nou." };
 
-  done();
+  done(parsed.data.returnTo);
 }

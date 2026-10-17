@@ -39,7 +39,7 @@ Legendă: ✅ gata și verificat · 🟡 demonstrativ sau parțial · ⬜ de fă
 | D3 | ✅ cod · ⬜ testat pe Supabase real — Teme și examene: creare, editare, finalizare, ștergere; `?adauga=examen\|tema` deschide formularul | apar pe pagina Azi și în agendă |
 | D4 | Calendar: vederea săptămână (desktop) + zi; agenda rămâne implicită pe mobil | capturi 360/768/1440 |
 | D5 | ✅ cod + teste logică · ⬜ testat pe Supabase real — `features/proposals`: `ProposalCard`, `confirmProposal`, `rejectProposal` | teste: fără confirmare nu se salvează nimic; dublu-click nu dublează; suprapunerea este respinsă; altă persoană nu poate confirma |
-| D6 | 🟡 sesiunea ✅ · progresul din teste după S7 — Azi: „Sesiunea recomandată” (următoarea sesiune de studiu confirmată) + „Progres recent” (din testele grilă, S7) | date reale |
+| D6 | ✅ cod · ⬜ testat pe Supabase real — Azi: „Sesiunea recomandată” (următoarea sesiune de studiu confirmată) + „Progres recent” (din testele grilă, S7) | date reale |
 | D7 | ✅ cod · ⬜ testat pe Supabase real — Disponibilitatea în profil (un interval pe zi) | salvată în `profiles.availability` |
 | D8 | **Progres și obicei**: streak, insigne (3/7/14/30/60/100 de zile), timpul de învățare pe ultimele 7 zile (grafic cu bare Lun–Dum) pe pagina Azi și într-o pagină Progres. Logica pură în `lib/progress/streak.ts`, cu teste (zile locale, schimbarea orei, zi fără activitate). Vezi CONTRACTS.md §7 | cifre doar din date reale; cont nou → 0 și „Începe-ți streak-ul azi” |
 
@@ -50,7 +50,7 @@ Legendă: ✅ gata și verificat · 🟡 demonstrativ sau parțial · ⬜ de fă
 | S4b | ✅ cod · ⬜ test cu poze reale — **AI vede poza**: studentul trimite o poză în chat (exercițiu, tablă, notițe), modelul (`gpt-6-luna`, intrare text + imagine) o citește și îl îndrumă pas cu pas, cu întrebări și indicii; spune clar când poza e neclară | test cu o poză reală clară + una neclară |
 | S5 | ✅ cod + test cu OpenAI real (instrumente simulate) — Instrumentele AI (`ai-tools.ts`), cu validare și max. 4 pași | „Am examen vineri. Găsește-mi trei intervale.” → propunere `pending` |
 | S6 | 🟡 notițele ✅ · PDF-uri după S3 — Explicații din material, cu citare de pagină; „nu apare în materiale” când e cazul | test cu PDF real |
-| S7 | Teste grilă: generare (structured output), rezolvare, scor, istoric, teme slabe | `getRecentAttempts()` pentru David |
+| S7 | ✅ cod + generare testată cu OpenAI real · ⬜ testat pe Supabase real — Teste grilă: generare (structured output), rezolvare, scor, istoric, teme slabe | `getRecentAttempts()` pentru David |
 | S8 | Propunerile de studiu țin cont de testele slabe și de examene | avertisment când nu încape |
 
 ### Sergiu — materii și fișiere

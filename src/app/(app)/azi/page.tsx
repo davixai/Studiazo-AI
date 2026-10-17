@@ -16,6 +16,8 @@ import { BadgesGrid } from "@/features/progress/components/badges";
 import { LearningChart } from "@/features/progress/components/learning-chart";
 import { StreakCard, StreakStrip } from "@/features/progress/components/streak";
 import { getLearningStats } from "@/features/progress/queries";
+import { RecentAttempts } from "@/features/quizzes/components/recent-attempts";
+import { getRecentAttempts } from "@/features/quizzes/queries";
 import type { AgendaItem } from "@/lib/contracts/domain";
 import { formatDayLong, formatDuration, formatRelativeDay, greetingFor } from "@/lib/time/format";
 import { daysBetween, toDateKey } from "@/lib/time/zone";
@@ -27,7 +29,7 @@ const EXAM_KINDS = ["examen", "colocviu", "test"];
 const delay = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
 export default async function TodayPage() {
-  const [overview, profile, stats] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats()]);
+  const [overview, profile, stats, attempts] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats(), getRecentAttempts(3)]);
   const { now, agenda, upcoming } = overview;
   const name = firstName(profile?.fullName ?? "");
   const remaining = agenda.filter((i) => endOf(i) > now).length;
@@ -113,7 +115,7 @@ export default async function TodayPage() {
                   title="Nimic programat azi"
                   description="Adaugă-ți orarul o singură dată, iar cursurile recurente apar automat în fiecare săptămână."
                   action={
-                    <ButtonLink href="/calendar" variant="secondary" size="sm">
+                    <ButtonLink href="/calendar?adauga=activitate" variant="secondary" size="sm">
                       Adaugă orarul
                     </ButtonLink>
                   }
@@ -131,6 +133,13 @@ export default async function TodayPage() {
             />
             <CardBody className="pt-6">
               <LearningChart stats={stats} />
+            </CardBody>
+          </Card>
+
+          <Card aria-labelledby="progres-recent" className="stagger" style={delay(7)}>
+            <CardHeader id="progres-recent" title="Progres recent" description="Ultimele teste grilă rezolvate" />
+            <CardBody>
+              <RecentAttempts attempts={attempts} subjects={overview.subjects} now={now} />
             </CardBody>
           </Card>
         </div>

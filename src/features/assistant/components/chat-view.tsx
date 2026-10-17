@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowUp, Camera, ImageIcon, RotateCcw, Sparkles, SquarePen, X } from "lucide-react";
+import { ArrowUp, Camera, ImageIcon, ListChecks, RotateCcw, Sparkles, SquarePen, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ProposalCard } from "@/features/proposals/components/proposal-card";
+import { createQuiz } from "@/features/quizzes/actions";
 import type { Subject } from "@/lib/contracts/domain";
 import type { Proposal } from "@/lib/contracts/proposals";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
   const [imageError, setImageError] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
   const [resetting, startResetting] = useTransition();
+  const [creatingQuiz, startCreatingQuiz] = useTransition();
   const endRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -93,6 +95,16 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
     });
   };
 
+  const quiz = () => {
+    if (!subject) return;
+    setError(null);
+    startCreatingQuiz(async () => {
+      const result = await createQuiz({ subjectId: subject.id, questionCount: 5 });
+      if (result.ok) router.push(`/asistent/test/${result.quizId}`);
+      else setError({ message: result.message, retryable: false });
+    });
+  };
+
   const attach = async (file: File | undefined) => {
     setImageError(null);
     if (!file) return;
@@ -119,12 +131,20 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
             {subject ? "Răspunde din materialele acestei materii" : "Program, termene și orice materie"}
           </p>
         </div>
-        {messages.length > 0 ? (
-          <Button variant="ghost" size="sm" onClick={reset} loading={resetting} disabled={sending}>
-            <SquarePen aria-hidden="true" />
-            Conversație nouă
-          </Button>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-1">
+          {subject ? (
+            <Button variant="secondary" size="sm" onClick={quiz} loading={creatingQuiz} disabled={!aiAvailable || sending}>
+              <ListChecks aria-hidden="true" />
+              Test grilă
+            </Button>
+          ) : null}
+          {messages.length > 0 ? (
+            <Button variant="ghost" size="sm" onClick={reset} loading={resetting} disabled={sending} aria-label="Conversație nouă">
+              <SquarePen aria-hidden="true" />
+              <span className="hidden sm:inline">Conversație nouă</span>
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-6 py-6" aria-live="polite" aria-busy={sending}>
@@ -184,6 +204,13 @@ export function ChatView({ subject, subjects, initialMessages, initialProposals,
               <span className="sr-only">Asistentul scrie…</span>
             </div>
           </>
+        ) : null}
+
+        {creatingQuiz ? (
+          <div className="flex items-center gap-3 animate-fade-in" role="status">
+            <AssistantAvatar />
+            <p className="text-sm text-ink-muted">Pregătesc un test grilă din materialele tale… durează câteva secunde.</p>
+          </div>
         ) : null}
 
         {error ? (

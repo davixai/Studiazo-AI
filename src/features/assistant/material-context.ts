@@ -3,6 +3,9 @@
 
 export type MaterialPage = { materialId: string; title: string; page: number; text: string };
 
+/** materialId pentru notițe (nu au pagini și nu se citează ca PDF). */
+export const NOTES_SOURCE = "notite";
+
 const STOP_WORDS = new Set(["si", "sau", "de", "la", "in", "cu", "pe", "din", "ce", "care", "este", "sunt", "un", "o", "a", "al", "ale", "pentru", "despre", "mi", "imi", "explica"]);
 
 export function normalize(text: string) {

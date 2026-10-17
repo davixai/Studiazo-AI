@@ -1,3 +1,4 @@
+import type { Quiz } from "@/lib/contracts/quiz";
 import type { CalendarEvent, Profile, Subject, Task } from "@/lib/contracts/domain";
 import { APP_TIMEZONE, fromLocal, shiftDateKey, startOfWeekKey, toDateKey } from "@/lib/time/zone";
 
@@ -101,3 +102,38 @@ export function previewTasks(now = new Date()): Task[] {
     task(304, { kind: "colocviu", title: "Colocviu SQL", subjectId: bd.id, durationMinutes: 90 }, 19, "12:00"),
   ];
 }
+
+/** Test grilă demonstrativ (doar pentru capturi): /asistent/test/00000000-0000-4000-8000-000000000777 */
+export const PREVIEW_QUIZ_ID = "00000000-0000-4000-8000-000000000777";
+export const PREVIEW_QUIZ: Quiz = {
+  title: "Arbori binari de căutare (demo)",
+  questions: [
+    {
+      id: "q1",
+      prompt: "Într-un ABC, rădăcina are cheia 20, iar cheia căutată este 14. În ce direcție continuă căutarea?",
+      options: ["În ambii subarbori", "În subarborele stâng", "În subarborele drept", "Se oprește la rădăcină"],
+      correctIndex: 1,
+      explanation: "Cheile mai mici decât rădăcina sunt în subarborele stâng, deci căutarea merge doar acolo.",
+      topic: "Proprietatea ABC",
+      source: { materialId: null, page: 3 },
+    },
+    {
+      id: "q2",
+      prompt: "Inserezi în ordine cheile 3, 8, 12, 19 într-un ABC fără echilibrare. Ce se întâmplă?",
+      options: ["Rămâne echilibrat", "Devine o listă, operațiile ajung la O(n)", "Cheile se reordonează automat", "Inserarea eșuează"],
+      correctIndex: 1,
+      explanation: "Cheile sortate produc un arbore degenerat: fiecare nod are un singur copil.",
+      topic: "Complexitate",
+      source: { materialId: null, page: 3 },
+    },
+    {
+      id: "q3",
+      prompt: "Ce parcurgere listează cheile unui ABC în ordine crescătoare?",
+      options: ["Preordine", "Postordine", "Inordine", "În lățime"],
+      correctIndex: 2,
+      explanation: "Inordinea vizitează stânga, rădăcina, apoi dreapta.",
+      topic: "Parcurgeri",
+      source: { materialId: null, page: 4 },
+    },
+  ],
+};

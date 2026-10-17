@@ -55,12 +55,12 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 - [x] S4b · Poza în chat: AI-ul o citește și îndrumă pas cu pas (indicii, nu soluția direct); spune când poza e neclară
 - [x] S5 · Instrumentele AI (program, termene, intervale libere, material, propuneri), validate cu Zod, max. 4 pași
 - [ ] S6 · Explicații din materiale cu „(pagina N)”; „nu apare în materialele tale” când e cazul — **după S3 al lui Sergiu**
-- [ ] S7 · Teste grilă: generare, rezolvare, scor, explicații, istoric, teme slabe
+- [x] S7 · Teste grilă: generare, rezolvare, scor, explicații, istoric, teme slabe
 - [ ] S8 · Plan de studiu pe examene + teme slabe, cu avertisment când nu încape
 
 **Legătura**
 - [x] D5 · `ProposalCard` + Confirmă / Renunță; fără duplicate la dublu-click; nimic salvat fără confirmare _(logica testată; de testat pe Supabase real)_
-- [ ] D6 · Azi: sesiunea recomandată ✅ (următoarea sesiune confirmată, „Am terminat sesiunea” → streak) + progres recent din teste _(după S7)_
+- [x] D6 · Azi: sesiunea recomandată (următoarea sesiune confirmată, „Am terminat sesiunea” → streak) + progres recent din teste
 - [x] D8 · Streak, insigne, timpul de învățare pe 7 zile
 
 ---

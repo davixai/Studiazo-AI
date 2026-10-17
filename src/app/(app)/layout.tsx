@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { MobileTabBar, MobileTopBar, Sidebar } from "@/components/layout/app-nav";
 import { SetupRequired } from "@/components/layout/setup-required";
+import { AiDock } from "@/features/assistant/components/ai-dock";
 import { getProfile } from "@/features/profile/queries";
+import { listSubjects } from "@/features/subjects/queries";
+import { getAiStatus } from "@/lib/ai/config";
 import { requireUser } from "@/lib/auth/session";
 import { isPreviewMode, isSupabaseConfigured } from "@/lib/env";
 
@@ -39,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </main>
       </div>
       <MobileTabBar />
+      <AiDock subjects={await listSubjects()} aiAvailable={getAiStatus().available && !isPreviewMode()} />
     </div>
   );
 }

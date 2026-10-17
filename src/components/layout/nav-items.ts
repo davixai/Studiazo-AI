@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, CalendarDays, Compass, House, LibraryBig, Sparkles, Wallet, type LucideIcon } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, Compass, GraduationCap, House, LibraryBig, Sparkles, Wallet, type LucideIcon } from "lucide-react";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; /** Afișat în bara de jos pe mobil */ mobile: boolean };
 
@@ -6,6 +6,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/azi", label: "Azi", icon: House, mobile: true },
   { href: "/calendar", label: "Calendar", icon: CalendarDays, mobile: true },
   { href: "/materii", label: "Materii", icon: LibraryBig, mobile: true },
+  // Pe mobil bara de jos are deja 7 secțiuni; Classroom se deschide din Profil și din meniul de sus.
+  { href: "/classroom", label: "Classroom", icon: GraduationCap, mobile: false },
   { href: "/asistent", label: "Asistent", icon: Sparkles, mobile: true },
   { href: "/buget", label: "Buget", icon: Wallet, mobile: true },
   { href: "/joburi", label: "Joburi", icon: BriefcaseBusiness, mobile: true },

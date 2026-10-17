@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn, initials } from "@/lib/utils";
@@ -76,6 +76,13 @@ export function MobileTopBar({ userName }: { userName: string }) {
         </Link>
         <div className="flex items-center gap-3">
           <LiveClockCompact />
+          <Link
+            href="/classroom"
+            aria-label="Google Classroom"
+            className="flex size-9 items-center justify-center rounded-full border border-line/70 bg-surface text-ink-soft transition-colors hover:text-ink"
+          >
+            <GraduationCap className="size-[18px]" aria-hidden="true" />
+          </Link>
           <Link href="/profil" className="rounded-full" aria-label="Profilul meu">
             <Avatar name={userName} />
           </Link>

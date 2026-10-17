@@ -28,6 +28,19 @@ export async function getOccurrencesBetween(range: Range): Promise<EventOccurren
   return expandEvents((data ?? []).map(toEvent) as CalendarEvent[], range);
 }
 
+/** O activitate după id (pentru editare); null dacă nu există sau nu e a utilizatorului. */
+export async function getEvent(id: string): Promise<CalendarEvent | null> {
+  if (!UUID_RE.test(id)) return null;
+  if (isPreviewMode()) return previewEvents().find((e) => e.id === id) ?? null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("events").select(EVENT_COLUMNS).eq("id", id).maybeSingle();
+  if (error) throw new Error(`Nu am putut citi activitatea: ${error.message}`);
+  return data ? toEvent(data) : null;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Teme și examene nefinalizate cu termen în interval. */
 export async function getTasksBetween(range: Range, { includeCompleted = false } = {}): Promise<Task[]> {
   if (isPreviewMode()) {

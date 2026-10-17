@@ -45,7 +45,7 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 ## David — calendar, organizare și tot AI-ul
 
 **Calendar și termene**
-- [ ] D2 · Formular activitate (curs, seminar, laborator, job, sport…): creare, editare, ștergere, finalizare, recurență săptămânal / la 2 săptămâni, avertisment la suprapunere
+- [x] D2 · Formular activitate (curs, seminar, laborator, job, sport…): creare, editare, ștergere, finalizare, recurență săptămânal / la 2 săptămâni, avertisment la suprapunere _(de testat pe Supabase real)_
 - [ ] D3 · Teme și examene: creare, editare, finalizare; `?adauga=examen|tema` deschide formularul
 - [ ] D4 · Vederea săptămână (desktop) și zi; agenda rămâne pe mobil
 - [ ] D7 · Disponibilitatea pe zile, în profil

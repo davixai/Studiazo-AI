@@ -35,7 +35,7 @@ Legendă: ✅ gata și verificat · 🟡 demonstrativ sau parțial · ⬜ de fă
 | # | Task | Criteriu de finalizare |
 | --- | --- | --- |
 | D1 | Conectare Supabase reală + verificarea fluxurilor de autentificare | înregistrare → email → bun-venit → azi; recuperarea parolei funcționează |
-| D2 | Calendar: formular pentru activitate (Dialog), recurență, editare, ștergere, finalizare | salvat în DB; după reîncărcare rămâne; validare Zod; suprapunerea e semnalată |
+| D2 | ✅ cod · ⬜ testat pe Supabase real — Calendar: formular pentru activitate (Dialog), recurență, editare, ștergere (o zi sau toată seria), finalizare | salvat în DB; după reîncărcare rămâne; validare Zod; suprapunerea e semnalată |
 | D3 | Teme și examene: creare, editare, finalizare; `?adauga=examen\|tema` deschide formularul | apar pe pagina Azi și în agendă |
 | D4 | Calendar: vederea săptămână (desktop) + zi; agenda rămâne implicită pe mobil | capturi 360/768/1440 |
 | D5 | `features/proposals`: `ProposalCard`, `confirmProposal`, `rejectProposal` | teste: fără confirmare nu se salvează nimic; dublu-click nu dublează; suprapunerea este respinsă; altă persoană nu poate confirma |

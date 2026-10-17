@@ -41,7 +41,7 @@ git push -u origin main
 3. **Auth → URL Configuration**:
    - Site URL: `http://localhost:3000` (apoi domeniul de producție).
    - Redirect URLs: `http://localhost:3000/auth/callback` (+ `https://<domeniu-aplicatie>/auth/callback`).
-4. **Auth → Sign In / Providers → Email**: activ. „Confirm email” rămâne activ pentru producție. Emailurile implicite ale Supabase au o limită mică de trimitere pe oră; pentru teste dese, configurați SMTP propriu (Auth → SMTP) sau dezactivați temporar confirmarea pe proiectul de dezvoltare.
+4. **Auth → Sign In / Providers → Email**: activ. „Confirm email” este **dezactivat** deocamdată: emailurile implicite ale Supabase au o limită mică pe oră și blocau crearea conturilor. Ce refacem la lansare (SMTP propriu + confirmare): `docs/SCALARE.md`.
 5. Copiați URL-ul și cheia *Publishable* în `.env.local`, apoi reporniți `npm run dev`.
 6. **Date demonstrative (opțional)**: creați un cont în aplicație, înlocuiți emailul din `supabase/seed/demo.sql`, apoi rulați scriptul în SQL Editor.
 7. **Testul de izolare**: creați două conturi (A și B), adăugați date cu A și verificați că B nu vede nimic.

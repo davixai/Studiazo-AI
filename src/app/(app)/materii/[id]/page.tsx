@@ -51,7 +51,7 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
           description={subject.professor ?? undefined}
           actions={
             <>
-              {/* Chatul pe materie îl face David (S4); până atunci /asistent ignoră parametrul. */}
+              {/* Deschide chatul acestei materii în asistent (partea lui David). */}
               <ButtonLink href={`/asistent?materie=${subject.id}`} variant="secondary" className="w-full sm:w-auto">
                 <Sparkles aria-hidden="true" />
                 Întreabă despre materie
@@ -65,6 +65,7 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
 
       <SubjectTabs
         initial={query.tab === "notite" ? "notite" : "materiale"}
+        counts={{ materiale: materials.length, notite: notes.length }}
         materials={
           <MaterialsPanel
             subjectId={subject.id}

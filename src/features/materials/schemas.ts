@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { safeText } from "./extraction";
 
 // Limitele oglindesc tabelul `materials` și bucketul `materials` (20 MB = 20.971.520 de octeți, MiB).
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
@@ -29,13 +30,13 @@ export const FinishUploadSchema = z.object({
 /** „Curs_03-grafuri.pdf” → „Curs 03 grafuri”; titlul gol devine „Curs fără nume”. */
 export function titleFromFileName(name: string) {
   const base = name.replace(/\.[a-z0-9]{1,5}$/i, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
-  return (base || "Curs fără nume").slice(0, MATERIAL_TITLE_MAX);
+  return safeText(base || "Curs fără nume", MATERIAL_TITLE_MAX).trim();
 }
 
 /** Titlul trimis de browser: curățat și limitat (nu ne bazăm pe validarea din client). */
 export function cleanTitle(title: string, fallback: string) {
-  const t = title.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
-  return (t || fallback).slice(0, MATERIAL_TITLE_MAX);
+  const t = safeText(title.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim(), MATERIAL_TITLE_MAX).trim();
+  return t || fallback;
 }
 
 /** Pozele se micșorează în browser, deci originalul poate fi mai mare decât limita de stocare. */

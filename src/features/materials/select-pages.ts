@@ -6,7 +6,7 @@ export type MaterialPage = { materialId: string; title: string; page: number; te
 const STOPWORDS = new Set([
   "care", "este", "sunt", "pentru", "despre", "dintre", "cum", "unde", "cand", "acest", "aceasta", "aceste",
   "acesta", "intre", "fara", "prin", "spre", "sau", "iar", "dar", "din", "the", "and", "una", "unei", "unui",
-  "explica", "explicami", "spune", "spunemi", "imi", "mai", "foarte", "ceva",
+  "explica", "explicami", "spune", "spunemi", "imi", "mai", "foarte", "ceva", "rog",
 ]);
 
 /** Fără diacritice, litere mici: „Ștergere” și „stergere” se potrivesc (inclusiv ş/ţ cu sedilă). */

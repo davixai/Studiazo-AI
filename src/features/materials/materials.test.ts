@@ -142,7 +142,7 @@ describe("selectPages (pentru asistent)", () => {
 
   it("normalizează ș/ț cu virgulă și cu sedilă la fel", () => {
     expect(normalizeForSearch("Ștergere ţintă ș ț")).toBe("stergere tinta s t");
-    expect(searchTerms("Explică-mi și BFS-ul, te rog")).toEqual(["bfs", "rog"]);
+    expect(searchTerms("Explică-mi și BFS-ul, te rog")).toEqual(["bfs"]);
   });
 });
 
@@ -159,5 +159,22 @@ describe("poze", () => {
     expect(checkFile({ name: "mare.png", type: "image/png", size: 30 * 1024 * 1024 }, "image")).toBeNull();
     expect(checkFile({ name: "imensă.png", type: "image/png", size: 51 * 1024 * 1024 }, "image")).toMatch(/50 MB/);
     expect(checkFile({ name: "doc.pdf", type: "application/pdf", size: 10 }, "image")).toMatch(/nu este o poză/);
+  });
+});
+
+describe("cazuri limită (audit)", () => {
+  it("1.048.500 B se afișează „1 MB”, nu „1024 KB”", () => {
+    expect(formatBytes(1_048_500)).toBe("1 MB");
+    expect(formatBytes(1_047_000)).toBe("1022 KB");
+  });
+  it("nu rupe un emoji la limită și elimină jumătățile orfane (Postgres le respinge)", async () => {
+    const { safeText } = await import("./extraction");
+    const emoji = "😀"; // 2 unități UTF-16
+    expect(safeText("ab" + emoji, 3)).toBe("ab");
+    expect(safeText("x\uD83Dy\uDE00z")).toBe("xyz");
+    expect(safeText("ok 😀")).toBe("ok 😀");
+    expect(normalizePageText("a".repeat(PAGE_TEXT_MAX - 1) + emoji)).toHaveLength(PAGE_TEXT_MAX - 1);
+    expect(titleFromFileName("a".repeat(159) + emoji + ".pdf")).toHaveLength(159);
+    expect(cleanTitle("\uD83D", "Rezervă")).toBe("Rezervă");
   });
 });

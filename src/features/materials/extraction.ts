@@ -13,15 +13,24 @@ const MIN_PAGE_CHARS = 10;
 export const SCANNED_PDF_MESSAGE =
   "Acest PDF nu are text selectabil. Asistentul nu îl poate citi încă; încearcă un PDF exportat din Word sau fotografiază pagina importantă.";
 
+/**
+ * Scurtează la `max` unități fără a rupe un caracter din două părți (emoji) și elimină jumătățile orfane:
+ * Postgres respinge un astfel de text, iar un singur caracter ar face să eșueze tot PDF-ul.
+ */
+export function safeText(text: string, max = Infinity) {
+  const cut = text.length > max ? text.slice(0, max) : text;
+  return cut.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "");
+}
+
 /** Scoate caracterele de control (Postgres nu acceptă \u0000), comprimă spațiile, păstrează paragrafele. */
 export function normalizePageText(text: string) {
-  return text
+  const clean = text
     .replace(/[\u0000-\u0008\u000b\u000e-\u001f\u007f]/g, "")
     .replace(/[ \t\f\v ]+/g, " ")
     .replace(/ *\r?\n */g, "\n")
     .replace(/\n{3,}/g, "\n\n")
-    .trim()
-    .slice(0, PAGE_TEXT_MAX);
+    .trim();
+  return safeText(clean, PAGE_TEXT_MAX);
 }
 
 function visibleChars(text: string) {

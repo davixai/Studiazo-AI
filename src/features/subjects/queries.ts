@@ -4,6 +4,8 @@ import { isPreviewMode } from "@/lib/env";
 import { PREVIEW_SUBJECTS } from "@/lib/preview/fixtures";
 import { createClient } from "@/lib/supabase/server";
 import { SUBJECT_COLUMNS, toSubject } from "@/lib/supabase/mappers";
+import { PREVIEW_MATERIALS } from "@/features/materials/preview";
+import { previewNotes } from "@/features/notes/preview";
 import { SubjectIdSchema } from "./schemas";
 
 // Proprietar: Sergiu. Citit și de David (calendar, termene, asistent).
@@ -27,7 +29,15 @@ export type SubjectWithCounts = Subject & { materialCount: number; noteCount: nu
 
 /** Materiile active cu numărul de materiale și notițe (cardurile din /materii). */
 export async function listSubjectsWithCounts(): Promise<SubjectWithCounts[]> {
-  if (isPreviewMode()) return PREVIEW_SUBJECTS.map((s) => ({ ...s, materialCount: 0, noteCount: 0 }));
+  if (isPreviewMode()) {
+    // Aceleași date demonstrative ca pe pagina materiei, ca numerele să se potrivească.
+    const notes = previewNotes();
+    return PREVIEW_SUBJECTS.map((s) => ({
+      ...s,
+      materialCount: PREVIEW_MATERIALS.filter((m) => m.subjectId === s.id).length,
+      noteCount: notes.filter((n) => n.subjectId === s.id).length,
+    }));
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase

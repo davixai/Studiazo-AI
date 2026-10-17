@@ -84,6 +84,41 @@ describe.skipIf(!process.env.LIVE_AI)("asistentul, cu OpenAI real", () => {
     if (calls.includes("propose_study_sessions")) expect(proposal.fits_available_time).toBe(false);
   }, 120_000);
 
+  it("rămâne pe studiu: refuză scurt cererile mari din afara rolului", async () => {
+    const turn = await runAssistant({
+      instructions,
+      userId: "test",
+      input: [{ role: "user", content: "Scrie-mi o rețetă completă de sarmale, cu toți pașii și cantitățile." }],
+      execute: async () => ({ output: "{}" }),
+    });
+    console.log(turn.usage, `\n${turn.text}`);
+    expect(turn.text.length).toBeLessThan(600);
+    expect(turn.text).not.toMatch(/\d+\s*(g|grame|kg)\b/i);
+  }, 90_000);
+
+  it("răspunde scurt la o întrebare minoră și revine la studiu", async () => {
+    const turn = await runAssistant({
+      instructions,
+      userId: "test",
+      input: [{ role: "user", content: "Ce culoare are cerul pe Marte?" }],
+      execute: async () => ({ output: "{}" }),
+    });
+    console.log(turn.usage, `\n${turn.text}`);
+    expect(turn.text.length).toBeLessThan(500);
+    expect(turn.text).toMatch(/\?/);
+  }, 90_000);
+
+  it("ajută cu subiectele apropiate de facultate (practică, CV)", async () => {
+    const turn = await runAssistant({
+      instructions,
+      userId: "test",
+      input: [{ role: "user", content: "Sunt în anul 2 la informatică. Ce pun în CV ca să prind un stagiu de practică vara asta?" }],
+      execute: async () => ({ output: "{}" }),
+    });
+    console.log(turn.usage, `\n${turn.text}`);
+    expect(turn.text.length).toBeGreaterThan(300);
+  }, 90_000);
+
   it("citește o poză cu un exercițiu și îndrumă, fără să dea direct soluția", async () => {
     const image = process.env.LIVE_AI_IMAGE;
     if (!image) return;

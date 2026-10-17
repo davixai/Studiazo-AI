@@ -16,7 +16,7 @@ export class AiUnavailableError extends Error {
 export function getOpenAI(): OpenAI {
   const config = getAiConfig();
   if (!config.enabled) throw new AiUnavailableError();
-  cached ??= new OpenAI({ apiKey: config.apiKey, timeout: config.timeoutMs, maxRetries: config.maxRetries });
+  cached ??= new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL, timeout: config.timeoutMs, maxRetries: config.maxRetries });
   return cached;
 }
 

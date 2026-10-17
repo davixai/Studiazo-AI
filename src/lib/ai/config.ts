@@ -11,9 +11,14 @@ function intFromEnv(name: string, fallback: number, min: number, max: number) {
 
 export function getAiConfig() {
   const apiKey = process.env.OPENAI_API_KEY?.trim() ?? "";
+  // Furnizor compatibil OpenAI (ex. Groq, gratuit: https://api.groq.com/openai/v1). Gol = OpenAI.
+  const baseURL = process.env.AI_BASE_URL?.trim() || undefined;
   return {
-    enabled: apiKey.startsWith("sk-") && !apiKey.includes("EXEMPLU"),
+    enabled: apiKey.length >= 20 && !apiKey.includes("EXEMPLU"),
     apiKey,
+    baseURL,
+    /** Parametrii pe care doar OpenAI îi acceptă (store, include, prompt_cache_key, safety_identifier). */
+    openaiExtras: !baseURL,
     model: process.env.OPENAI_MODEL?.trim() || DEFAULT_MODEL,
     requestsPerHour: intFromEnv("AI_REQUESTS_PER_HOUR", 30, 1, 500),
     maxOutputTokens: intFromEnv("AI_MAX_OUTPUT_TOKENS", 1200, 200, 8000),

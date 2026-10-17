@@ -52,8 +52,7 @@ export async function generateQuiz({
     text: { format: { type: "json_schema", name: "test_grila", strict: true, schema: QUIZ_JSON_SCHEMA } },
     reasoning: { effort: "low" },
     max_output_tokens: 6000,
-    store: false,
-    safety_identifier: createHash("sha256").update(userId).digest("hex").slice(0, 32),
+    ...(config.openaiExtras ? { store: false, safety_identifier: createHash("sha256").update(userId).digest("hex").slice(0, 32) } : {}),
   });
 
   const quiz = buildQuiz(JSON.parse(response.output_text), excerpts, questionCount);

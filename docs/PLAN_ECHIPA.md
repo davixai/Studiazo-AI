@@ -51,9 +51,9 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 - [x] D7 · Disponibilitatea pe zile, în profil _(de testat pe Supabase real)_
 
 **Asistentul AI**
-- [ ] S4 · Chat General + câte un chat pe fiecare materie; istoric; limite; erori clare; compozitor lipit jos pe telefon
-- [ ] S4b · Poza în chat: AI-ul o citește și îndrumă pas cu pas (indicii, nu soluția direct); spune când poza e neclară
-- [ ] S5 · Instrumentele AI (program, termene, intervale libere, material, propuneri), validate cu Zod, max. 4 pași
+- [x] S4 · Chat General + câte un chat pe fiecare materie; istoric; limite; erori clare; compozitor lipit jos pe telefon
+- [x] S4b · Poza în chat: AI-ul o citește și îndrumă pas cu pas (indicii, nu soluția direct); spune când poza e neclară
+- [x] S5 · Instrumentele AI (program, termene, intervale libere, material, propuneri), validate cu Zod, max. 4 pași
 - [ ] S6 · Explicații din materiale cu „(pagina N)”; „nu apare în materialele tale” când e cazul — **după S3 al lui Sergiu**
 - [ ] S7 · Teste grilă: generare, rezolvare, scor, explicații, istoric, teme slabe
 - [ ] S8 · Plan de studiu pe examene + teme slabe, cu avertisment când nu încape

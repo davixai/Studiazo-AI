@@ -57,7 +57,9 @@ Nu primesc `user_id`: RLS limitează la utilizatorul curent. Semnăturile rămâ
 
 ## 5. Instrumentele AI — `lib/contracts/ai-tools.ts` (David)
 
-Numele și schemele argumentelor: `get_schedule`, `get_upcoming_deadlines`, `find_free_slots`, `get_subject_material`, `propose_task`, `propose_study_sessions`, `generate_quiz`. Limitele sunt în `AI_LIMITS` (max. 4 pași de instrumente, 12 mesaje de istoric, 24.000 de caractere de material). Argumentele se validează cu Zod înainte de execuție. Niciun instrument nu primește `user_id`, nu rulează SQL arbitrar și nu scrie direct în calendar.
+Implementare: `src/features/assistant/tools.ts`. Datele de la model sunt locale (`date` YYYY-MM-DD + `start`/`time` HH:MM) și devin momente exacte doar prin `fromLocal()`. Propunerile se validează ca la confirmare (schemă, timp, suprapuneri) înainte de a fi salvate ca `pending`. Testele grilă (S7) nu sunt un instrument de chat, ci un flux separat.
+
+Numele și schemele argumentelor: `get_schedule`, `get_upcoming_deadlines`, `find_free_slots`, `get_subject_material`, `propose_task`, `propose_study_sessions`. Limitele sunt în `AI_LIMITS` (max. 4 pași de instrumente, 12 mesaje de istoric, 24.000 de caractere de material). Argumentele se validează cu Zod înainte de execuție. Niciun instrument nu primește `user_id`, nu rulează SQL arbitrar și nu scrie direct în calendar.
 
 ## 6. Materii — `features/subjects/queries.ts` (Sergiu)
 

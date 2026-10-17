@@ -1,27 +1,27 @@
-import { ChevronRight, FileText, LibraryBig } from "lucide-react";
+import { LibraryBig } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
-import { SUBJECT_COLOR_CLASSES } from "@/components/ui/category";
 import { EmptyState } from "@/components/ui/empty-state";
+import { formatRelativeTime } from "@/features/notes/format";
 import { ArchivedSubjects } from "@/features/subjects/components/archived-subjects";
+import { ContentPanel, LibraryHero, RecentPanel, StudiedPanel, SubjectCard } from "@/features/subjects/components/library";
 import { SubjectDialog } from "@/features/subjects/components/subject-dialog";
-import { subjectContentSummary } from "@/features/subjects/format";
-import { listArchivedSubjects, listSubjectsWithCounts } from "@/features/subjects/queries";
+import { getLibraryOverview, listArchivedSubjects } from "@/features/subjects/queries";
 import { SUBJECT_COLORS, type Subject, type SubjectColor } from "@/lib/contracts/domain";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Materii" };
 
 const delay = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
 export default async function SubjectsPage() {
-  const [subjects, archived] = await Promise.all([listSubjectsWithCounts(), listArchivedSubjects()]);
+  const [overview, archived] = await Promise.all([getLibraryOverview(), listArchivedSubjects()]);
+  const { subjects, totals } = overview;
+  const now = new Date();
   const addButton = <SubjectDialog mode="create" defaultColor={nextColor(subjects)} />;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 lg:gap-7">
       <PageHeader
         title="Materii"
         description="Cursurile tale în PDF, pozele și notițele, organizate pe materii."
@@ -38,41 +38,38 @@ export default async function SubjectsPage() {
           />
         </Card>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {subjects.map((subject, i) => {
-            const color = SUBJECT_COLOR_CLASSES[subject.color];
-            return (
-              // `stagger` pe <li> și `lift` pe card: ambele animă transform, deci stau pe elemente diferite.
-              <li key={subject.id} className="stagger" style={delay(Math.min(i + 1, 9))}>
-                <Link
-                  href={`/materii/${subject.id}`}
-                  className="group block h-full rounded-lg transition-transform active:scale-[0.99]"
-                >
-                  <Card className="lift flex h-full flex-col gap-5 p-5">
-                    <div className="flex items-start justify-between">
-                      <div className={cn("flex size-10 items-center justify-center rounded-md", color.soft, color.text)}>
-                        <FileText className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                      </div>
-                      <ChevronRight
-                        className="size-4 text-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-ink-muted"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="mt-auto min-w-0">
-                      <h2 className="text-[15px] leading-snug font-semibold break-words">{subject.name}</h2>
-                      {subject.professor ? (
-                        <p className="mt-0.5 truncate text-[13px] text-ink-muted">{subject.professor}</p>
-                      ) : null}
-                      <p className="tabular mt-2 text-[13px] font-medium text-ink-soft">
-                        {subjectContentSummary(subject.materialCount, subject.noteCount)}
-                      </p>
-                    </div>
-                  </Card>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          <section aria-label="Pe scurt" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-12 lg:gap-5">
+            <div className="flex sm:col-span-2 lg:col-span-5 [&>section]:w-full">
+              <LibraryHero totals={totals} index={1} />
+            </div>
+            <StudiedPanel studied={totals.studied} total={totals.pdfs} index={2} className="lg:col-span-3" />
+            <ContentPanel subjects={subjects} index={3} className="lg:col-span-4" />
+          </section>
+
+          <div className="grid gap-6 lg:grid-cols-12 lg:gap-5">
+            <section aria-labelledby="materiile-tale" className="flex min-w-0 flex-col gap-3 lg:col-span-8">
+              <h2 id="materiile-tale" className="flex items-baseline gap-2 text-[15px] font-bold tracking-[-0.015em] text-ink">
+                Materiile tale
+                <span className="text-[13px] font-medium text-ink-muted tabular">{subjects.length}</span>
+              </h2>
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {subjects.map((subject, i) => (
+                  // `stagger` pe <li> și `lift` pe card: ambele animă transform, deci stau pe elemente diferite.
+                  <li key={subject.id} className="stagger" style={delay(Math.min(i + 4, 10))}>
+                    <SubjectCard subject={subject} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <div className="min-w-0 lg:col-span-4 lg:pt-8">
+              <RecentPanel
+                index={5}
+                items={overview.recent.map((r) => ({ ...r, label: formatRelativeTime(new Date(r.at), now) }))}
+              />
+            </div>
+          </div>
+        </>
       )}
 
       <ArchivedSubjects subjects={archived} />

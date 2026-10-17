@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ExternalLink, ImageOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, ImageIcon, ImageOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { buttonStyles } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -65,13 +65,13 @@ export function PhotoGrid({ photos }: { photos: MaterialItem[] }) {
 
 /**
  * Miniatura e randată și pe server, deci se poate încărca înainte ca React să atașeze `onLoad`:
- * fără stare de încărcare (ar rămâne invizibilă); pictograma de dedesubt se vede doar dacă poza lipsește.
+ * fără stare de încărcare (ar rămâne invizibilă); pictograma neutră de dedesubt se vede cât timp se încarcă.
  */
 function Thumb({ photo }: { photo: MaterialItem }) {
   return (
     <>
-      <span className="absolute inset-0 flex items-center justify-center text-ink-faint">
-        <ImageOff className="size-6" aria-hidden="true" />
+      <span className="absolute inset-0 flex items-center justify-center text-ink-faint/60">
+        <ImageIcon className="size-6" aria-hidden="true" />
       </span>
       <img
         src={fileUrl(photo, true)}

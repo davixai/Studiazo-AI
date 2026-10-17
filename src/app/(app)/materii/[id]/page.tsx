@@ -1,19 +1,19 @@
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PageHeader } from "@/components/layout/page-header";
-import { ButtonLink } from "@/components/ui/button";
-import { ColorDot } from "@/components/ui/category";
 import { ArchiveSubject } from "@/features/subjects/components/archive-subject";
 import { SubjectDialog } from "@/features/subjects/components/subject-dialog";
+import { SubjectHeader, type SubjectNumbers } from "@/features/subjects/components/subject-header";
 import { SubjectTabs } from "@/features/subjects/components/subject-tabs";
 import { getSubject } from "@/features/subjects/queries";
 import { NotesPanel } from "@/features/notes/components/notes-panel";
 import { formatRelativeTime } from "@/features/notes/format";
 import { listNotes } from "@/features/notes/queries";
+import type { Note } from "@/features/notes/types";
 import { MaterialsPanel } from "@/features/materials/components/materials-panel";
 import { listMaterials } from "@/features/materials/queries";
+import type { Material } from "@/features/materials/types";
 
 /** Un PDF rămas „în procesare” mai mult de atât poate fi reluat manual. */
 const STALE_PROCESSING_MS = 3 * 60_000;
@@ -41,21 +41,12 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
           <ArrowLeft className="size-3.5" aria-hidden="true" />
           Materii
         </Link>
-        <PageHeader
-          title={
-            <span className="flex items-center gap-3">
-              <ColorDot color={subject.color} className="size-3" />
-              <span className="min-w-0 break-words">{subject.name}</span>
-            </span>
-          }
-          description={subject.professor ?? undefined}
+        <SubjectHeader
+          subject={subject}
+          numbers={numbersFor(materials, notes.length)}
+          lastActivity={lastActivity(materials, notes, now)}
           actions={
             <>
-              {/* Deschide chatul acestei materii în asistent (partea lui David). */}
-              <ButtonLink href={`/asistent?materie=${subject.id}`} variant="secondary" className="w-full sm:w-auto">
-                <Sparkles aria-hidden="true" />
-                Întreabă despre materie
-              </ButtonLink>
               <SubjectDialog mode="edit" subject={subject} />
               <ArchiveSubject subject={subject} />
             </>
@@ -85,4 +76,26 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
       />
     </div>
   );
+}
+
+/** Numerele din antet; „pagini gata” = paginile PDF-urilor procesate (ce poate citi asistentul). */
+function numbersFor(materials: Material[], notes: number): SubjectNumbers {
+  const pdfs = materials.filter((m) => m.kind === "pdf");
+  return {
+    pdfs: pdfs.length,
+    photos: materials.length - pdfs.length,
+    notes,
+    studied: pdfs.filter((m) => m.studiedAt).length,
+    readyPages: pdfs.reduce((sum, m) => sum + (m.status === "procesat" ? (m.pageCount ?? 0) : 0), 0),
+  };
+}
+
+/** Cel mai recent material (după adăugare) sau notiță (după modificare). */
+function lastActivity(materials: Material[], notes: Note[], now: Date) {
+  const items = [
+    ...materials.map((m) => ({ title: m.title, at: m.createdAt })),
+    ...notes.map((n) => ({ title: n.title, at: n.updatedAt })),
+  ].sort((a, b) => b.at.localeCompare(a.at));
+  const latest = items[0];
+  return latest ? { title: latest.title, label: formatRelativeTime(new Date(latest.at), now) } : null;
 }

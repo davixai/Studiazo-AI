@@ -48,7 +48,7 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 - [x] D2 · Formular activitate (curs, seminar, laborator, job, sport…): creare, editare, ștergere, finalizare, recurență săptămânal / la 2 săptămâni, avertisment la suprapunere _(de testat pe Supabase real)_
 - [x] D3 · Teme și examene: creare, editare, finalizare, ștergere; `?adauga=examen|tema` deschide formularul; termenele de pe Azi se deschid la apăsare _(de testat pe Supabase real)_
 - [ ] D4 · Vederea săptămână (desktop) și zi; agenda rămâne pe mobil
-- [ ] D7 · Disponibilitatea pe zile, în profil
+- [x] D7 · Disponibilitatea pe zile, în profil _(de testat pe Supabase real)_
 
 **Asistentul AI**
 - [ ] S4 · Chat General + câte un chat pe fiecare materie; istoric; limite; erori clare; compozitor lipit jos pe telefon

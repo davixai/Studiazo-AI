@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { signOut } from "@/features/auth/actions";
+import { AvailabilityForm } from "@/features/profile/components/availability-form";
 import { DeleteAccount } from "@/features/profile/components/delete-account";
 import { ProfileForm } from "@/features/profile/components/profile-form";
 import { getProfile } from "@/features/profile/queries";
@@ -21,6 +22,10 @@ export default async function ProfilePage() {
 
       <Card className="p-5 sm:p-8">
         <ProfileForm profile={profile} mode="profile" />
+      </Card>
+
+      <Card id="disponibilitate" className="scroll-mt-24 p-5 sm:p-8">
+        <AvailabilityForm availability={profile.availability} />
       </Card>
 
       <Card className="divide-y divide-line">

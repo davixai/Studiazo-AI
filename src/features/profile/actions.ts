@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/session";
 import { isPreviewMode } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { fieldErrorsFrom, type FormState } from "@/features/auth/schemas";
-import { DELETE_CONFIRMATION, ProfileFormSchema, type ProfileFormValues } from "./schemas";
+import { DELETE_CONFIRMATION, ProfileFormSchema, availabilityFromForm, type ProfileFormValues } from "./schemas";
 
 const PREVIEW_STATE: FormState = {
   status: "error",
@@ -107,4 +107,21 @@ export async function deleteAccount(_prev: FormState, formData: FormData): Promi
 
   await supabase.auth.signOut();
   redirect("/autentificare");
+}
+
+/** Intervalele în care studentul poate învăța; folosite de planificarea sesiunilor (computeFreeSlots). */
+export async function saveAvailability(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (isPreviewMode()) return PREVIEW_STATE;
+  const user = await requireUser();
+
+  const values = rawValues(formData);
+  const parsed = availabilityFromForm(values);
+  if (!parsed.ok) return { status: "error", fieldErrors: parsed.fieldErrors, values };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("profiles").update({ availability: parsed.windows }).eq("id", user.id);
+  if (error) return { status: "error", message: "Nu am putut salva disponibilitatea. Încearcă din nou.", values };
+
+  revalidatePath("/profil");
+  return { status: "success", message: "Disponibilitatea a fost salvată.", values };
 }

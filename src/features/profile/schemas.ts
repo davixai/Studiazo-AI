@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PREFERRED_TIMES } from "@/lib/contracts/domain";
+import { PREFERRED_TIMES, type AvailabilityWindow } from "@/lib/contracts/domain";
 import { isTimeOfDay } from "@/lib/time/zone";
 
 const optionalText = (max: number) =>
@@ -42,3 +42,30 @@ export const SESSION_LENGTH_OPTIONS = [25, 45, 50, 60, 90] as const;
 export const DAILY_LIMIT_OPTIONS = [60, 120, 180, 240, 300] as const;
 
 export const DELETE_CONFIRMATION = "ȘTERGE";
+
+export const WEEKDAY_LABELS = ["Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă", "Duminică"] as const;
+
+/**
+ * Citește formularul de disponibilitate: câte un interval pe zi (d1 … d7 = luni … duminică),
+ * cu d{n}=on, d{n}_start și d{n}_end. Erorile sunt pe cheia zilei.
+ */
+export function availabilityFromForm(values: Record<string, string>):
+  | { ok: true; windows: AvailabilityWindow[] }
+  | { ok: false; fieldErrors: Record<string, string> } {
+  const windows: AvailabilityWindow[] = [];
+  const fieldErrors: Record<string, string> = {};
+
+  for (let weekday = 1; weekday <= 7; weekday++) {
+    if (values[`d${weekday}`] !== "on") continue;
+    const start = values[`d${weekday}_start`] ?? "";
+    const end = values[`d${weekday}_end`] ?? "";
+    if (!isTimeOfDay(start) || !isTimeOfDay(end)) fieldErrors[`d${weekday}`] = "Alege ora de început și de sfârșit.";
+    else if (end <= start) fieldErrors[`d${weekday}`] = "Intervalul trebuie să se termine după ce începe.";
+    else windows.push({ weekday, start, end });
+  }
+
+  if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
+  if (windows.length === 0) return { ok: false, fieldErrors: { form: "Alege cel puțin o zi în care poți învăța." } };
+  const parsed = AvailabilitySchema.safeParse(windows);
+  return parsed.success ? { ok: true, windows: parsed.data } : { ok: false, fieldErrors: { form: "Intervale invalide." } };
+}

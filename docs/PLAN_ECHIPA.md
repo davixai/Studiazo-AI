@@ -54,9 +54,9 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 - [x] S4 · Chat General + câte un chat pe fiecare materie; istoric; limite; erori clare; compozitor lipit jos pe telefon
 - [x] S4b · Poza în chat: AI-ul o citește și îndrumă pas cu pas (indicii, nu soluția direct); spune când poza e neclară
 - [x] S5 · Instrumentele AI (program, termene, intervale libere, material, propuneri), validate cu Zod, max. 4 pași
-- [ ] S6 · Explicații din materiale cu „(pagina N)”; „nu apare în materialele tale” când e cazul — **după S3 al lui Sergiu**
+- [x] S6 · Explicații din materiale cu „(pagina N)”; „nu apare în materialele tale” când e cazul — **după S3 al lui Sergiu**
 - [x] S7 · Teste grilă: generare, rezolvare, scor, explicații, istoric, teme slabe
-- [ ] S8 · Plan de studiu pe examene + teme slabe, cu avertisment când nu încape
+- [x] S8 · Plan de studiu pe examene + teme slabe, cu avertisment când nu încape
 
 **Legătura**
 - [x] D5 · `ProposalCard` + Confirmă / Renunță; fără duplicate la dublu-click; nimic salvat fără confirmare _(logica testată; de testat pe Supabase real)_
@@ -78,6 +78,6 @@ Amândoi lucrați pe `main`: `git pull` → lucru → `npm run check` → commit
 | Ce | De la | Pentru | Folosit în |
 | --- | --- | --- | --- |
 | `listSubjects()` | Sergiu (există deja) | David | formulare calendar, lista de chaturi |
-| `getMaterialPages()` | Sergiu (S3) | David | S6 explicații cu pagină |
+| text pe pagini (`material_pages`) | Sergiu (S3) ✅ | David | S6 — citit printr-un adaptor în `features/assistant/materials.ts` |
 | `getMaterialImageUrl()` | Sergiu (S3b) | David | S4b, „întreabă despre această poză” |
 | ruta `/asistent?materie=<id>` | David (S4) | Sergiu | butonul „Întreabă despre materie” (până atunci, linkul duce la `/asistent`) |

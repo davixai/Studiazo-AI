@@ -49,9 +49,9 @@ Legendă: ✅ gata și verificat · 🟡 demonstrativ sau parțial · ⬜ de fă
 | S4 | ✅ cod · ⬜ testat cap-coadă pe Supabase real — Chat: **un chat pentru fiecare materie a studentului** (listă: General + materiile lui, ex. Matematică, Analiză, Electronică, Programare) + istoric, Responses API, limite, erori, timeout. Butonul „Întreabă despre materie” din `/materii/[id]` deschide chatul materiei | chatul materiei folosește doar materialele ei; AI indisponibil → mesaj clar, restul aplicației merge |
 | S4b | ✅ cod · ⬜ test cu poze reale — **AI vede poza**: studentul trimite o poză în chat (exercițiu, tablă, notițe), modelul (`gpt-6-luna`, intrare text + imagine) o citește și îl îndrumă pas cu pas, cu întrebări și indicii; spune clar când poza e neclară | test cu o poză reală clară + una neclară |
 | S5 | ✅ cod + test cu OpenAI real (instrumente simulate) — Instrumentele AI (`ai-tools.ts`), cu validare și max. 4 pași | „Am examen vineri. Găsește-mi trei intervale.” → propunere `pending` |
-| S6 | 🟡 notițele ✅ · PDF-uri după S3 — Explicații din material, cu citare de pagină; „nu apare în materiale” când e cazul | test cu PDF real |
+| S6 | ✅ cod + test live (citare pagină, instrucțiune malițioasă ignorată) · ⬜ test cu un PDF real încărcat — Explicații din material, cu citare de pagină; „nu apare în materiale” când e cazul | test cu PDF real |
 | S7 | ✅ cod + generare testată cu OpenAI real · ⬜ testat pe Supabase real — Teste grilă: generare (structured output), rezolvare, scor, istoric, teme slabe | `getRecentAttempts()` pentru David |
-| S8 | Propunerile de studiu țin cont de testele slabe și de examene | avertisment când nu încape |
+| S8 | ✅ cod + test live (examen + teme slabe + „nu încape”) — Propunerile de studiu țin cont de testele slabe și de examene | avertisment când nu încape |
 
 ### Sergiu — materii și fișiere
 | # | Task | Criteriu de finalizare |

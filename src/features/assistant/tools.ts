@@ -4,6 +4,8 @@ import { getOccurrencesBetween, getTasksBetween, getUpcomingTasks } from "@/feat
 import { AI_LIMITS, AI_TOOL_ARGS, type AiToolName } from "@/lib/contracts/ai-tools";
 import { EVENT_KIND_LABELS, TASK_KIND_LABELS, type Profile, type Subject, type TaskKind } from "@/lib/contracts/domain";
 import { ProposalPayloadSchema, checkProposalTiming, type ProposalPayload } from "@/lib/contracts/proposals";
+import { getRecentAttempts } from "@/features/quizzes/queries";
+import { weakTopics, type TopicBreakdown } from "@/lib/contracts/quiz";
 import { createClient } from "@/lib/supabase/server";
 import { computeFreeSlots, findConflicts, findInternalOverlaps } from "@/lib/time/slots";
 import { dayBounds, fromLocal, shiftDateKey, toDateKey, toTimeOfDay } from "@/lib/time/zone";
@@ -58,6 +60,9 @@ export const TOOL_DEFINITIONS: FunctionTool[] = [
   tool("get_subject_material", "Textul din notițele și materialele (PDF) unei materii, cu titlul și numărul paginii.", {
     subject_id: { type: "string", description: "Id-ul materiei" },
     query: { ...nullable("string"), description: "Ce cauți (ex. „arbori binari”); null pentru început" },
+  }),
+  tool("get_weak_topics", "Temele la care studentul a greșit în testele grilă recente, de la cea mai slabă. Folosește-l când planifici recapitularea.", {
+    subject_id: { ...nullable("string"), description: "Id-ul materiei sau null pentru toate" },
   }),
   tool("propose_task", "Pregătește teme sau examene pentru calendar. NU salvează: studentul confirmă cu un buton.", {
     explanation: { type: "string", description: "O propoziție pentru student" },
@@ -124,6 +129,8 @@ export async function executeTool(name: string, rawArgs: string, ctx: ToolContex
         return await upcomingDeadlines(parsed.data as ArgsOf<"get_upcoming_deadlines">, ctx);
       case "find_free_slots":
         return await freeSlots(parsed.data as ArgsOf<"find_free_slots">, ctx);
+      case "get_weak_topics":
+        return await weakTopicsTool(parsed.data as ArgsOf<"get_weak_topics">, ctx);
       case "get_subject_material":
         return await subjectMaterial(parsed.data as ArgsOf<"get_subject_material">, ctx);
       case "propose_task":
@@ -235,6 +242,29 @@ async function subjectMaterial({ subject_id, query }: ArgsOf<"get_subject_materi
   };
 }
 
+async function weakTopicsTool({ subject_id }: ArgsOf<"get_weak_topics">, ctx: ToolContext) {
+  const attempts = await getRecentAttempts(20);
+  const bySubject = new Map<string, TopicBreakdown>();
+  for (const a of attempts) {
+    if (subject_id && a.subjectId !== subject_id) continue;
+    const merged = bySubject.get(a.subjectId) ?? {};
+    for (const [topic, { correct, total }] of Object.entries(a.topicBreakdown)) {
+      const entry = (merged[topic] ??= { correct: 0, total: 0 });
+      entry.correct += correct;
+      entry.total += total;
+    }
+    bySubject.set(a.subjectId, merged);
+  }
+  return ok({
+    subjects: [...bySubject.entries()].map(([id, breakdown]) => ({
+      subject: subjectName(ctx, id),
+      subject_id: id,
+      weak_topics: weakTopics(breakdown).map((t) => ({ topic: t.topic, correct: t.correct, total: t.total })),
+    })),
+    note: attempts.length === 0 ? "Studentul nu a rezolvat încă teste grilă." : undefined,
+  });
+}
+
 async function proposeTask({ explanation, items }: ArgsOf<"propose_task">, ctx: ToolContext) {
   const payload = {
     version: 1,
@@ -289,6 +319,15 @@ async function saveProposal(raw: unknown, ctx: ToolContext): Promise<ToolResult>
       start: new Date(Math.min(...sessions.map((s) => s.start.getTime()))),
       end: new Date(Math.max(...sessions.map((s) => s.end.getTime()))),
     };
+    const limit = ctx.profile?.dailyStudyLimitMinutes;
+    if (limit) {
+      const perDay = new Map<string, number>();
+      for (const s of sessions) perDay.set(toDateKey(s.start), (perDay.get(toDateKey(s.start)) ?? 0) + (s.end.getTime() - s.start.getTime()) / 60_000);
+      const over = [...perDay.entries()].filter(([, minutes]) => minutes > limit);
+      if (over.length > 0) {
+        return fail(`Depășește limita zilnică de ${limit} de minute în ${over.map(([d]) => d).join(", ")}. Împarte sesiunile pe mai multe zile sau pune fits_available_time=false cu un avertisment.`);
+      }
+    }
     const busy = await busyBetween(range);
     const clash = sessions.flatMap((s) => findConflicts(s, busy).map((b) => `${toDateKey(s.start)} ${toTimeOfDay(s.start)} se suprapune cu „${b.title}”`));
     if (clash.length > 0) return fail(`${clash.join("; ")}. Folosește find_free_slots și alege alte ore.`);

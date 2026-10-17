@@ -46,7 +46,7 @@ export default async function TodayPage() {
       </header>
 
       {/* Mobil: ce urmează + streak + scurtături */}
-      <div className="flex flex-col gap-4 lg:hidden">
+      <div className="flex min-w-0 flex-col gap-4 lg:hidden">
         <NextUpCard agenda={agenda} now={now} />
         <StreakStrip stats={stats} />
         <nav aria-label="Acțiuni rapide" className="stagger rounded-lg border border-line/70 bg-surface p-4 shadow-sm" style={delay(2)}>
@@ -82,8 +82,8 @@ export default async function TodayPage() {
         />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-12 lg:gap-7">
-        <div className="flex flex-col gap-6 lg:col-span-7 lg:gap-7">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-7">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-7 lg:gap-7">
           <Card aria-labelledby="program-azi" className="stagger" style={delay(5)}>
             <CardHeader
               id="program-azi"
@@ -134,7 +134,7 @@ export default async function TodayPage() {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-6 lg:col-span-5 lg:gap-7">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-5 lg:gap-7">
           <div className="hidden lg:block">
             <StreakCard stats={stats} index={5} />
           </div>

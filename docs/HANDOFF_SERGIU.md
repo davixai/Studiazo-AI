@@ -4,8 +4,8 @@
 
 **Pregătire (o singură dată):**
 ```bash
-git clone https://github.com/<cont>/studiazo.git
-cd studiazo
+git clone https://github.com/davixai/Studiazo-AI.git
+cd Studiazo-AI
 npm install
 cp .env.example .env.local   # valorile Supabase de la David + cheia ta OpenAI (docs/SETUP.md §3)
 npm run check

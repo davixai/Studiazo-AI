@@ -1,53 +1,70 @@
 import { MapPin } from "lucide-react";
 import { EVENT_KIND_COLOR, SUBJECT_COLOR_CLASSES, TASK_KIND_COLOR } from "@/components/ui/category";
-import { EVENT_KIND_LABELS, TASK_KIND_LABELS, type AgendaItem } from "@/lib/contracts/domain";
+import { EVENT_KIND_LABELS, TASK_KIND_LABELS, type AgendaItem, type SubjectColor } from "@/lib/contracts/domain";
 import { formatTime, formatTimeRange } from "@/lib/time/format";
 import { cn } from "@/lib/utils";
 
 type AgendaRowProps = { item: AgendaItem; now: Date };
 
-/** Un rând din agendă: oră, bară de categorie, titlu, tip și loc. */
+const PILL: Record<SubjectColor, string> = {
+  blue: "bg-cat-blue/10 text-cat-blue",
+  teal: "bg-cat-teal/10 text-cat-teal",
+  green: "bg-cat-green/10 text-cat-green",
+  amber: "bg-cat-amber/12 text-cat-amber",
+  rose: "bg-cat-rose/10 text-cat-rose",
+  violet: "bg-cat-violet/10 text-cat-violet",
+  slate: "bg-cat-slate/10 text-cat-slate",
+};
+
+/** Un rând din agendă: oră, punct pe cronologie, titlu și loc, eticheta tipului în dreapta. */
 export function AgendaRow({ item, now }: AgendaRowProps) {
   const view = describe(item);
-  const color = SUBJECT_COLOR_CLASSES[item.subject?.color ?? view.fallbackColor];
+  const color = item.subject?.color ?? view.fallbackColor;
   const isNow = view.start <= now && now < view.end;
   const isPast = view.end <= now;
 
   return (
-    <li className={cn("group relative flex gap-4 py-3.5", isPast && "opacity-55")}>
-      <div className="w-[52px] shrink-0 pt-0.5 text-right">
-        <p className="text-sm font-medium text-ink tabular">{formatTime(view.start)}</p>
-        {view.showEnd ? <p className="text-xs text-ink-faint tabular">{formatTime(view.end)}</p> : null}
+    <li className={cn("group relative flex gap-3 py-3.5 sm:gap-4", isPast && "opacity-55")}>
+      <div className="w-[50px] shrink-0 pt-0.5">
+        <p className="text-[13px] font-semibold text-ink tabular">{formatTime(view.start)}</p>
+        {view.showEnd ? <p className="mt-0.5 text-xs text-ink-faint tabular">{formatTime(view.end)}</p> : null}
       </div>
-      <span aria-hidden="true" className={cn("w-[3px] shrink-0 rounded-full", color.bar)} />
+      <div className="relative flex w-3 shrink-0 justify-center pt-1.5" aria-hidden="true">
+        <span
+          className={cn(
+            "relative z-10 size-2.5 rounded-full ring-4 ring-surface",
+            SUBJECT_COLOR_CLASSES[color].dot,
+            isNow && "ring-accent-soft",
+          )}
+        />
+        <span className="absolute top-4 -bottom-4 w-px bg-line group-last:hidden" />
+      </div>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <p className="truncate text-[15px] font-medium text-ink">{view.title}</p>
-          {isNow ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent-ink">
-              <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
-              Acum
-            </span>
-          ) : null}
-        </div>
-        {/* Separatorul „·” stă la începutul fiecărui element, ca să nu rămână singur la capăt de rând. */}
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-muted">
-          <span>{view.kindLabel}</span>
-          {item.subject && item.subject.name !== view.title ? (
-            <span className="min-w-0 truncate">
-              <span aria-hidden="true">· </span>
-              {item.subject.name}
-            </span>
-          ) : null}
+        <p className="truncate text-sm font-semibold text-ink">{view.title}</p>
+        <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[13px] text-ink-muted">
           {view.location ? (
-            <span className="inline-flex items-center gap-1">
-              <span aria-hidden="true">·</span>
-              <MapPin className="size-3" aria-hidden="true" />
-              {view.location}
-            </span>
-          ) : null}
+            <>
+              <MapPin className="size-3 shrink-0" aria-hidden="true" />
+              <span className="truncate">{view.location}</span>
+            </>
+          ) : (
+            <span className="truncate">{item.subject && item.subject.name !== view.title ? item.subject.name : view.kindLabel}</span>
+          )}
         </p>
         <span className="sr-only">{view.showEnd ? formatTimeRange(view.start, view.end) : `termen la ${formatTime(view.start)}`}</span>
+      </div>
+      <div className="shrink-0 pt-0.5">
+        {isNow ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-bold text-success">
+            <span className="relative flex size-1.5" aria-hidden="true">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-success/60" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-success" />
+            </span>
+            Acum
+          </span>
+        ) : (
+          <span className={cn("inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold", PILL[color])}>{view.kindLabel}</span>
+        )}
       </div>
     </li>
   );
@@ -70,7 +87,7 @@ function describe(item: AgendaItem) {
   const end = item.task.durationMinutes ? new Date(due.getTime() + item.task.durationMinutes * 60_000) : due;
   return {
     title: item.task.title,
-    kindLabel: item.task.kind === "examen" ? "Examen" : `${TASK_KIND_LABELS[item.task.kind]} · termen`,
+    kindLabel: TASK_KIND_LABELS[item.task.kind],
     location: item.task.location,
     start: due,
     end,

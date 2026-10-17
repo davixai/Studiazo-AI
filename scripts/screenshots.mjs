@@ -39,6 +39,7 @@ for (const width of WIDTHS) {
   for (const [name, path] of PAGES) {
     await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
     await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(1600); // animațiile de intrare
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     if (overflow > 0) problems.push(`${width}px ${path}: derulare orizontală de ${overflow}px`);
     await page.screenshot({ path: `screenshots/${width}/${name}.png`, fullPage: true });

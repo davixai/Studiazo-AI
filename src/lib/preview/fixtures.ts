@@ -72,6 +72,13 @@ export function previewEvents(now = new Date()): CalendarEvent[] {
   ];
 }
 
+/** Activitate demonstrativă: 12 zile la rând de studiu (inclusiv azi). */
+export function previewLearningActivity(now = new Date()) {
+  const today = toDateKey(now);
+  const minutes = [25, 40, 15, 30, 50, 20, 35, 17, 8, 12, 5, 14];
+  return minutes.map((m, i) => ({ date: shiftDateKey(today, i - (minutes.length - 1)), minutes: m }));
+}
+
 export function previewTasks(now = new Date()): Task[] {
   const today = toDateKey(now);
   const task = (id: number, partial: Pick<Task, "kind" | "title"> & Partial<Task>, days: number, time: string): Task => ({

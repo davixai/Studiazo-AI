@@ -1,154 +1,199 @@
-import { ArrowRight, BookOpenCheck, CalendarCheck2, CalendarPlus, FilePlus2, GraduationCap, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpenCheck, CalendarCheck2, CalendarClock, Clock3, GraduationCap, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeader } from "@/components/layout/page-header";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AgendaRow } from "@/features/calendar/components/agenda-row";
+import { NextUpCard } from "@/features/dashboard/components/next-up";
+import { QuickActions } from "@/features/dashboard/components/quick-actions";
+import { StatTile } from "@/features/dashboard/components/stat-tile";
 import { UpcomingList } from "@/features/dashboard/components/upcoming-list";
 import { getTodayOverview } from "@/features/dashboard/queries";
 import { getProfile } from "@/features/profile/queries";
-import { formatDayLong, formatRelativeDay, greetingFor } from "@/lib/time/format";
+import { BadgesGrid } from "@/features/progress/components/badges";
+import { LearningChart } from "@/features/progress/components/learning-chart";
+import { StreakCard, StreakStrip } from "@/features/progress/components/streak";
+import { getLearningStats } from "@/features/progress/queries";
+import type { AgendaItem } from "@/lib/contracts/domain";
+import { formatDayLong, formatDuration, formatRelativeDay, greetingFor } from "@/lib/time/format";
+import { daysBetween, toDateKey } from "@/lib/time/zone";
 import { firstName } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Azi" };
 
-const QUICK_ACTIONS = [
-  { href: "/calendar?adauga=examen", label: "Adaugă examen", icon: GraduationCap },
-  { href: "/calendar?adauga=tema", label: "Adaugă temă", icon: CalendarPlus },
-  { href: "/materii", label: "Încarcă material", icon: FilePlus2 },
-  { href: "/asistent", label: "Întreabă asistentul", icon: Sparkles },
-];
+const EXAM_KINDS = ["examen", "colocviu", "test"];
+const delay = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
 export default async function TodayPage() {
-  const [overview, profile] = await Promise.all([getTodayOverview(), getProfile()]);
-  const { now, agenda, upcoming, subjects } = overview;
+  const [overview, profile, stats] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats()]);
+  const { now, agenda, upcoming } = overview;
   const name = firstName(profile?.fullName ?? "");
-  const remaining = agenda.filter((i) => (i.type === "event" ? i.occurrence.end : new Date(i.task.dueAt)) > now).length;
-  const nextExam = upcoming.find(({ task }) => ["examen", "colocviu", "test"].includes(task.kind));
+  const remaining = agenda.filter((i) => endOf(i) > now).length;
+  const nextExam = upcoming.find(({ task }) => EXAM_KINDS.includes(task.kind));
+  const dueThisWeek = upcoming.filter(({ task }) => daysBetween(toDateKey(now), toDateKey(new Date(task.dueAt))) <= 7).length;
 
   return (
-    <div className="flex flex-col gap-8 lg:gap-10">
-      <PageHeader
-        eyebrow={formatDayLong(now)}
-        title={name ? `${greetingFor(now)}, ${name}.` : `${greetingFor(now)}.`}
-        description={summary(remaining, nextExam ? formatRelativeDay(new Date(nextExam.task.dueAt), now) : null)}
-      />
+    <div className="flex flex-col gap-6 lg:gap-7">
+      <header className="stagger flex flex-col gap-1">
+        <p className="text-[13px] font-medium text-ink-muted first-letter:uppercase">{formatDayLong(now)}</p>
+        <h1 className="text-[26px] leading-tight font-bold tracking-[-0.03em] text-ink sm:text-[30px]">
+          {greetingFor(now)}
+          {name ? `, ${name}` : ""}
+          <span aria-hidden="true"> 👋</span>
+        </h1>
+        <p className="text-sm text-ink-muted">Hai să facem ziua de azi una productivă.</p>
+      </header>
 
-      <nav aria-label="Acțiuni rapide">
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {QUICK_ACTIONS.map(({ href, label, icon: Icon }) => (
-            <li key={href}>
-              <Link
-                href={href}
-                className="flex h-12 items-center gap-2.5 rounded-md border border-line bg-surface px-3.5 text-[13px] leading-tight font-medium text-ink shadow-xs transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-sm sm:px-4 sm:text-sm"
-              >
-                <Icon className="size-4 shrink-0 text-accent" strokeWidth={1.9} aria-hidden="true" />
-                {label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {/* Mobil: ce urmează + streak + scurtături */}
+      <div className="flex flex-col gap-4 lg:hidden">
+        <NextUpCard agenda={agenda} now={now} />
+        <StreakStrip stats={stats} />
+        <nav aria-label="Acțiuni rapide" className="stagger rounded-lg border border-line/70 bg-surface p-4 shadow-sm" style={delay(2)}>
+          <QuickActions variant="row" />
+        </nav>
+      </div>
 
-      {/* Ordinea din DOM = ordinea pe mobil; pe desktop: două rânduri, două coloane. */}
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:gap-8">
-        <Card aria-labelledby="program-azi">
+      <section aria-label="Pe scurt" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatTile
+          index={1}
+          label="Activități azi"
+          value={String(agenda.length)}
+          sub={remaining === 0 ? "Gata pe azi" : `${remaining} rămase`}
+          icon={CalendarClock}
+          color="violet"
+        />
+        <StatTile index={2} label="Termene în 7 zile" value={String(dueThisWeek)} sub="Teme și examene" icon={BookOpenCheck} color="amber" />
+        <StatTile
+          index={3}
+          label="Următorul examen"
+          value={nextExam ? formatRelativeDay(new Date(nextExam.task.dueAt), now) : "—"}
+          sub={nextExam ? (nextExam.subject?.name ?? nextExam.task.title) : "Niciun examen apropiat"}
+          icon={GraduationCap}
+          color="rose"
+        />
+        <StatTile
+          index={4}
+          label="Învățat în 7 zile"
+          value={formatDuration(stats.weekMinutes)}
+          sub={`Record: ${stats.bestStreak} zile la rând`}
+          icon={Clock3}
+          color="green"
+        />
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-12 lg:gap-7">
+        <div className="flex flex-col gap-6 lg:col-span-7 lg:gap-7">
+          <Card aria-labelledby="program-azi" className="stagger" style={delay(5)}>
+            <CardHeader
+              id="program-azi"
+              title="Programul de azi"
+              action={
+                <Link href="/calendar" className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent hover:underline">
+                  Vezi tot <ArrowRight className="size-3.5" aria-hidden="true" />
+                </Link>
+              }
+            />
+            <CardBody className="pt-1">
+              {agenda.length > 0 ? (
+                <ul>
+                  {agenda.map((item) => (
+                    <AgendaRow
+                      key={item.type === "event" ? `${item.occurrence.event.id}-${item.occurrence.occurrenceDate}` : item.task.id}
+                      item={item}
+                      now={now}
+                    />
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState
+                  compact
+                  icon={<CalendarCheck2 />}
+                  title="Nimic programat azi"
+                  description="Adaugă-ți orarul o singură dată, iar cursurile recurente apar automat în fiecare săptămână."
+                  action={
+                    <ButtonLink href="/calendar" variant="secondary" size="sm">
+                      Adaugă orarul
+                    </ButtonLink>
+                  }
+                />
+              )}
+            </CardBody>
+          </Card>
+
+          <Card aria-labelledby="timp-invatare" className="stagger" style={delay(6)}>
+            <CardHeader
+              id="timp-invatare"
+              title="Timp de învățare"
+              description="Ultimele 7 zile"
+              action={<span className="text-lg font-bold tracking-[-0.02em] text-ink tabular">{formatDuration(stats.weekMinutes)}</span>}
+            />
+            <CardBody className="pt-6">
+              <LearningChart stats={stats} />
+            </CardBody>
+          </Card>
+        </div>
+
+        <div className="flex flex-col gap-6 lg:col-span-5 lg:gap-7">
+          <div className="hidden lg:block">
+            <StreakCard stats={stats} index={5} />
+          </div>
+
+          <Card aria-labelledby="actiuni" className="stagger hidden lg:block" style={delay(6)}>
+            <CardHeader id="actiuni" title="Acțiuni rapide" />
+            <CardBody>
+              <QuickActions variant="grid" />
+            </CardBody>
+          </Card>
+
+          <Card aria-labelledby="termene" className="stagger" style={delay(7)}>
+            <CardHeader id="termene" title="Următoarele termene" description="Teme și examene din următoarele 30 de zile" />
+            <CardBody>
+              {upcoming.length > 0 ? (
+                <UpcomingList items={upcoming} now={now} />
+              ) : (
+                <EmptyState compact icon={<GraduationCap />} title="Niciun termen apropiat" description="Când adaugi o temă sau un examen, îl vezi aici." />
+              )}
+            </CardBody>
+          </Card>
+        </div>
+
+        <Card aria-labelledby="insigne" className="stagger lg:col-span-7" style={delay(8)}>
           <CardHeader
-            id="program-azi"
-            title="Programul de azi"
-            action={
-              <Link href="/calendar" className="inline-flex items-center gap-1 text-[13px] font-medium text-accent hover:underline">
-                Calendar <ArrowRight className="size-3.5" aria-hidden="true" />
-              </Link>
-            }
+            id="insigne"
+            title="Insigne de etapă"
+            description="Învață puțin în fiecare zi ca să-ți crești streak-ul și să deblochezi insigne."
           />
-          <CardBody className="pt-2">
-            {agenda.length > 0 ? (
-              <ul className="divide-y divide-line">
-                {agenda.map((item) => (
-                  <AgendaRow key={item.type === "event" ? `${item.occurrence.event.id}-${item.occurrence.occurrenceDate}` : item.task.id} item={item} now={now} />
-                ))}
-              </ul>
-            ) : (
-              <EmptyState
-                compact
-                icon={<CalendarCheck2 />}
-                title="Nimic programat azi"
-                description="Adaugă-ți orarul o singură dată, iar cursurile recurente apar automat în fiecare săptămână."
-                action={
-                  <ButtonLink href="/calendar" variant="secondary" size="sm">
-                    Adaugă orarul
-                  </ButtonLink>
-                }
-              />
-            )}
-          </CardBody>
-        </Card>
-
-        <Card aria-labelledby="termene">
-          <CardHeader id="termene" title="Următoarele termene" description="Teme și examene din următoarele 30 de zile" />
           <CardBody>
-            {upcoming.length > 0 ? (
-              <UpcomingList items={upcoming} now={now} />
-            ) : (
-              <EmptyState
-                compact
-                icon={<GraduationCap />}
-                title="Niciun termen apropiat"
-                description="Când adaugi o temă sau un examen, îl vezi aici, cu cât timp mai ai."
-              />
-            )}
+            <BadgesGrid stats={stats} />
           </CardBody>
         </Card>
 
-        <Card aria-labelledby="sesiune-recomandata" className="overflow-hidden">
-          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-              <Sparkles className="size-5" strokeWidth={1.8} aria-hidden="true" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 id="sesiune-recomandata" className="text-[15px] font-semibold">
+        <Card aria-labelledby="sesiune-recomandata" className="stagger overflow-hidden lg:col-span-5" style={delay(9)}>
+          <div className="flex h-full flex-col gap-4 p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 items-center justify-center rounded-md bg-accent-soft text-accent">
+                <Sparkles className="size-[18px]" strokeWidth={2} aria-hidden="true" />
+              </span>
+              <h2 id="sesiune-recomandata" className="text-[15px] font-bold">
                 Sesiunea de studiu recomandată
               </h2>
-              <p className="mt-1 text-sm leading-6 text-ink-muted">
-                Cere asistentului un plan: găsește golurile din program și îți propune sesiuni pe care le confirmi tu.
-              </p>
             </div>
-            <ButtonLink href="/asistent" variant="secondary" className="shrink-0">
+            <p className="text-sm leading-6 text-ink-muted">
+              Asistentul găsește golurile din program și îți propune sesiuni. Tu confirmi ce intră în calendar.
+            </p>
+            <ButtonLink href="/asistent" className="mt-auto self-start">
               Planifică studiul
             </ButtonLink>
           </div>
-        </Card>
-
-        <Card aria-labelledby="progres">
-          <CardHeader id="progres" title="Progres recent" />
-          <CardBody>
-            <EmptyState
-              compact
-              icon={<BookOpenCheck />}
-              title="Încă niciun test"
-              description="După primul test vezi aici la ce capitole stai bine și ce merită recapitulat."
-              action={
-                <ButtonLink href="/materii" variant="ghost" size="sm">
-                  {subjects.length > 0 ? "Alege o materie" : "Adaugă o materie"}
-                </ButtonLink>
-              }
-            />
-          </CardBody>
         </Card>
       </div>
     </div>
   );
 }
 
-function summary(remaining: number, nextExamIn: string | null) {
-  const today =
-    remaining === 0
-      ? "Nu mai ai nimic programat azi."
-      : remaining === 1
-        ? "Mai ai o activitate azi."
-        : `Mai ai ${remaining} ${remaining < 20 ? "activități" : "de activități"} azi.`;
-  return nextExamIn ? `${today} Următorul examen este ${nextExamIn}.` : today;
+function endOf(item: AgendaItem) {
+  if (item.type === "event") return item.occurrence.end;
+  const due = new Date(item.task.dueAt);
+  return item.task.durationMinutes ? new Date(due.getTime() + item.task.durationMinutes * 60_000) : due;
 }

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 export function AuthHeading({ title, description }: { title: ReactNode; description?: ReactNode }) {
   return (
     <div className="mb-8">
-      <h1 className="font-display text-[34px] leading-[1.1] font-medium tracking-[-0.02em]">{title}</h1>
+      <h1 className="font-display text-[34px] leading-[1.1] font-bold tracking-[-0.03em]">{title}</h1>
       {description ? <p className="mt-3 text-[15px] leading-6 text-ink-soft">{description}</p> : null}
     </div>
   );

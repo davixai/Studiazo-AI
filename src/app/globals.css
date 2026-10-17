@@ -6,79 +6,106 @@
    ───────────────────────────────────────────────────────────── */
 
 @theme {
-  /* Neutre calde („hârtie”) */
-  --color-canvas: #f7f6f3;
+  /* Fundal lavandă deschis, suprafețe albe */
+  --color-canvas: #f5f5fb;
   --color-surface: #ffffff;
-  --color-surface-muted: #f2f1ed;
-  --color-surface-sunken: #ecebe6;
-  --color-line: #e5e3dd;
-  --color-line-strong: #d3d0c7;
+  --color-surface-muted: #f4f3fb;
+  --color-surface-sunken: #ebeaf5;
+  --color-line: #ebeaf3;
+  --color-line-strong: #d9d7e7;
 
-  /* Text */
-  --color-ink: #1b1b18;
-  --color-ink-soft: #46453f;
-  --color-ink-muted: #6b6960;
-  --color-ink-faint: #9a978d;
+  /* Text (bleumarin închis) */
+  --color-ink: #17162b;
+  --color-ink-soft: #3f3d56;
+  --color-ink-muted: #6b6880;
+  --color-ink-faint: #8a87a0;
 
-  /* Accent unic: albastru-cerneală */
-  --color-accent: #3049c4;
-  --color-accent-hover: #273da6;
-  --color-accent-soft: #eef1fc;
-  --color-accent-line: #cfd7f6;
-  --color-accent-ink: #22348f;
+  /* Accent unic: violet */
+  --color-accent: #5b4be0;
+  --color-accent-hover: #4d3dd0;
+  --color-accent-soft: #efedfd;
+  --color-accent-line: #dcd8fb;
+  --color-accent-ink: #4433c4;
+  --color-accent-deep: #4535c9;
 
-  /* Stări (folosite doar pentru a comunica ceva) */
-  --color-success: #1d7348;
-  --color-success-soft: #e9f4ed;
-  --color-warning: #8f5400;
-  --color-warning-soft: #fbf2e2;
-  --color-danger: #b42318;
-  --color-danger-hover: #961d14;
-  --color-danger-soft: #fdedeb;
+  /* Stări */
+  --color-success: #15803d;
+  --color-success-soft: #e7f6ec;
+  --color-warning: #a35200;
+  --color-warning-soft: #fdf3e3;
+  --color-danger: #c42b2b;
+  --color-danger-hover: #a52222;
+  --color-danger-soft: #fdecec;
 
-  /* Categorii (materii, tipuri de activități) — doar ca puncte, bare fine, fundaluri foarte discrete */
-  --color-cat-blue: #3b63d9;
-  --color-cat-teal: #0f817a;
-  --color-cat-green: #2f8049;
-  --color-cat-amber: #a86d12;
-  --color-cat-rose: #be3a58;
-  --color-cat-violet: #7149c8;
-  --color-cat-slate: #5b6472;
+  /* Categorii (pătrățele pastel pentru iconițe, puncte, bare) */
+  --color-cat-blue: #3b6fe0;
+  --color-cat-teal: #0e8a82;
+  --color-cat-green: #22924f;
+  --color-cat-amber: #c27a12;
+  --color-cat-rose: #d4456a;
+  --color-cat-violet: #7a52e0;
+  --color-cat-slate: #5d6478;
 
   /* Tipografie */
-  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 
-  /* Raze */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* Raze generoase */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
 
-  /* Umbre subtile */
-  --shadow-xs: 0 1px 0 rgb(27 27 24 / 0.04);
-  --shadow-sm: 0 1px 2px rgb(27 27 24 / 0.05), 0 1px 1px rgb(27 27 24 / 0.03);
-  --shadow-md: 0 4px 12px -2px rgb(27 27 24 / 0.08), 0 2px 4px -2px rgb(27 27 24 / 0.04);
-  --shadow-lg: 0 24px 48px -12px rgb(27 27 24 / 0.18), 0 8px 16px -8px rgb(27 27 24 / 0.08);
+  /* Umbre moi */
+  --shadow-xs: 0 1px 2px rgb(23 22 43 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(23 22 43 / 0.04), 0 8px 24px -12px rgb(23 22 43 / 0.10);
+  --shadow-md: 0 2px 4px rgb(23 22 43 / 0.04), 0 16px 32px -14px rgb(23 22 43 / 0.16);
+  --shadow-lg: 0 24px 56px -16px rgb(23 22 43 / 0.28), 0 8px 16px -8px rgb(23 22 43 / 0.10);
+  --shadow-accent: 0 12px 32px -12px rgb(91 75 224 / 0.55);
 
-  /* Animații scurte */
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --animate-fade-in: fade-in 180ms var(--ease-out);
-  --animate-rise-in: rise-in 220ms var(--ease-out);
-  --animate-sheet-in: sheet-in 260ms var(--ease-out);
+  /* Animații: scurte, moi, oprite la prefers-reduced-motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-fade-in: fade-in 200ms var(--ease-out) both;
+  --animate-rise-in: rise-in 420ms var(--ease-out) both;
+  --animate-sheet-in: sheet-in 320ms var(--ease-out) both;
+  --animate-grow-y: grow-y 700ms var(--ease-out) both;
+  --animate-fill-x: fill-x 900ms var(--ease-out) both;
+  --animate-pop-in: pop-in 520ms var(--ease-spring) both;
+  --animate-flame: flame 2.4s ease-in-out infinite;
+  --animate-glow: glow 3.2s ease-in-out infinite;
 
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
   @keyframes rise-in {
-    from { opacity: 0; transform: translateY(6px) scale(0.99); }
+    from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: none; }
   }
   @keyframes sheet-in {
-    from { transform: translateY(24px); opacity: 0; }
+    from { transform: translateY(32px); opacity: 0; }
     to { transform: none; opacity: 1; }
+  }
+  @keyframes grow-y {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+  }
+  @keyframes fill-x {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes flame {
+    0%, 100% { transform: scale(1) rotate(-2deg); }
+    50% { transform: scale(1.08) rotate(2deg); }
+  }
+  @keyframes glow {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.12); }
   }
 }
 
@@ -92,8 +119,7 @@
     background: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
-    -webkit-font-smoothing: antialiased;
+        -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
@@ -121,7 +147,7 @@
   }
 
   dialog::backdrop {
-    background: rgb(27 27 24 / 0.32);
+    background: rgb(23 22 43 / 0.36);
     animation: var(--animate-fade-in);
   }
 
@@ -135,8 +161,24 @@
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Intrare în cascadă: style={{ "--i": n }} pe elemente cu clasa `stagger` */
+@utility stagger {
+  animation: var(--animate-rise-in);
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* Card interactiv: ridicare fină la hover */
+@utility lift {
+  transition: transform 220ms var(--ease-out), box-shadow 220ms var(--ease-out), border-color 220ms var(--ease-out);
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn, initials } from "@/lib/utils";
@@ -12,11 +13,12 @@ type AppNavProps = { userName: string; userDetail: string | null };
 export function Sidebar({ userName, userDetail }: AppNavProps) {
   const pathname = usePathname();
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-canvas px-4 py-5 lg:flex">
-      <Link href="/azi" className="mx-2 mb-8 rounded-md" aria-label="Studiazo AI — Azi">
+    <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line/70 bg-surface px-4 py-6 lg:flex">
+      <Link href="/azi" className="mx-2 mb-9 rounded-md" aria-label="Studiazo AI — Azi">
         <Logo />
       </Link>
-      <nav aria-label="Navigare principală" className="flex flex-col gap-0.5">
+      <p className="mb-2 px-3 text-[11px] font-semibold tracking-[0.08em] text-ink-faint uppercase">Meniu</p>
+      <nav aria-label="Navigare principală" className="flex flex-col gap-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
@@ -25,12 +27,16 @@ export function Sidebar({ userName, userDetail }: AppNavProps) {
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "group flex h-9 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors",
-                active ? "bg-surface text-ink shadow-sm ring-1 ring-line" : "text-ink-muted hover:bg-surface-sunken/60 hover:text-ink",
+                "group relative flex h-10 items-center gap-3 rounded-md px-3 text-sm font-semibold transition-colors duration-200",
+                active ? "bg-accent-soft text-accent-ink" : "text-ink-muted hover:bg-surface-muted hover:text-ink",
               )}
             >
-              <Icon className={cn("size-4.5", active ? "text-accent" : "text-ink-faint group-hover:text-ink-muted")} strokeWidth={1.8} />
+              <Icon
+                className={cn("size-[18px] transition-colors", active ? "text-accent" : "text-ink-faint group-hover:text-ink-muted")}
+                strokeWidth={2}
+              />
               {label}
+              {active ? <span className="absolute inset-y-2 -left-4 w-1 rounded-r-full bg-accent" aria-hidden="true" /> : null}
             </Link>
           );
         })}
@@ -40,15 +46,16 @@ export function Sidebar({ userName, userDetail }: AppNavProps) {
           href="/profil"
           aria-current={isActive(pathname, "/profil") ? "page" : undefined}
           className={cn(
-            "flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-surface-sunken/60",
-            isActive(pathname, "/profil") && "bg-surface shadow-sm ring-1 ring-line",
+            "flex items-center gap-3 rounded-lg border border-line/80 bg-surface-muted/60 p-2.5 transition-colors hover:border-line-strong hover:bg-surface-muted",
+            isActive(pathname, "/profil") && "border-accent-line bg-accent-soft",
           )}
         >
           <Avatar name={userName} />
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-medium text-ink">{userName || "Profilul meu"}</span>
-            {userDetail ? <span className="block truncate text-xs text-ink-muted">{userDetail}</span> : null}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-ink">{userName || "Profilul meu"}</span>
+            <span className="block truncate text-xs text-ink-muted">{userDetail ?? "Vezi profilul"}</span>
           </span>
+          <ChevronRight className="size-4 text-ink-faint" aria-hidden="true" />
         </Link>
       </div>
     </aside>
@@ -58,7 +65,7 @@ export function Sidebar({ userName, userDetail }: AppNavProps) {
 /** Bara de sus (< lg): logo + profil. */
 export function MobileTopBar({ userName }: { userName: string }) {
   return (
-    <header className="pt-safe sticky top-0 z-30 border-b border-line/80 bg-canvas/90 backdrop-blur-md supports-[backdrop-filter]:bg-canvas/80 lg:hidden">
+    <header className="pt-safe sticky top-0 z-30 bg-canvas/85 backdrop-blur-xl lg:hidden">
       <div className="flex h-14 items-center justify-between px-4 sm:px-6">
         <Link href="/azi" className="rounded-md" aria-label="Studiazo AI — Azi">
           <Logo />
@@ -77,9 +84,9 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label="Navigare principală"
-      className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md lg:hidden"
+      className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-surface/90 shadow-[0_-8px_24px_-16px_rgb(23_22_43/0.2)] backdrop-blur-xl lg:hidden"
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-5">
+      <ul className="mx-auto grid max-w-xl grid-cols-5 px-1">
         {NAV_ITEMS.filter((i) => i.mobile).map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
@@ -88,11 +95,18 @@ export function MobileTabBar() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+                  "flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors",
                   active ? "text-accent" : "text-ink-muted hover:text-ink",
                 )}
               >
-                <Icon className="size-5.5" strokeWidth={active ? 2.1 : 1.8} />
+                <span
+                  className={cn(
+                    "flex h-7 w-12 items-center justify-center rounded-full transition-all duration-300",
+                    active && "bg-accent-soft",
+                  )}
+                >
+                  <Icon className="size-5" strokeWidth={active ? 2.3 : 1.9} />
+                </span>
                 <span className="max-w-full truncate px-1">{label === "Resurse Iași" ? "Resurse" : label}</span>
               </Link>
             </li>
@@ -108,7 +122,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
     <span
       aria-hidden="true"
       className={cn(
-        "inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-[12px] font-semibold tracking-wide text-white",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#7b6cf5] to-[#4f3fd6] text-[12px] font-bold tracking-wide text-white ring-2 ring-white",
         className,
       )}
     >

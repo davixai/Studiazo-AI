@@ -43,10 +43,10 @@ function AuthIllustration() {
   return (
     <div className="flex h-full flex-col justify-between p-14 xl:p-20">
       <div className="max-w-md">
-        <p className="font-display text-[44px] leading-[1.05] font-medium tracking-[-0.025em] text-ink xl:text-[52px]">
+        <p className="font-display text-[44px] leading-[1.05] font-bold tracking-[-0.03em] text-ink xl:text-[52px]">
           Al doilea creier
           <br />
-          <em className="text-ink-soft">al studentului ieșean.</em>
+          <span className="text-accent">al studentului ieșean.</span>
         </p>
         <p className="mt-6 max-w-sm text-[15px] leading-6 text-ink-soft">
           Programul tău, materiile tale și un asistent care te ajută să înveți la timp, nu în ultima noapte.

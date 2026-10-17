@@ -1,15 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Newsreader } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({ variable: "--font-geist", subsets: ["latin", "latin-ext"], display: "swap" });
-
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
-  subsets: ["latin", "latin-ext"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
+const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin", "latin-ext"], display: "swap" });
 
 // Toate paginile depind de sesiune sau de configurarea de la rulare: nu se prerandează nimic
 // (evită ca o pagină privată sau o stare de configurare să fie „înghețată” la build).
@@ -28,12 +21,12 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
-  themeColor: "#f7f6f3",
+  themeColor: "#f5f5fb",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ro" className={`${geist.variable} ${newsreader.variable} h-full`}>
+    <html lang="ro" className={`${jakarta.variable} h-full`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

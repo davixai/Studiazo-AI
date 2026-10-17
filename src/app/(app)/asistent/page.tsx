@@ -34,7 +34,7 @@ export default function AssistantPage() {
         <div className="flex size-11 items-center justify-center rounded-full bg-accent-soft text-accent">
           <Sparkles className="size-5" strokeWidth={1.8} aria-hidden="true" />
         </div>
-        <h2 className="mt-5 font-display text-2xl font-medium tracking-[-0.015em]">Cu ce te pot ajuta?</h2>
+        <h2 className="mt-5 font-display text-2xl font-bold tracking-[-0.03em]">Cu ce te pot ajuta?</h2>
         <p className="mt-2 max-w-xl text-sm leading-6 text-ink-muted">
           Răspunsurile se bazează pe materialele încărcate la materii. Când informația nu apare în ele, asistentul îți spune.
         </p>

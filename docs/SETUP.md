@@ -25,7 +25,7 @@ Nu folosim cheia **secret / service role** a Supabase. Nu o puneți nicăieri.
 ## 1. GitHub (David)
 
 ```bash
-git remote add origin https://github.com/<cont>/studiazo.git
+git remote add origin https://github.com/davixai/Studiazo-AI.git
 git push -u origin main
 ```
 1. Pe github.com: *New repository* → `studiazo`, **Private**, fără README (există deja).

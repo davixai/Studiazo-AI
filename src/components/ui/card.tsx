@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function Card({ className, ...props }: ComponentProps<"section">) {
-  return <section className={cn("rounded-lg border border-line bg-surface shadow-xs", className)} {...props} />;
+  return <section className={cn("rounded-lg border border-line/70 bg-surface shadow-sm", className)} {...props} />;
 }
 
 type CardHeaderProps = {
@@ -18,7 +18,7 @@ export function CardHeader({ title, description, action, id, className }: CardHe
   return (
     <header className={cn("flex items-start justify-between gap-4 px-5 pt-5 sm:px-6", className)}>
       <div className="min-w-0">
-        <h2 id={id} className="text-[15px] font-semibold tracking-[-0.01em] text-ink">
+        <h2 id={id} className="text-[15px] font-bold tracking-[-0.015em] text-ink">
           {title}
         </h2>
         {description ? <p className="mt-1 text-[13px] leading-5 text-ink-muted">{description}</p> : null}

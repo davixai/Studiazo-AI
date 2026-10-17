@@ -46,7 +46,7 @@ export default async function AssistantPage({ searchParams }: PageProps<"/asiste
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
-        <nav aria-label="Chaturi" className={cn("lg:sticky lg:top-8 lg:self-start", selected && "hidden lg:block")}>
+        <nav aria-label="Chaturi" className={cn("min-w-0 lg:sticky lg:top-8 lg:self-start", selected && "hidden lg:block")}>
           <ChatList subjects={subjects} active={subject?.id ?? (selected === GENERAL || !selected ? GENERAL : null)} />
         </nav>
 

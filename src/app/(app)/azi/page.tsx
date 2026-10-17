@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpenCheck, CalendarCheck2, CalendarClock, Clock3, GraduationCap } from "lucide-react";
+import { ArrowRight, BookOpenCheck, CalendarCheck2, CalendarClock, Clock3, Flame, GraduationCap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { getLearningStats } from "@/features/progress/queries";
 import { RecentAttempts } from "@/features/quizzes/components/recent-attempts";
 import { getRecentAttempts } from "@/features/quizzes/queries";
 import type { AgendaItem } from "@/lib/contracts/domain";
-import { formatDayLong, formatDuration, formatRelativeDay, greetingFor } from "@/lib/time/format";
+import { formatDuration, formatRelativeDay, greetingFor } from "@/lib/time/format";
 import { daysBetween, toDateKey } from "@/lib/time/zone";
 import { MotivationalQuote } from "@/features/dashboard/components/motivational-quote";
 import { QUOTES } from "@/features/dashboard/quotes";
@@ -41,7 +41,21 @@ export default async function TodayPage() {
   return (
     <div className="flex flex-col gap-6 lg:gap-7">
       <header className="stagger flex flex-col gap-1">
-        <p className="text-[13px] font-medium text-ink-muted first-letter:uppercase">{formatDayLong(now)}</p>
+        <div className="mb-1 flex flex-wrap items-center gap-2">
+          <p className="inline-flex items-center gap-2 rounded-full border border-line/70 bg-surface/60 px-3 py-1 text-[12px] font-semibold text-ink-soft backdrop-blur-sm">
+            <span aria-hidden="true" className="relative flex size-2">
+              <span className={`absolute inset-0 rounded-full ${remaining > 0 ? "animate-ping bg-success/70" : ""}`} />
+              <span className={`relative size-2 rounded-full ${remaining > 0 ? "bg-success" : "bg-accent"}`} />
+            </span>
+            {dayStatus(agenda.length, remaining)}
+          </p>
+          {stats.currentStreak > 0 && (
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning-soft px-3 py-1 text-[12px] font-semibold text-warning">
+              <Flame className="size-3.5 fill-warning" aria-hidden="true" />
+              {stats.currentStreak} {stats.currentStreak === 1 ? "zi" : "zile"} la rând
+            </p>
+          )}
+        </div>
         <h1 className="text-[26px] leading-tight font-bold tracking-[-0.03em] text-ink sm:text-[30px]">
           {greetingFor(now)}
           {name ? `, ${name}` : ""}
@@ -189,6 +203,12 @@ export default async function TodayPage() {
       </div>
     </div>
   );
+}
+
+function dayStatus(total: number, remaining: number) {
+  if (total === 0) return "Zi liberă: perfectă pentru recapitulare";
+  if (remaining === 0) return "Ai terminat programul de azi 🎉";
+  return remaining === 1 ? "Mai ai o activitate azi" : `Mai ai ${remaining} activități azi`;
 }
 
 function endOf(item: AgendaItem) {

@@ -93,10 +93,10 @@ const BOTTOM_ROW = [
     </p>
   </MiniCard>,
   <MiniCard key="joburi" title="Joburi" icon={<BriefcaseBusiness />}>
-    <p className="text-[13px] font-semibold text-ink">☕ Barista part-time</p>
-    <p className="mt-1 text-[12px] text-ink-soft tabular">1.800–2.800 lei/lună</p>
+    <p className="text-[13px] font-semibold text-ink">Support part-time · Wolt</p>
+    <p className="mt-1 text-[12px] text-ink-soft tabular">20 de ore pe săptămână, de acasă</p>
     <div className="mt-3 flex flex-wrap gap-1.5">
-      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-ink">Ture flexibile</span>
+      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-ink">Remote</span>
       <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] font-medium text-ink-soft">Fără experiență</span>
     </div>
   </MiniCard>,

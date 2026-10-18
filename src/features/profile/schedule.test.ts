@@ -31,6 +31,18 @@ describe("cleanSchedule", () => {
     expect(note).toBe("Lipsește sala la sport.");
   });
 
+  it("spune ce materii au fost văzute în orar, dar fără ore citite", () => {
+    const { note } = cleanSchedule({
+      subjects: [
+        { name: "Baze de date", short: "BD" },
+        { name: "Sisteme cu microprocesoare", short: "SuP" },
+      ],
+      entries: [entry],
+      note: null,
+    });
+    expect(note).toBe("Nu am citit orele pentru: Sisteme cu microprocesoare. Le poți adăuga manual mai jos.");
+  });
+
   it("acceptă răspunsuri stricate fără să arunce eroare", () => {
     expect(cleanSchedule(null)).toEqual({ entries: [], note: null });
     expect(cleanSchedule({ entries: "nu" })).toEqual({ entries: [], note: null });

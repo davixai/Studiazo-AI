@@ -47,8 +47,19 @@ export const ScheduleListSchema = z.array(ScheduleEntrySchema).max(SCHEDULE_MAX_
 export const SCHEDULE_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["entries", "note"],
+  required: ["subjects", "entries", "note"],
   properties: {
+    // Întâi lista completă a materiilor (cu prescurtarea din orar), apoi orele: modelul nu mai „uită” materii,
+    // iar codul verifică după aceea că fiecare materie are ore.
+    subjects: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "short"],
+        properties: { name: { type: "string" }, short: { type: ["string", "null"] } },
+      },
+    },
     entries: {
       type: "array",
       items: {
@@ -74,14 +85,23 @@ export const SCHEDULE_JSON_SCHEMA = {
 
 /** Păstrează orele valide din răspunsul AI-ului (o oră greșită nu strică tot orarul), ordonate pe zile și ore. */
 export function cleanSchedule(raw: unknown): { entries: ScheduleEntry[]; note: string | null } {
-  const data = typeof raw === "object" && raw !== null ? (raw as { entries?: unknown; note?: unknown }) : {};
+  const data = typeof raw === "object" && raw !== null ? (raw as { subjects?: unknown; entries?: unknown; note?: unknown }) : {};
   const entries = (Array.isArray(data.entries) ? data.entries : [])
     .map((e) => ScheduleEntrySchema.safeParse(normalizeTimes(e)))
     .flatMap((r) => (r.success ? [r.data] : []))
     .slice(0, SCHEDULE_MAX_ENTRIES)
     .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start));
-  const note = typeof data.note === "string" && data.note.trim() ? data.note.trim().slice(0, 300) : null;
-  return { entries, note };
+
+  // Materiile văzute în orar, dar fără nicio oră citită: le spunem studentului, ca să le adauge manual.
+  const withHours = new Set(entries.map((e) => e.subject.toLocaleLowerCase("ro")));
+  const missing = (Array.isArray(data.subjects) ? data.subjects : [])
+    .map((s) => (typeof s === "object" && s !== null && typeof (s as { name?: unknown }).name === "string" ? (s as { name: string }).name.trim().replace(/\s+/g, " ") : ""))
+    .filter((name) => name && !withHours.has(name.toLocaleLowerCase("ro")));
+  const notes = [
+    typeof data.note === "string" && data.note.trim() ? data.note.trim().slice(0, 300) : null,
+    missing.length > 0 ? `Nu am citit orele pentru: ${[...new Set(missing)].join(", ")}. Le poți adăuga manual mai jos.` : null,
+  ].filter(Boolean);
+  return { entries, note: notes.length > 0 ? notes.join(" ") : null };
 }
 
 /** „8:00” → „08:00”, „8.00” → „08:00”. */

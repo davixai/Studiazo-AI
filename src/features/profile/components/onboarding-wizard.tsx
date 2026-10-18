@@ -6,7 +6,8 @@ import { useFormStatus } from "react-dom";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
-import { Input } from "@/components/ui/field";
+import { Input, Select } from "@/components/ui/field";
+import { TimeInput } from "@/components/ui/time-input";
 import { Spinner } from "@/components/ui/spinner";
 import { initialFormState, type FormState } from "@/features/auth/schemas";
 import { EVENT_KIND_LABELS, type Profile } from "@/lib/contracts/domain";
@@ -14,7 +15,16 @@ import { formatDateLong } from "@/lib/time/format";
 import { fromLocal, toDateKey } from "@/lib/time/zone";
 import { cn, firstName } from "@/lib/utils";
 import { finishOnboarding, readSchedule, skipOnboarding } from "../actions";
-import { SCHEDULE_IMAGE_MAX_CHARS, WEEKDAY_NAMES, forGroup, scheduleGroups, semesterEnd, type ScheduleEntry } from "../schedule";
+import {
+  SCHEDULE_IMAGE_MAX_CHARS,
+  SCHEDULE_KINDS,
+  ScheduleEntrySchema,
+  WEEKDAY_NAMES,
+  forGroup,
+  scheduleGroups,
+  semesterEnd,
+  type ScheduleEntry,
+} from "../schedule";
 import {
   AGE_MAX,
   AGE_MIN,
@@ -799,6 +809,7 @@ function ScheduleStep({
         entries={phase.entries}
         note={phase.note}
         initialGroup={group}
+        knownSubjects={answers.subjects}
         onRetry={() => setPhase({ name: "pick" })}
         onConfirm={(kept, chosenGroup) => onDone(kept, chosenGroup)}
       />
@@ -824,7 +835,7 @@ function ScheduleStep({
             onChange={(e) => setGroup(e.target.value)}
             className="h-13 rounded-xl text-[16px] sm:h-13"
           />
-          <p className="mt-1.5 text-[13px] leading-5 text-ink-muted">Dacă orarul are mai multe grupe, păstrăm doar orele tale.</p>
+          <p className="mt-1.5 text-[13px] leading-5 text-ink-muted">Dacă orarul are mai multe grupe, îți arătăm doar orele tale.</p>
         </div>
 
         <label
@@ -862,35 +873,48 @@ function ScheduleStep({
   );
 }
 
-/** Orarul citit, pe zile: studentul își alege grupa și scoate orele greșite înainte să-l adauge. */
+/** Orarul citit, pe zile: studentul își alege grupa, corectează numele, scoate ce nu e al lui și adaugă ce lipsește. */
 function ScheduleReview({
   entries,
   note,
   initialGroup,
+  knownSubjects,
   onRetry,
   onConfirm,
 }: {
   entries: ScheduleEntry[];
   note: string | null;
   initialGroup: string;
+  /** Materiile scrise de student în ghid: sugestii când redenumește sau adaugă. */
+  knownSubjects: string[];
   onRetry: () => void;
   onConfirm: (kept: ScheduleEntry[], group: string) => void;
 }) {
-  const groups = scheduleGroups(entries);
+  const [items, setItems] = useState(entries);
+  const groups = scheduleGroups(items);
   const [group, setGroup] = useState<string | null>(
     () => groups.find((g) => g.toLocaleLowerCase("ro") === initialGroup.trim().toLocaleLowerCase("ro")) ?? null,
   );
-  const [removed, setRemoved] = useState<Set<ScheduleEntry>>(() => new Set());
-  const kept = forGroup(entries, group).filter((e) => !removed.has(e));
-  const days = [...new Set(kept.map((e) => e.day))];
-  const subjects = new Set(kept.map((e) => e.subject.toLocaleLowerCase("ro"))).size;
+  const [adding, setAdding] = useState(false);
+  const kept = forGroup(items, group);
+  const days = [...new Set(kept.map((e) => e.day))].sort((a, b) => a - b);
+  const subjectNames = [...new Map(kept.map((e) => [e.subject.toLocaleLowerCase("ro"), e.subject])).values()];
+  const suggestions = uniqueSubjects([...knownSubjects, ...items.map((e) => e.subject)]);
   const untilLabel = formatDateLong(fromLocal(semesterEnd(toDateKey(new Date())), "12:00"));
+
+  /** Schimbă numele materiei la toate orele ei; două nume identice devin aceeași materie. */
+  function rename(from: string, raw: string) {
+    const to = raw.trim().replace(/\s+/g, " ").slice(0, 120);
+    if (!to || to === from) return false;
+    setItems((list) => list.map((e) => (e.subject === from ? { ...e, subject: to } : e)));
+    return true;
+  }
 
   return (
     <div className="flex flex-1 flex-col">
       <StepTitle
         title="Verifică-ți orarul"
-        subtitle={`${kept.length === 1 ? "O oră" : `${kept.length} ore`} pe săptămână, ${subjects === 1 ? "o materie" : `${subjects} materii`}. Scoate ce nu e al tău.`}
+        subtitle={`${kept.length === 1 ? "O oră" : `${kept.length} ore`} pe săptămână, ${subjectNames.length === 1 ? "o materie" : `${subjectNames.length} materii`}. Corectează ce nu e bine.`}
       />
 
       {groups.length > 1 ? (
@@ -920,9 +944,52 @@ function ScheduleReview({
         </div>
       ) : null}
 
+      <datalist id="ob-subject-names">
+        {suggestions.map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
+
+      {subjectNames.length > 0 ? (
+        <section aria-labelledby="ob-subjects" className="stagger mt-6" style={{ "--i": 2 } as React.CSSProperties}>
+          <p id="ob-subjects" className="text-[13px] font-semibold text-ink-soft">
+            Materiile din orar
+          </p>
+          <p className="mt-1 mb-3 text-[13px] leading-5 text-ink-muted">
+            Toate intră în Materii. Dacă un nume e prescurtat sau greșit (ex. „SuP”), scrie-l întreg; se schimbă la toate orele lui.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {subjectNames.map((name) => {
+              const hours = kept.filter((e) => e.subject === name).length;
+              return (
+                <li key={name} className="flex items-center gap-3">
+                  <Input
+                    defaultValue={name}
+                    list="ob-subject-names"
+                    maxLength={120}
+                    aria-label={`Numele materiei ${name}`}
+                    onBlur={(e) => {
+                      if (!rename(name, e.currentTarget.value)) e.currentTarget.value = name;
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                    }}
+                    className="h-11 min-w-0 flex-1 rounded-xl text-[15px] font-semibold sm:h-11"
+                  />
+                  <span className="tabular w-12 shrink-0 text-right text-[13px] text-ink-muted">{hours === 1 ? "1 oră" : `${hours} ore`}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
       <div className="mt-6 flex flex-col gap-5">
         {days.map((day, i) => (
-          <section key={day} aria-label={WEEKDAY_NAMES[day - 1]} className="stagger" style={{ "--i": i + 2 } as React.CSSProperties}>
+          <section key={day} aria-label={WEEKDAY_NAMES[day - 1]} className="stagger" style={{ "--i": i + 3 } as React.CSSProperties}>
             <h2 className="mb-2 text-[13px] font-bold tracking-[0.12em] text-ink-muted uppercase">{WEEKDAY_NAMES[day - 1]}</h2>
             <ul className="flex flex-col gap-2">
               {kept
@@ -946,7 +1013,7 @@ function ScheduleReview({
                     </span>
                     <button
                       type="button"
-                      onClick={() => setRemoved((r) => new Set(r).add(e))}
+                      onClick={() => setItems((list) => list.filter((x) => x !== e))}
                       aria-label={`Scoate ${e.subject}, ${WEEKDAY_NAMES[day - 1]} ${e.start}`}
                       className="-m-1 flex size-10 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink"
                     >
@@ -957,7 +1024,26 @@ function ScheduleReview({
             </ul>
           </section>
         ))}
-        {kept.length === 0 ? <Alert tone="warning">Nu a rămas nicio oră. Alege altă grupă sau încearcă altă poză.</Alert> : null}
+        {kept.length === 0 && !adding ? <Alert tone="warning">Nu a rămas nicio oră. Alege altă grupă, adaugă una sau încearcă altă poză.</Alert> : null}
+
+        {adding ? (
+          <ManualEntry
+            onCancel={() => setAdding(false)}
+            onAdd={(entry) => {
+              setItems((list) => [...list, entry].sort((a, b) => a.day - b.day || a.start.localeCompare(b.start)));
+              setAdding(false);
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong px-4 text-[15px] font-semibold text-ink-soft transition-colors hover:border-accent-line hover:text-accent-ink"
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            Adaugă o oră sau o materie
+          </button>
+        )}
       </div>
 
       <p className="mt-5 text-center text-[13px] leading-5 text-ink-muted">
@@ -970,6 +1056,124 @@ function ScheduleReview({
         <SecondaryButton onClick={onRetry}>Încearcă altă poză</SecondaryButton>
       </Footer>
     </div>
+  );
+}
+
+/** O oră scrisă de mână: pentru ce n-a citit AI-ul sau pentru o materie care lipsește din poză. */
+function ManualEntry({ onAdd, onCancel }: { onAdd: (entry: ScheduleEntry) => void; onCancel: () => void }) {
+  const [subject, setSubject] = useState("");
+  const [kind, setKind] = useState<ScheduleEntry["kind"]>("curs");
+  const [day, setDay] = useState(1);
+  const [start, setStart] = useState("08:00");
+  const [end, setEnd] = useState("10:00");
+  const [room, setRoom] = useState("");
+  const [professor, setProfessor] = useState("");
+  const [biweekly, setBiweekly] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function add() {
+    if (!subject.trim()) return setError("Scrie numele materiei.");
+    if (end <= start) return setError("Ora de sfârșit trebuie să fie după cea de început.");
+    const parsed = ScheduleEntrySchema.safeParse({ subject, kind, day, start, end, room: room || null, professor: professor || null, biweekly, groups: [] });
+    if (!parsed.success) return setError("Verifică câmpurile: unul dintre ele e prea lung sau invalid.");
+    onAdd(parsed.data);
+  }
+
+  return (
+    <section aria-labelledby="ob-manual" className="animate-rise-in rounded-xl border border-accent-line bg-surface p-4 shadow-md sm:p-5">
+      <h2 id="ob-manual" className="text-[15px] font-semibold text-ink">
+        Adaugă o oră
+      </h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label htmlFor="ob-manual-subject" className="mb-1.5 block text-sm font-medium text-ink">
+            Materia
+          </label>
+          <Input
+            id="ob-manual-subject"
+            autoFocus
+            list="ob-subject-names"
+            maxLength={120}
+            placeholder="ex. Sisteme cu microprocesoare"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="h-11 rounded-xl text-[16px] sm:h-11"
+          />
+        </div>
+        <div>
+          <label htmlFor="ob-manual-kind" className="mb-1.5 block text-sm font-medium text-ink">
+            Tipul
+          </label>
+          <Select id="ob-manual-kind" value={kind} onChange={(e) => setKind(e.target.value as ScheduleEntry["kind"])}>
+            {SCHEDULE_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {EVENT_KIND_LABELS[k]}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <label htmlFor="ob-manual-day" className="mb-1.5 block text-sm font-medium text-ink">
+            Ziua
+          </label>
+          <Select id="ob-manual-day" value={day} onChange={(e) => setDay(Number(e.target.value))}>
+            {WEEKDAY_NAMES.map((d, i) => (
+              <option key={d} value={i + 1}>
+                {d}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <label htmlFor="ob-manual-start" className="mb-1.5 block text-sm font-medium text-ink">
+            De la
+          </label>
+          <TimeInput id="ob-manual-start" value={start} onChange={setStart} />
+        </div>
+        <div>
+          <label htmlFor="ob-manual-end" className="mb-1.5 block text-sm font-medium text-ink">
+            Până la
+          </label>
+          <TimeInput id="ob-manual-end" value={end} onChange={setEnd} />
+        </div>
+        <div>
+          <label htmlFor="ob-manual-room" className="mb-1.5 block text-sm font-medium text-ink">
+            Sala <span className="font-normal text-ink-muted">(opțional)</span>
+          </label>
+          <Input id="ob-manual-room" maxLength={160} value={room} onChange={(e) => setRoom(e.target.value)} className="h-11 rounded-xl text-[16px] sm:h-11" />
+        </div>
+        <div>
+          <label htmlFor="ob-manual-professor" className="mb-1.5 block text-sm font-medium text-ink">
+            Profesorul <span className="font-normal text-ink-muted">(opțional)</span>
+          </label>
+          <Input
+            id="ob-manual-professor"
+            maxLength={160}
+            value={professor}
+            onChange={(e) => setProfessor(e.target.value)}
+            className="h-11 rounded-xl text-[16px] sm:h-11"
+          />
+        </div>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium text-ink sm:col-span-2">
+          <input type="checkbox" checked={biweekly} onChange={(e) => setBiweekly(e.target.checked)} className="size-5 accent-accent" />
+          Se ține o dată la două săptămâni
+        </label>
+      </div>
+      {error ? (
+        <p role="alert" className="mt-3 text-[13px] font-medium text-danger">
+          {error}
+        </p>
+      ) : null}
+      <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" onClick={onCancel} className={buttonStyles({ variant: "ghost", size: "lg", className: "rounded-full" })}>
+          Renunță
+        </button>
+        <button type="button" onClick={add} className={buttonStyles({ size: "lg", className: "rounded-full" })}>
+          <Plus aria-hidden="true" />
+          Adaugă ora
+        </button>
+      </div>
+    </section>
   );
 }
 

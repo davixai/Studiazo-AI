@@ -1,10 +1,13 @@
 import { z } from "zod";
-import { isTimeOfDay, localSpan, shiftDateKey, startOfWeekKey } from "@/lib/time/zone";
+import { daysBetween, isTimeOfDay, localSpan, shiftDateKey, startOfWeekKey } from "@/lib/time/zone";
 
 // Importul orarului din poză (/bun-venit): ce citește AI-ul, cum validăm fiecare oră
 // și cum devine o activitate care se repetă în calendar până la finalul semestrului.
 
 export const SCHEDULE_KINDS = ["curs", "seminar", "laborator"] as const;
+/** În ce săptămâni ale semestrului se ține ora (orarele scriu „IMPAR”/„PAR” pentru cele alternative). */
+export const SCHEDULE_WEEKS = ["toate", "impare", "pare"] as const;
+export type WeekParity = "impara" | "para";
 export const SCHEDULE_MAX_ENTRIES = 80;
 /** Poza trimisă ca data URL; sub limita de 1 MB a Server Actions. */
 export const SCHEDULE_IMAGE_MAX_CHARS = 950_000;
@@ -34,7 +37,7 @@ export const ScheduleEntrySchema = z
     end: z.string().refine(isTimeOfDay),
     room: nullableText(160),
     professor: nullableText(160),
-    biweekly: z.boolean(),
+    weeks: z.enum(SCHEDULE_WEEKS),
     groups: z.array(z.string().trim().min(1).max(40)).max(20),
   })
   .refine((e) => e.end > e.start, "Ora de sfârșit trebuie să fie după cea de început.");
@@ -65,7 +68,7 @@ export const SCHEDULE_JSON_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["subject", "kind", "day", "start", "end", "room", "professor", "biweekly", "groups"],
+        required: ["subject", "kind", "day", "start", "end", "room", "professor", "weeks", "groups"],
         properties: {
           subject: { type: "string" },
           kind: { type: "string", enum: [...SCHEDULE_KINDS] },
@@ -74,7 +77,7 @@ export const SCHEDULE_JSON_SCHEMA = {
           end: { type: "string", description: "HH:MM, 24 de ore" },
           room: { type: ["string", "null"] },
           professor: { type: ["string", "null"] },
-          biweekly: { type: "boolean" },
+          weeks: { type: "string", enum: [...SCHEDULE_WEEKS] },
           groups: { type: "array", items: { type: "string" } },
         },
       },
@@ -134,12 +137,31 @@ export function semesterEnd(todayKey: string) {
   return `${year}-06-07`;
 }
 
-/** Rândurile pentru `events`: prima apariție în săptămâna curentă, apoi săptămânal (sau la două săptămâni). */
-export function scheduleToEvents(entries: ScheduleEntry[], todayKey: string, subjectIds: Map<string, string>) {
+/** Prima zi a semestrului (estimare): semestrul 1 în săptămâna cu 1 octombrie, semestrul 2 în ultima săptămână din februarie. */
+function semesterStartMonday(todayKey: string) {
+  const year = Number(todayKey.slice(0, 4));
+  const month = Number(todayKey.slice(5, 7));
+  if (month >= 8) return startOfWeekKey(`${year}-10-01`);
+  if (month === 1) return startOfWeekKey(`${year - 1}-10-01`);
+  return startOfWeekKey(`${year}-02-24`);
+}
+
+/** Paritatea estimată a săptămânii curente în semestru (săptămâna 1 = impară); studentul o poate corecta. */
+export function guessWeekParity(todayKey: string): WeekParity {
+  const weeks = Math.floor(daysBetween(semesterStartMonday(todayKey), startOfWeekKey(todayKey)) / 7);
+  return weeks >= 0 && weeks % 2 === 1 ? "para" : "impara";
+}
+
+/**
+ * Rândurile pentru `events`: prima apariție în săptămâna curentă, apoi săptămânal. Orele doar din săptămânile
+ * impare/pare se repetă la două săptămâni și încep în săptămâna potrivită (`thisWeek` = paritatea săptămânii curente).
+ */
+export function scheduleToEvents(entries: ScheduleEntry[], todayKey: string, subjectIds: Map<string, string>, thisWeek: WeekParity) {
   const monday = startOfWeekKey(todayKey);
   const until = semesterEnd(todayKey);
   return entries.map((e) => {
-    const { start, end } = localSpan(shiftDateKey(monday, e.day - 1), e.start, e.end);
+    const nextWeek = (e.weeks === "impare" && thisWeek === "para") || (e.weeks === "pare" && thisWeek === "impara");
+    const { start, end } = localSpan(shiftDateKey(monday, e.day - 1 + (nextWeek ? 7 : 0)), e.start, e.end);
     return {
       kind: e.kind,
       title: e.subject,
@@ -148,7 +170,7 @@ export function scheduleToEvents(entries: ScheduleEntry[], todayKey: string, sub
       notes: e.professor ? `Profesor: ${e.professor}` : null,
       starts_at: start.toISOString(),
       ends_at: end.toISOString(),
-      recurrence: e.biweekly ? ("biweekly" as const) : ("weekly" as const),
+      recurrence: e.weeks === "toate" ? ("weekly" as const) : ("biweekly" as const),
       recurrence_until: until,
     };
   });
@@ -156,13 +178,14 @@ export function scheduleToEvents(entries: ScheduleEntry[], todayKey: string, sub
 
 /** Orar de probă pentru modul previzualizare (STUDIA_PREVIEW=1): două grupe și ore comune. */
 export const PREVIEW_SCHEDULE: ScheduleEntry[] = [
-  { subject: "Baze de date", kind: "curs", day: 1, start: "08:00", end: "10:00", room: "C2", professor: "Conf. dr. Ana Popescu", biweekly: false, groups: [] },
-  { subject: "Baze de date", kind: "laborator", day: 1, start: "12:00", end: "14:00", room: "C412", professor: "Asist. Mihai Ionescu", biweekly: false, groups: ["2A"] },
-  { subject: "Baze de date", kind: "laborator", day: 2, start: "10:00", end: "12:00", room: "C412", professor: "Asist. Mihai Ionescu", biweekly: false, groups: ["2B"] },
-  { subject: "Programare orientată pe obiecte", kind: "curs", day: 2, start: "14:00", end: "16:00", room: "C1", professor: "Prof. dr. Radu Matei", biweekly: false, groups: [] },
-  { subject: "Probabilități și statistică", kind: "seminar", day: 3, start: "10:00", end: "12:00", room: "C903", professor: "Lect. dr. Ioana Rusu", biweekly: true, groups: ["2A"] },
-  { subject: "Probabilități și statistică", kind: "curs", day: 4, start: "08:00", end: "10:00", room: "C2", professor: "Lect. dr. Ioana Rusu", biweekly: false, groups: [] },
-  { subject: "Rețele de calculatoare", kind: "laborator", day: 5, start: "16:00", end: "18:00", room: null, professor: null, biweekly: false, groups: ["2A"] },
+  { subject: "Baze de date", kind: "curs", day: 1, start: "08:00", end: "10:00", room: "C2", professor: "Conf. dr. Ana Popescu", weeks: "toate", groups: [] },
+  { subject: "Baze de date", kind: "laborator", day: 1, start: "12:00", end: "14:00", room: "C412", professor: "Asist. Mihai Ionescu", weeks: "toate", groups: ["2A"] },
+  { subject: "Baze de date", kind: "laborator", day: 2, start: "10:00", end: "12:00", room: "C412", professor: "Asist. Mihai Ionescu", weeks: "toate", groups: ["2B"] },
+  { subject: "Programare orientată pe obiecte", kind: "curs", day: 2, start: "14:00", end: "16:00", room: "C1", professor: "Prof. dr. Radu Matei", weeks: "toate", groups: [] },
+  { subject: "Probabilități și statistică", kind: "seminar", day: 3, start: "10:00", end: "12:00", room: "C903", professor: "Lect. dr. Ioana Rusu", weeks: "impare", groups: ["2A"] },
+  { subject: "Fizică 2", kind: "laborator", day: 3, start: "10:00", end: "12:00", room: "D008", professor: "Asist. Andrei Diaconu", weeks: "pare", groups: ["2A"] },
+  { subject: "Probabilități și statistică", kind: "curs", day: 4, start: "08:00", end: "10:00", room: "C2", professor: "Lect. dr. Ioana Rusu", weeks: "toate", groups: [] },
+  { subject: "Rețele de calculatoare", kind: "laborator", day: 5, start: "16:00", end: "18:00", room: null, professor: null, weeks: "toate", groups: ["2A"] },
 ];
 
 /** Profesorul de curs al fiecărei materii (altfel primul profesor găsit), pentru materiile create din orar. */

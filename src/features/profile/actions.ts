@@ -185,7 +185,9 @@ export async function finishOnboarding(_prev: FormState, formData: FormData): Pr
     const { data: subjects, error: idsError } = await supabase.from("subjects").select("id, name");
     if (idsError) return { status: "error", message: "Nu am putut salva orarul. Încearcă din nou.", values };
     const ids = new Map((subjects ?? []).map((s) => [cleanSubjectName(String(s.name)).toLocaleLowerCase("ro"), String(s.id)]));
-    const { error: eventsError } = await supabase.from("events").insert(scheduleToEvents(schedule, toDateKey(new Date()), ids));
+    const thisWeek = values.weekParity === "para" ? "para" : "impara";
+    const rows = scheduleToEvents(schedule, toDateKey(new Date()), ids, thisWeek);
+    const { error: eventsError } = await supabase.from("events").insert(rows);
     if (eventsError) return { status: "error", message: "Nu am putut salva orarul. Încearcă din nou.", values };
     revalidatePath("/calendar");
   }

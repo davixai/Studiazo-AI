@@ -109,13 +109,20 @@ export default async function TodayPage() {
             </CardBody>
           </Card>
 
-          <Card aria-labelledby="termene" className="stagger" style={delay(4)}>
+          {/* Pe ecrane mari, ultimul card din coloana mai scurtă se întinde, ca să nu rămână gol sub el. */}
+          <Card aria-labelledby="termene" className="stagger lg:flex lg:flex-1 lg:flex-col" style={delay(4)}>
             <CardHeader id="termene" title="Următoarele termene" description="Teme și examene din următoarele 30 de zile" />
-            <CardBody>
+            <CardBody className="lg:flex lg:flex-1 lg:flex-col">
               {upcoming.length > 0 ? (
                 <UpcomingList items={upcoming} now={now} />
               ) : (
-                <EmptyState compact icon={<GraduationCap />} title="Niciun termen apropiat" description="Când adaugi o temă sau un examen, îl vezi aici." />
+                <EmptyState
+                  compact
+                  className="lg:my-auto"
+                  icon={<GraduationCap />}
+                  title="Niciun termen apropiat"
+                  description="Când adaugi o temă sau un examen, îl vezi aici."
+                />
               )}
             </CardBody>
           </Card>
@@ -133,7 +140,7 @@ export default async function TodayPage() {
             </CardBody>
           </Card>
 
-          <Card aria-labelledby="sesiune-recomandata" className="stagger overflow-hidden" style={delay(5)}>
+          <Card aria-labelledby="sesiune-recomandata" className="stagger overflow-hidden lg:flex-1" style={delay(5)}>
             <RecommendedSession session={toSessionView(overview.nextStudySession)} now={now.toISOString()} />
           </Card>
         </div>

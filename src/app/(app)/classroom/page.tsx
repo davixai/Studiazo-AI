@@ -18,7 +18,7 @@ export default async function ClassroomPage({ searchParams }: PageProps<"/classr
   const connected = configured && Boolean(await readToken(user.id));
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <PageHeader
         title="Google Classroom"
         description="Importă cursurile, temele și documentele din Classroom. Asistentul AI le citește apoi ca pe orice material încărcat de tine."

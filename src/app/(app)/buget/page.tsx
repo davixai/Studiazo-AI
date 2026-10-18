@@ -101,7 +101,8 @@ export default async function BudgetPage({ searchParams }: PageProps<"/buget">) 
             </CardBody>
           </Card>
 
-          <Card aria-labelledby="inregistrari" className="stagger" style={delay(5)}>
+          {/* Pe ecrane mari, ultimul card din fiecare coloană se întinde până jos, ca să nu rămână gol sub coloana mai scurtă. */}
+          <Card aria-labelledby="inregistrari" className="stagger lg:flex-1" style={delay(5)}>
             <CardHeader id="inregistrari" title="Înregistrările lunii" />
             <CardBody className="pt-2">
               {hasData ? (
@@ -144,7 +145,7 @@ export default async function BudgetPage({ searchParams }: PageProps<"/buget">) 
             </CardBody>
           </Card>
 
-          <Card aria-labelledby="joburi-potrivite" className="stagger" style={delay(8)}>
+          <Card aria-labelledby="joburi-potrivite" className="stagger lg:flex-1" style={delay(8)}>
             <CardHeader
               id="joburi-potrivite"
               title="Un venit în plus?"

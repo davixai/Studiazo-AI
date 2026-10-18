@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { OnboardingSchema } from "./onboarding";
-import { PREVIEW_SCHEDULE, cleanSchedule, forGroup, professorsBySubject, scheduleGroups, scheduleToEvents, semesterEnd } from "./schedule";
+import {
+  PREVIEW_SCHEDULE,
+  cleanSchedule,
+  forGroup,
+  guessWeekParity,
+  professorsBySubject,
+  scheduleGroups,
+  scheduleToEvents,
+  semesterEnd,
+  type ScheduleEntry,
+} from "./schedule";
 
 const entry = {
   subject: "  Baze   de date ",
@@ -10,7 +20,7 @@ const entry = {
   end: "10.00",
   room: "",
   professor: "Conf. dr. Ana Popescu",
-  biweekly: false,
+  weeks: "toate",
   groups: [],
 };
 
@@ -75,6 +85,7 @@ describe("scheduleToEvents", () => {
       [PREVIEW_SCHEDULE[0], { ...PREVIEW_SCHEDULE[4], subject: "Statistică" }],
       "2026-10-18",
       ids,
+      "impara",
     );
     expect(course).toMatchObject({
       kind: "curs",
@@ -88,6 +99,27 @@ describe("scheduleToEvents", () => {
       recurrence_until: "2027-01-20",
     });
     expect(lab).toMatchObject({ subject_id: null, recurrence: "biweekly", starts_at: "2026-10-14T07:00:00.000Z" });
+  });
+
+  it("orele IMPAR și PAR din același interval nu cad în aceeași săptămână", () => {
+    const slot = { kind: "laborator", day: 2, start: "14:00", end: "16:00", room: null, professor: null, groups: [] } as const;
+    const odd: ScheduleEntry = { ...slot, groups: [], subject: "Circuite electrice 1", weeks: "impare" };
+    const even: ScheduleEntry = { ...slot, groups: [], subject: "Fizică 2", weeks: "pare" };
+    // Săptămâna 12–18 octombrie e impară: CEL1 începe marți 13, Fizica marți 20; amândouă la două săptămâni.
+    const [a, b] = scheduleToEvents([odd, even], "2026-10-18", new Map(), "impara");
+    expect(a).toMatchObject({ starts_at: "2026-10-13T11:00:00.000Z", recurrence: "biweekly" });
+    expect(b).toMatchObject({ starts_at: "2026-10-20T11:00:00.000Z", recurrence: "biweekly" });
+    // Dacă săptămâna e pară, se inversează.
+    const [c, d] = scheduleToEvents([odd, even], "2026-10-18", new Map(), "para");
+    expect(c.starts_at).toBe("2026-10-20T11:00:00.000Z");
+    expect(d.starts_at).toBe("2026-10-13T11:00:00.000Z");
+  });
+
+  it("ghicește paritatea după începutul semestrului (săptămâna 1 = impară)", () => {
+    expect(guessWeekParity("2026-09-30")).toBe("impara"); // săptămâna 1 (28 sept.–4 oct.)
+    expect(guessWeekParity("2026-10-07")).toBe("para"); // săptămâna 2
+    expect(guessWeekParity("2026-10-18")).toBe("impara"); // săptămâna 3
+    expect(guessWeekParity("2027-03-03")).toBe("para"); // semestrul 2, săptămâna 2
   });
 
   it("alege profesorul de curs pentru materie", () => {

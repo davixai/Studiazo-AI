@@ -23,7 +23,9 @@ import {
   forGroup,
   scheduleGroups,
   semesterEnd,
+  guessWeekParity,
   type ScheduleEntry,
+  type WeekParity,
 } from "../schedule";
 import {
   AGE_MAX,
@@ -61,6 +63,8 @@ type Answers = {
   group: string;
   /** Orele confirmate din poza cu orarul; se salvează în calendar la final. */
   schedule: ScheduleEntry[];
+  /** Paritatea săptămânii curente (pentru orele IMPAR/PAR din orar). */
+  weekParity: WeekParity;
 };
 
 function initialAnswers(profile: Profile): Answers {
@@ -78,6 +82,7 @@ function initialAnswers(profile: Profile): Answers {
     subjects: [],
     group: "",
     schedule: [],
+    weekParity: guessWeekParity(toDateKey(new Date())),
   };
 }
 
@@ -514,8 +519,8 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
           {step === "orar" ? (
             <ScheduleStep
               answers={answers}
-              onDone={(schedule, group) => {
-                setAnswers((a) => ({ ...a, schedule, group }));
+              onDone={(schedule, group, weekParity) => {
+                setAnswers((a) => ({ ...a, schedule, group, weekParity }));
                 go(index + 1);
               }}
               onSkip={() => {
@@ -754,7 +759,7 @@ function ScheduleStep({
   onSkip,
 }: {
   answers: Answers;
-  onDone: (entries: ScheduleEntry[], group: string) => void;
+  onDone: (entries: ScheduleEntry[], group: string, parity: WeekParity) => void;
   onSkip: () => void;
 }) {
   const [group, setGroup] = useState(answers.group);
@@ -810,8 +815,9 @@ function ScheduleStep({
         note={phase.note}
         initialGroup={group}
         knownSubjects={answers.subjects}
+        initialParity={answers.weekParity}
         onRetry={() => setPhase({ name: "pick" })}
-        onConfirm={(kept, chosenGroup) => onDone(kept, chosenGroup)}
+        onConfirm={onDone}
       />
     );
   }
@@ -879,6 +885,7 @@ function ScheduleReview({
   note,
   initialGroup,
   knownSubjects,
+  initialParity,
   onRetry,
   onConfirm,
 }: {
@@ -887,10 +894,12 @@ function ScheduleReview({
   initialGroup: string;
   /** Materiile scrise de student în ghid: sugestii când redenumește sau adaugă. */
   knownSubjects: string[];
+  initialParity: WeekParity;
   onRetry: () => void;
-  onConfirm: (kept: ScheduleEntry[], group: string) => void;
+  onConfirm: (kept: ScheduleEntry[], group: string, parity: WeekParity) => void;
 }) {
   const [items, setItems] = useState(entries);
+  const [parity, setParity] = useState(initialParity);
   const groups = scheduleGroups(items);
   const [group, setGroup] = useState<string | null>(
     () => groups.find((g) => g.toLocaleLowerCase("ro") === initialGroup.trim().toLocaleLowerCase("ro")) ?? null,
@@ -942,6 +951,30 @@ function ScheduleReview({
         <div className="mt-6">
           <Alert tone="info">{note}</Alert>
         </div>
+      ) : null}
+
+      {kept.some((e) => e.weeks !== "toate") ? (
+        <section aria-labelledby="ob-parity" className="stagger mt-6" style={{ "--i": 2 } as React.CSSProperties}>
+          <p id="ob-parity" className="text-[13px] font-semibold text-ink-soft">
+            Săptămâna aceasta e impară sau pară?
+          </p>
+          <p className="mt-1 mb-2.5 text-[13px] leading-5 text-ink-muted">
+            Așa știm din ce săptămână încep orele marcate IMPAR și PAR. Am ghicit după începutul semestrului; schimbă dacă la tine e altfel.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(["impara", "para"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                aria-pressed={parity === p}
+                onClick={() => setParity(p)}
+                className="min-h-10 rounded-full border border-line bg-surface px-4 text-[14px] font-semibold text-ink-soft shadow-xs transition-[transform,border-color,color,background-color] duration-150 hover:border-accent-line active:scale-[0.97] aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
+              >
+                {p === "impara" ? "Impară" : "Pară"}
+              </button>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <datalist id="ob-subject-names">
@@ -1007,7 +1040,7 @@ function ScheduleReview({
                       <span className="block text-[15px] leading-5 font-semibold text-ink sm:text-[16px]">{e.subject}</span>
                       <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-5 text-ink-muted">
                         <Badge tone={e.kind === "curs" ? "accent" : "neutral"}>{EVENT_KIND_LABELS[e.kind]}</Badge>
-                        {e.biweekly ? <Badge tone="warning">la 2 săptămâni</Badge> : null}
+                        {e.weeks !== "toate" ? <Badge tone="warning">săpt. {e.weeks}</Badge> : null}
                         {[e.room, e.professor].filter(Boolean).join(" · ")}
                       </span>
                     </span>
@@ -1050,7 +1083,7 @@ function ScheduleReview({
         Se repetă în calendar până pe {untilLabel}. Le poți modifica oricând din Calendar.
       </p>
       <Footer>
-        <PrimaryButton disabled={kept.length === 0} onClick={() => onConfirm(kept, group ?? "")}>
+        <PrimaryButton disabled={kept.length === 0} onClick={() => onConfirm(kept, group ?? "", parity)}>
           {kept.length > 0 ? `Adaug orarul · ${kept.length} ore` : "Adaug orarul"}
         </PrimaryButton>
         <SecondaryButton onClick={onRetry}>Încearcă altă poză</SecondaryButton>
@@ -1068,13 +1101,13 @@ function ManualEntry({ onAdd, onCancel }: { onAdd: (entry: ScheduleEntry) => voi
   const [end, setEnd] = useState("10:00");
   const [room, setRoom] = useState("");
   const [professor, setProfessor] = useState("");
-  const [biweekly, setBiweekly] = useState(false);
+  const [weeks, setWeeks] = useState<ScheduleEntry["weeks"]>("toate");
   const [error, setError] = useState<string | null>(null);
 
   function add() {
     if (!subject.trim()) return setError("Scrie numele materiei.");
     if (end <= start) return setError("Ora de sfârșit trebuie să fie după cea de început.");
-    const parsed = ScheduleEntrySchema.safeParse({ subject, kind, day, start, end, room: room || null, professor: professor || null, biweekly, groups: [] });
+    const parsed = ScheduleEntrySchema.safeParse({ subject, kind, day, start, end, room: room || null, professor: professor || null, weeks, groups: [] });
     if (!parsed.success) return setError("Verifică câmpurile: unul dintre ele e prea lung sau invalid.");
     onAdd(parsed.data);
   }
@@ -1154,10 +1187,16 @@ function ManualEntry({ onAdd, onCancel }: { onAdd: (entry: ScheduleEntry) => voi
             className="h-11 rounded-xl text-[16px] sm:h-11"
           />
         </div>
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium text-ink sm:col-span-2">
-          <input type="checkbox" checked={biweekly} onChange={(e) => setBiweekly(e.target.checked)} className="size-5 accent-accent" />
-          Se ține o dată la două săptămâni
-        </label>
+        <div className="sm:col-span-2">
+          <label htmlFor="ob-manual-weeks" className="mb-1.5 block text-sm font-medium text-ink">
+            În ce săptămâni
+          </label>
+          <Select id="ob-manual-weeks" value={weeks} onChange={(e) => setWeeks(e.target.value as ScheduleEntry["weeks"])}>
+            <option value="toate">În fiecare săptămână</option>
+            <option value="impare">Doar în săptămânile impare</option>
+            <option value="pare">Doar în săptămânile pare</option>
+          </Select>
+        </div>
       </div>
       {error ? (
         <p role="alert" className="mt-3 text-[13px] font-medium text-danger">
@@ -1217,7 +1256,7 @@ function HiddenAnswers({ answers }: { answers: Answers }) {
     ["studyYear", answers.studyYear],
     ["goal", answers.goal],
   ];
-  if (answers.schedule.length > 0) fields.push(["schedule", JSON.stringify(answers.schedule)]);
+  if (answers.schedule.length > 0) fields.push(["schedule", JSON.stringify(answers.schedule)], ["weekParity", answers.weekParity]);
   return (
     <>
       {fields.map(([key, value]) => (

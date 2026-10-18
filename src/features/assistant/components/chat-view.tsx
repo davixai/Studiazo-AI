@@ -230,7 +230,7 @@ export function ChatView({
 
         {messages.map((m) =>
           m.role === "user" ? (
-            <UserBubble key={m.id} text={m.content} hasImage={m.hasImage} image={m.localImage ?? m.imageUrl} />
+            <UserBubble key={m.id} text={m.content} hasImage={m.hasImage} image={m.localImage ?? m.imageUrl} quizId={m.quizId} />
           ) : (
             <div key={m.id} className="flex flex-col gap-3">
               <AssistantMessage text={m.content} />
@@ -470,7 +470,7 @@ function AssistantMessage({ text }: { text: string }) {
   );
 }
 
-function UserBubble({ text, hasImage, image }: { text: string; hasImage?: boolean; image?: string | null }) {
+function UserBubble({ text, hasImage, image, quizId }: { text: string; hasImage?: boolean; image?: string | null; quizId?: string | null }) {
   return (
     <div className="flex flex-col items-end gap-2 animate-rise-in">
       {image ? (
@@ -486,6 +486,12 @@ function UserBubble({ text, hasImage, image }: { text: string; hasImage?: boolea
         <p className={cn("max-w-[85%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-[15px] leading-6 whitespace-pre-wrap text-white shadow-sm")}>
           {text}
         </p>
+      ) : null}
+      {quizId ? (
+        <Link href={`/asistent/test/${quizId}`} className="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline">
+          <ListChecks className="size-3.5" aria-hidden="true" />
+          Deschide testul
+        </Link>
       ) : null}
     </div>
   );

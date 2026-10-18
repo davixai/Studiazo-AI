@@ -15,6 +15,8 @@ export type ChatMessage = {
   proposalIds: string[];
   hasImage: boolean;
   imageUrl: string | null;
+  /** Mesajul vine de la „Explică-mi ce n-a mers bine” după un test: linkul către test. */
+  quizId: string | null;
 };
 
 export type ConversationSummary = { id: string; title: string; updatedAt: string };
@@ -32,7 +34,7 @@ const MAX_MESSAGES = 1000;
 const IMAGE_URL_SECONDS = 3600;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-type Metadata = { proposalIds?: unknown; image?: unknown; imagePath?: unknown };
+type Metadata = { proposalIds?: unknown; image?: unknown; imagePath?: unknown; quizId?: unknown };
 
 export function imagePathOf(metadata: unknown): string | null {
   const path = (metadata as Metadata | null)?.imagePath;
@@ -50,6 +52,7 @@ export function toChatMessage(r: Record<string, unknown>, imageUrls: Map<string,
     proposalIds: Array.isArray(metadata.proposalIds) ? metadata.proposalIds.filter((p): p is string => typeof p === "string") : [],
     hasImage: metadata.image === true,
     imageUrl: path ? (imageUrls.get(path) ?? null) : null,
+    quizId: typeof metadata.quizId === "string" ? metadata.quizId : null,
   };
 }
 

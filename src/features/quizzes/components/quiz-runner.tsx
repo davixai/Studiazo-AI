@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowRight, Check, ChevronLeft, MessageCircleQuestion, RotateCcw, X } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, MessageCircleQuestion, RotateCcw, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
 import type { Quiz } from "@/lib/contracts/quiz";
 import { cn } from "@/lib/utils";
-import { submitAttempt, type SubmitAttemptResult } from "../actions";
+import { MessageContent } from "@/features/assistant/components/message-content";
+import { explainAttempt, submitAttempt, type SubmitAttemptResult } from "../actions";
 
 type QuizRunnerProps = { quizId: string; quiz: Quiz; subject: { id: string; name: string } };
 
@@ -22,6 +23,10 @@ export function QuizRunner({ quizId, quiz, subject }: QuizRunnerProps) {
   const [result, setResult] = useState<Extract<SubmitAttemptResult, { ok: true }> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
+  const [review, setReview] = useState<{ text: string; href: string } | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [explaining, startExplaining] = useTransition();
+  const reviewRef = useRef<HTMLDivElement>(null);
   const explanationRef = useRef<HTMLDivElement>(null);
 
   const question = quiz.questions[index];
@@ -49,7 +54,21 @@ export function QuizRunner({ quizId, quiz, subject }: QuizRunnerProps) {
     });
   };
 
+  const explain = () => {
+    if (!result) return;
+    setReviewError(null);
+    startExplaining(async () => {
+      const explained = await explainAttempt({ attemptId: result.attemptId });
+      if (explained.ok) {
+        setReview({ text: explained.text, href: explained.href });
+        requestAnimationFrame(() => reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      } else setReviewError(explained.message);
+    });
+  };
+
   const restart = () => {
+    setReview(null);
+    setReviewError(null);
     setAnswers(quiz.questions.map(() => null));
     setIndex(0);
     setResult(null);
@@ -58,6 +77,7 @@ export function QuizRunner({ quizId, quiz, subject }: QuizRunnerProps) {
 
   if (result) {
     const ratio = result.score / result.total;
+    const hasMistakes = result.score < result.total;
     const verdict = ratio === 1 ? "Perfect!" : ratio >= 0.8 ? "Foarte bine!" : ratio >= 0.5 ? "Pe drumul cel bun" : "Mai exersăm puțin";
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
@@ -90,21 +110,69 @@ export function QuizRunner({ quizId, quiz, subject }: QuizRunnerProps) {
 
           {result.weak.length > 0 ? (
             <Alert tone="warning" className="mt-6 w-full text-left" title="De recapitulat">
-              {result.weak.join(", ")}. Întreabă asistentul să ți le explice sau să-ți planifice o sesiune.
+              {result.weak.join(", ")}.
+            </Alert>
+          ) : null}
+
+          {reviewError ? (
+            <Alert tone="danger" className="mt-6 w-full text-left">
+              {reviewError}
             </Alert>
           ) : null}
 
           <div className="mt-6 grid w-full gap-2 sm:grid-cols-2">
-            <Button variant="secondary" onClick={restart}>
+            <Button variant="secondary" onClick={restart} disabled={explaining}>
               <RotateCcw aria-hidden="true" />
               Refă testul
             </Button>
-            <ButtonLink href={chatHref}>
-              <MessageCircleQuestion aria-hidden="true" />
-              {result.weak.length > 0 ? "Explică-mi temele slabe" : "Înapoi la chat"}
-            </ButtonLink>
+            {hasMistakes && !review ? (
+              <Button onClick={explain} loading={explaining}>
+                <Sparkles aria-hidden="true" />
+                Explică-mi ce n-a mers bine
+              </Button>
+            ) : (
+              <ButtonLink href={review?.href ?? chatHref} variant={review ? "secondary" : "primary"}>
+                <MessageCircleQuestion aria-hidden="true" />
+                {review ? "Continuă în chatul materiei" : "Înapoi la chat"}
+              </ButtonLink>
+            )}
           </div>
         </div>
+
+        {explaining ? (
+          <div className="flex flex-col gap-3 rounded-lg border border-accent-line bg-surface p-5 shadow-sm animate-rise-in sm:p-6" role="status">
+            <p className="flex items-center gap-2 text-sm font-semibold text-accent-ink">
+              <Sparkles className="size-4 animate-pulse" aria-hidden="true" />
+              Asistentul îți analizează greșelile…
+            </p>
+            {[92, 78, 85, 60].map((w, i) => (
+              <div key={i} className="h-3 animate-pulse rounded-full bg-surface-muted" style={{ width: `${w}%`, animationDelay: `${i * 120}ms` }} />
+            ))}
+          </div>
+        ) : null}
+
+        {review ? (
+          <section
+            ref={reviewRef}
+            aria-labelledby="ce-nu-a-mers"
+            className="scroll-mt-6 rounded-lg border border-accent-line bg-surface p-5 shadow-sm animate-rise-in sm:p-6"
+          >
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h2 id="ce-nu-a-mers" className="flex items-center gap-2 text-[17px] font-bold tracking-[-0.02em] text-ink">
+                <span className="flex size-8 items-center justify-center rounded-md bg-accent-soft text-accent-ink" aria-hidden="true">
+                  <Sparkles className="size-4" />
+                </span>
+                Ce n-a mers bine
+              </h2>
+              <span className="text-xs text-ink-muted">Salvat în istoricul materiei</span>
+            </div>
+            <MessageContent text={review.text} />
+            <ButtonLink href={review.href} variant="secondary" className="mt-5 w-full sm:w-auto">
+              <MessageCircleQuestion aria-hidden="true" />
+              Întreabă mai departe în chat
+            </ButtonLink>
+          </section>
+        ) : null}
       </div>
     );
   }

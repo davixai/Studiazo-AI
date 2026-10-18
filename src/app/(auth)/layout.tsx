@@ -1,8 +1,15 @@
+import { Camera, Gift, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { Alert } from "@/components/ui/alert";
 import { FeatureMarquee } from "@/features/auth/components/feature-marquee";
 import { isPreviewMode } from "@/lib/env";
+
+const HIGHLIGHTS = [
+  { icon: Gift, title: "Gratuit pentru studenți", text: "Contul se face în mai puțin de un minut, fără card." },
+  { icon: Camera, title: "Orarul din poză", text: "Pozezi orarul facultății, iar noi îl punem în calendar." },
+  { icon: LockKeyhole, title: "Datele tale rămân private", text: "Doar tu îți vezi programul, cursurile și notițele." },
+];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +29,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             </Alert>
           ) : null}
           {children}
+          <ul className="mt-12 hidden gap-3 border-t border-line/70 pt-8 lg:grid">
+            {HIGHLIGHTS.map(({ icon: Icon, title, text }) => (
+              <li key={title} className="flex items-start gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent-ink">
+                  <Icon className="size-[18px]" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-[14px] font-semibold text-ink">{title}</p>
+                  <p className="text-[13px] leading-5 text-ink-muted">{text}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </main>
         <div aria-hidden="true" className="-mx-5 mb-6 sm:-mx-10 lg:hidden">
           <FeatureMarquee single />

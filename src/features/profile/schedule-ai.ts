@@ -27,6 +27,7 @@ Orele (cel mai des greșite, citește-le cu grijă):
 - Dacă intervalul e scris în celulă (ex. „8-10”, „14:00–15:50”), îl folosești pe acela; „15:50” sau „16:50” la final înseamnă de obicei ora întreagă cu pauza inclusă, deci rotunjești la 16:00 / 17:00.
 - Altfel, ora de început și de sfârșit le iei din etichetele orelor de pe margine, după marginile chenarului: unde începe și unde se termină chenarul. Rândurile pot avea înălțimi diferite, deci nu socoti din pixeli; potrivește fiecare margine cu linia de oră cea mai apropiată. Orele de facultate încep și se termină aproape mereu la ore fixe (ex. 14:00–16:00); jumătăți de oră doar dacă sunt scrise explicit.
 - Un chenar împărțit în două cu etichetele IMPAR și PAR NU înseamnă două ore una după alta: e ACELAȘI interval orar, în săptămâni alternative. Partea IMPAR are weeks = "impare", partea PAR are weeks = "pare", iar amândouă au ora de început și de sfârșit a întregului chenar. O parte cu „—” înseamnă că în săptămânile acelea nu e nimic acolo (nu creezi intrare).
+- Când mai multe chenare împărțite IMPAR/PAR stau unul sub altul, citești fiecare jumătate separat: urmărești coloana IMPAR de sus în jos, apoi coloana PAR. O materie are interval doar în chenarele în care apare chiar ea în jumătatea aceea; nu o lungi peste un „—” și nu o muta în cealaltă jumătate.
 - Dacă aceeași materie, cu același tip, aceeași sală și aceleași săptămâni, apare în chenare consecutive, le unești într-o singură intrare, de la începutul primului până la sfârșitul ultimului.
 - weeks = "toate" pentru orele din fiecare săptămână; "impare"/"pare" doar pentru cele marcate IMPAR/PAR (sau „săpt. impare/pare”, „/2”, „1 din 2” — dacă nu reiese care, alegi "impare").
 
@@ -34,6 +35,8 @@ Celelalte câmpuri:
 - Tipul: „C”/„curs” = curs, „S”/„sem” = seminar, „L”/„lab” = laborator. Dacă nu reiese, alegi după context.
 - Ziua: 1 = luni … 7 = duminică. Orele în HH:MM, pe 24 de ore. Sala și profesorul dacă apar, altfel null.
 - groups: grupele sau semigrupele pentru care e ora, exact cum apar în orar (ex. „2A”, „IE21”); listă goală dacă ora e comună pentru tot anul sau toată seria. Păstrezi orele TUTUROR grupelor; studentul își alege grupa după aceea.
+- Dacă orarul e al unei singure grupe (titlul o spune, ex. „AIA • an 2 • 3221a”, și nu are coloane pentru mai multe grupe), toate orele au groups = [].
+- Mențiunile de forma „+IETTI”, „+MCT, ESCCA”, „+C” arată ALTE specializări sau serii care vin la aceeași oră. Nu sunt grupe: nu le pui în groups.
 - Dacă o oră se ține doar în anumite săptămâni (ex. „S 1–7”, „săpt. 1–9”), o păstrezi și scrii asta pe scurt în note.
 - Nu inventa ore, săli sau profesori. O oră pe care n-o poți citi sigur o lași afară, dar materia ei rămâne în subjects.
 - Dacă poza nu este un orar, subjects = [], entries = [] și explici pe scurt în note. Altfel note = null sau o observație scurtă și utilă.

@@ -26,6 +26,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/materii", label: "Încarcă cursuri și poze" },
       { href: "/asistent", label: "Asistentul AI" },
       { href: "/asistent?materie=general", label: "Plan de studiu" },
+      { href: "/progres", label: "Progresul tău" },
       { href: "/resurse", label: "Resurse în Iași" },
     ],
   },

@@ -17,7 +17,7 @@ export function Sidebar({ userName, userDetail }: AppNavProps) {
   const pathname = usePathname();
   return (
     <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line/70 bg-surface px-4 py-6 lg:flex">
-      <Link href="/azi" className="mx-2 mb-5 rounded-md" aria-label="Studiazo AI — Azi">
+      <Link href="/azi" className="mx-2 mb-5 rounded-md" aria-label="Studiazo AI — Acasă">
         <Logo />
       </Link>
       <LiveClockCard className="mb-7" />
@@ -71,7 +71,7 @@ export function MobileTopBar({ userName }: { userName: string }) {
   return (
     <header className="pt-safe sticky top-0 z-30 bg-canvas/85 backdrop-blur-xl lg:hidden">
       <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-        <Link href="/azi" className="rounded-md" aria-label="Studiazo AI — Azi">
+        <Link href="/azi" className="rounded-md" aria-label="Studiazo AI — Acasă">
           <Logo />
         </Link>
         <div className="flex items-center gap-3">

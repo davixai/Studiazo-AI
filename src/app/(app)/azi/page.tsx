@@ -12,12 +12,8 @@ import { StatTile } from "@/features/dashboard/components/stat-tile";
 import { UpcomingList } from "@/features/dashboard/components/upcoming-list";
 import { getTodayOverview, type TodayOverview } from "@/features/dashboard/queries";
 import { getProfile } from "@/features/profile/queries";
-import { BadgesGrid } from "@/features/progress/components/badges";
-import { LearningChart } from "@/features/progress/components/learning-chart";
 import { StreakCard, StreakStrip } from "@/features/progress/components/streak";
 import { getLearningStats } from "@/features/progress/queries";
-import { RecentAttempts } from "@/features/quizzes/components/recent-attempts";
-import { getRecentAttempts } from "@/features/quizzes/queries";
 import type { AgendaItem } from "@/lib/contracts/domain";
 import { formatDuration, formatRelativeDay, greetingFor } from "@/lib/time/format";
 import { daysBetween, toDateKey } from "@/lib/time/zone";
@@ -25,13 +21,13 @@ import { MotivationalQuote } from "@/features/dashboard/components/motivational-
 import { QUOTES } from "@/features/dashboard/quotes";
 import { firstName } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Azi" };
+export const metadata: Metadata = { title: "Acasă" };
 
 const EXAM_KINDS = ["examen", "colocviu", "test"];
 const delay = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
 export default async function TodayPage() {
-  const [overview, profile, stats, attempts] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats(), getRecentAttempts(3)]);
+  const [overview, profile, stats] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats()]);
   const { now, agenda, upcoming } = overview;
   const name = firstName(profile?.fullName ?? "");
   const remaining = agenda.filter((i) => endOf(i) > now).length;
@@ -52,7 +48,7 @@ export default async function TodayPage() {
           {stats.currentStreak > 0 && (
             <p className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning-soft px-3 py-1 text-[12px] font-semibold text-warning">
               <Flame className="size-3.5 fill-warning" aria-hidden="true" />
-              {stats.currentStreak} {stats.currentStreak === 1 ? "zi" : "zile"} la rând
+              {stats.currentStreak} {daysLabel(stats.currentStreak)} la rând
             </p>
           )}
         </div>
@@ -64,8 +60,6 @@ export default async function TodayPage() {
         <p className="text-sm text-ink-muted">Hai să facem ziua de azi una productivă.</p>
       </header>
 
-      <MotivationalQuote initialIndex={Math.floor(now.getTime() / 1000) % QUOTES.length} />
-
       {/* Mobil: ce urmează + streak + scurtături */}
       <div className="flex min-w-0 flex-col gap-4 lg:hidden">
         <NextUpCard agenda={agenda} now={now} />
@@ -75,37 +69,10 @@ export default async function TodayPage() {
         </nav>
       </div>
 
-      <section aria-label="Pe scurt" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <StatTile
-          index={1}
-          label="Activități azi"
-          value={String(agenda.length)}
-          sub={remaining === 0 ? "Gata pe azi" : `${remaining} rămase`}
-          icon={CalendarClock}
-          color="violet"
-        />
-        <StatTile index={2} label="Termene în 7 zile" value={String(dueThisWeek)} sub="Teme și examene" icon={BookOpenCheck} color="amber" />
-        <StatTile
-          index={3}
-          label="Următorul examen"
-          value={nextExam ? formatRelativeDay(new Date(nextExam.task.dueAt), now) : "—"}
-          sub={nextExam ? (nextExam.subject?.name ?? nextExam.task.title) : "Niciun examen apropiat"}
-          icon={GraduationCap}
-          color="rose"
-        />
-        <StatTile
-          index={4}
-          label="Învățat în 7 zile"
-          value={formatDuration(stats.weekMinutes)}
-          sub={`Record: ${stats.bestStreak} zile la rând`}
-          icon={Clock3}
-          color="green"
-        />
-      </section>
-
+      {/* Întâi ce contează azi: programul și termenele; în dreapta streak-ul și scurtăturile. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-7">
         <div className="flex min-w-0 flex-col gap-6 lg:col-span-7 lg:gap-7">
-          <Card aria-labelledby="program-azi" className="stagger" style={delay(5)}>
+          <Card aria-labelledby="program-azi" className="stagger" style={delay(2)}>
             <CardHeader
               id="program-azi"
               title="Programul de azi"
@@ -142,39 +109,7 @@ export default async function TodayPage() {
             </CardBody>
           </Card>
 
-          <Card aria-labelledby="timp-invatare" className="stagger" style={delay(6)}>
-            <CardHeader
-              id="timp-invatare"
-              title="Timp de învățare"
-              description="Ultimele 7 zile"
-              action={<span className="text-lg font-bold tracking-[-0.02em] text-ink tabular">{formatDuration(stats.weekMinutes)}</span>}
-            />
-            <CardBody className="pt-6">
-              <LearningChart stats={stats} />
-            </CardBody>
-          </Card>
-
-          <Card aria-labelledby="progres-recent" className="stagger" style={delay(7)}>
-            <CardHeader id="progres-recent" title="Progres recent" description="Ultimele teste grilă rezolvate" />
-            <CardBody>
-              <RecentAttempts attempts={attempts} subjects={overview.subjects} now={now} />
-            </CardBody>
-          </Card>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-6 lg:col-span-5 lg:gap-7">
-          <div className="hidden lg:block">
-            <StreakCard stats={stats} index={5} />
-          </div>
-
-          <Card aria-labelledby="actiuni" className="stagger hidden lg:block" style={delay(6)}>
-            <CardHeader id="actiuni" title="Acțiuni rapide" />
-            <CardBody>
-              <QuickActions variant="grid" />
-            </CardBody>
-          </Card>
-
-          <Card aria-labelledby="termene" className="stagger" style={delay(7)}>
+          <Card aria-labelledby="termene" className="stagger" style={delay(4)}>
             <CardHeader id="termene" title="Următoarele termene" description="Teme și examene din următoarele 30 de zile" />
             <CardBody>
               {upcoming.length > 0 ? (
@@ -186,23 +121,61 @@ export default async function TodayPage() {
           </Card>
         </div>
 
-        <Card aria-labelledby="insigne" className="stagger lg:col-span-7" style={delay(8)}>
-          <CardHeader
-            id="insigne"
-            title="Insigne de etapă"
-            description="Învață puțin în fiecare zi ca să-ți crești streak-ul și să deblochezi insigne."
-          />
-          <CardBody>
-            <BadgesGrid stats={stats} />
-          </CardBody>
-        </Card>
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-5 lg:gap-7">
+          <div className="hidden lg:block">
+            <StreakCard stats={stats} index={3} href="/progres" />
+          </div>
 
-        <Card aria-labelledby="sesiune-recomandata" className="stagger overflow-hidden lg:col-span-5" style={delay(9)}>
-          <RecommendedSession session={toSessionView(overview.nextStudySession)} now={now.toISOString()} />
-        </Card>
+          <Card aria-labelledby="actiuni" className="stagger hidden lg:block" style={delay(4)}>
+            <CardHeader id="actiuni" title="Acțiuni rapide" />
+            <CardBody>
+              <QuickActions variant="grid" />
+            </CardBody>
+          </Card>
+
+          <Card aria-labelledby="sesiune-recomandata" className="stagger overflow-hidden" style={delay(5)}>
+            <RecommendedSession session={toSessionView(overview.nextStudySession)} now={now.toISOString()} />
+          </Card>
+        </div>
       </div>
+
+      <section aria-label="Pe scurt" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatTile
+          index={6}
+          label="Activități azi"
+          value={String(agenda.length)}
+          sub={remaining === 0 ? "Gata pe azi" : `${remaining} rămase`}
+          icon={CalendarClock}
+          color="violet"
+        />
+        <StatTile index={7} label="Termene în 7 zile" value={String(dueThisWeek)} sub="Teme și examene" icon={BookOpenCheck} color="amber" />
+        <StatTile
+          index={8}
+          label="Următorul examen"
+          value={nextExam ? formatRelativeDay(new Date(nextExam.task.dueAt), now) : "—"}
+          sub={nextExam ? (nextExam.subject?.name ?? nextExam.task.title) : "Niciun examen apropiat"}
+          icon={GraduationCap}
+          color="rose"
+        />
+        <StatTile
+          index={9}
+          label="Învățat în 7 zile"
+          value={formatDuration(stats.weekMinutes)}
+          sub={`Record: ${stats.bestStreak} ${daysLabel(stats.bestStreak)} la rând`}
+          icon={Clock3}
+          color="green"
+        />
+      </section>
+
+      {/* Gândul zilei: la final, ca un moment de respiro după ce ai văzut ce ai de făcut. */}
+      <MotivationalQuote initialIndex={Math.floor(now.getTime() / 1000) % QUOTES.length} />
     </div>
   );
+}
+
+/** „1 zi”, „5 zile”, „20 de zile”. */
+function daysLabel(n: number) {
+  return n === 1 ? "zi" : n !== 0 && (n % 100 === 0 || n % 100 >= 20) ? "de zile" : "zile";
 }
 
 function dayStatus(total: number, remaining: number) {

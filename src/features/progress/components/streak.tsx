@@ -1,4 +1,5 @@
-import { Flame } from "lucide-react";
+import { ArrowRight, ChevronRight, Flame } from "lucide-react";
+import Link from "next/link";
 import type { LearningStats } from "@/lib/progress/streak";
 import { formatWeekdayShort } from "@/lib/time/format";
 import { dayBounds } from "@/lib/time/zone";
@@ -15,17 +16,16 @@ function streakMessage(stats: LearningStats) {
   return "Ai învățat azi. Ține flacăra aprinsă și mâine!";
 }
 
-/** Card mare cu streak-ul (desktop) — singurul element cu fundal plin de accent. */
-export function StreakCard({ stats, index = 0 }: { stats: LearningStats; index?: number }) {
+/**
+ * Card mare cu streak-ul — singurul element cu fundal plin de accent.
+ * Cu `href` (pe Acasă) tot cardul duce la pagina Progres, cu insignele și restul detaliilor.
+ */
+export function StreakCard({ stats, index = 0, href }: { stats: LearningStats; index?: number; href?: string }) {
   const toNext = stats.nextBadge ? stats.nextBadge - stats.currentStreak : 0;
   const progress = stats.nextBadge ? Math.min(1, stats.currentStreak / stats.nextBadge) : 1;
 
-  return (
-    <section
-      aria-labelledby="streak-title"
-      className="stagger relative overflow-hidden rounded-lg bg-brand p-6 text-white shadow-accent"
-      style={{ "--i": index } as React.CSSProperties}
-    >
+  const body = (
+    <>
       <div aria-hidden="true" className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-white/10" />
       <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-10 size-44 rounded-full bg-white/[0.06]" />
 
@@ -66,14 +66,37 @@ export function StreakCard({ stats, index = 0 }: { stats: LearningStats; index?:
           </div>
         </div>
       ) : null}
+
+      {href ? (
+        <span className="relative mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-white">
+          Insigne și progres <ArrowRight className="size-3.5" aria-hidden="true" />
+        </span>
+      ) : null}
+    </>
+  );
+
+  const className = "stagger relative block overflow-hidden rounded-lg bg-brand p-6 text-white shadow-accent";
+  const style = { "--i": index } as React.CSSProperties;
+  return href ? (
+    <Link href={href} aria-labelledby="streak-title" className={cn(className, "lift active:scale-[0.99]")} style={style}>
+      {body}
+    </Link>
+  ) : (
+    <section aria-labelledby="streak-title" className={className} style={style}>
+      {body}
     </section>
   );
 }
 
-/** Rând compact pentru mobil: flacără + număr + ultimele 7 zile ca puncte. */
+/** Rând compact pentru mobil: flacără + număr + ultimele 7 zile ca puncte; duce la pagina Progres. */
 export function StreakStrip({ stats }: { stats: LearningStats }) {
   return (
-    <section aria-label="Streak" className="stagger flex items-center gap-4 rounded-lg border border-line/70 bg-surface p-4 shadow-sm" style={{ "--i": 1 } as React.CSSProperties}>
+    <Link
+      href="/progres"
+      aria-label={`Streak: ${stats.currentStreak} ${streakLabel(stats.currentStreak)}. Vezi progresul și insignele`}
+      className="stagger flex items-center gap-3 rounded-lg border border-line/70 bg-surface p-4 shadow-sm active:scale-[0.99] sm:gap-4"
+      style={{ "--i": 1 } as React.CSSProperties}
+    >
       <span className="relative flex size-12 shrink-0 items-center justify-center rounded-md bg-[#fff3e0]">
         <Flame
           className={cn("size-6 origin-bottom", stats.currentStreak > 0 ? "animate-flame fill-[#ff9f1c] text-[#f08a00]" : "text-ink-faint")}
@@ -100,6 +123,7 @@ export function StreakStrip({ stats }: { stats: LearningStats }) {
           </li>
         ))}
       </ol>
-    </section>
+      <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+    </Link>
   );
 }

@@ -7,17 +7,17 @@ import { Input, Select } from "@/components/ui/field";
 import { countLabel } from "@/features/subjects/format";
 import { cn } from "@/lib/utils";
 import { JOB_DOMAINS, JOB_DOMAIN_LABELS, JOB_TYPES, JOB_TYPE_LABELS, JOBS, WORK_MODE_LABELS, type WorkMode } from "../data";
-import { DEFAULT_FILTERS, matchesFilters, reasonsFor, sortJobs, type JobFilters, type StudentContext } from "../recommend";
+import { DEFAULT_FILTERS, fitsStudy, matchesFilters, sortJobs, type JobFilters, type StudentContext } from "../recommend";
 import { JobCard } from "./job-card";
 
-const MIN_MONTHLY_OPTIONS = [0, 1500, 2500, 4000, 6000];
-const MODES = Object.keys(WORK_MODE_LABELS) as WorkMode[];
+// Doar modurile care apar în anunțuri, ca un filtru să nu ducă la o listă goală.
+const MODES = (Object.keys(WORK_MODE_LABELS) as WorkMode[]).filter((m) => JOBS.some((j) => j.mode === m));
 
 function toggle<T>(list: T[], value: T) {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
-/** Catalogul de joburi cu filtre: tip, domeniu, mod de lucru, câștig minim, program flexibil, experiență. */
+/** Anunțurile reale cu filtre: tip, domeniu, mod de lucru, pentru studenți, experiență. */
 export function JobBoard({ context }: { context: StudentContext }) {
   const [filters, setFilters] = useState<JobFilters>(DEFAULT_FILTERS);
   const set = (patch: Partial<JobFilters>) => setFilters((f) => ({ ...f, ...patch }));
@@ -33,7 +33,7 @@ export function JobBoard({ context }: { context: StudentContext }) {
             type="search"
             value={filters.query}
             onChange={(e) => set({ query: e.target.value })}
-            placeholder="Caută (ex. engleză, IT, cafenea)"
+            placeholder="Caută (ex. germană, IT)"
             aria-label="Caută joburi"
             className="pl-9"
           />
@@ -67,19 +67,8 @@ export function JobBoard({ context }: { context: StudentContext }) {
           </Select>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">
-          Câștig lunar minim
-          <Select value={filters.minMonthly} onChange={(e) => set({ minMonthly: Number(e.target.value) })}>
-            {MIN_MONTHLY_OPTIONS.map((v) => (
-              <option key={v} value={v}>
-                {v === 0 ? "Oricât" : `Cel puțin ${new Intl.NumberFormat("ro-RO").format(v)} lei`}
-              </option>
-            ))}
-          </Select>
-        </label>
-
         <div className="flex flex-col gap-2.5">
-          <Check label="Program compatibil cu cursurile" checked={filters.flexibleOnly} onChange={(v) => set({ flexibleOnly: v })} />
+          <Check label="Doar anunțuri pentru studenți" checked={filters.studentsOnly} onChange={(v) => set({ studentsOnly: v })} />
           <Check label="Fără experiență cerută" checked={filters.noExperience} onChange={(v) => set({ noExperience: v })} />
         </div>
 
@@ -93,13 +82,13 @@ export function JobBoard({ context }: { context: StudentContext }) {
       <div className="flex min-w-0 flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p role="status" className="text-sm font-medium text-ink-soft">
-            {countLabel(jobs.length, "job găsit", "joburi găsite")}
+            {countLabel(jobs.length, "anunț găsit", "anunțuri găsite")}
           </p>
           <label className="flex items-center gap-2 text-[13px] text-ink-muted">
             Ordonează
             <Select value={filters.sort} onChange={(e) => set({ sort: e.target.value as JobFilters["sort"] })} className="h-9 w-auto text-[13px] sm:h-9">
               <option value="potrivire">Potrivite pentru mine</option>
-              <option value="salariu">Câștig cel mai mare</option>
+              <option value="recente">Cele mai noi</option>
             </Select>
           </label>
         </div>
@@ -112,7 +101,7 @@ export function JobBoard({ context }: { context: StudentContext }) {
           <ul className="grid gap-4 md:grid-cols-2">
             {jobs.map((job, i) => (
               <li key={job.id} className="stagger" style={{ "--i": Math.min(i, 8) } as React.CSSProperties}>
-                <JobCard job={job} reasons={filters.sort === "potrivire" ? reasonsFor(job, context) : []} className="h-full" />
+                <JobCard job={job} fitsStudy={fitsStudy(job, context.study)} className="h-full" />
               </li>
             ))}
           </ul>

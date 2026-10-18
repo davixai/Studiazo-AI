@@ -1,55 +1,51 @@
 import { describe, expect, it } from "vitest";
-import { JOBS, searchLinks } from "./data";
+import { JOBS, JOB_TYPES, jobUrl } from "./data";
 import { DEFAULT_FILTERS, fitsStudy, matchesFilters, reasonsFor, recommendJobs, sortJobs } from "./recommend";
 
 const byId = (id: string) => JOBS.find((j) => j.id === id)!;
 
-describe("catalogul de joburi", () => {
-  it("are id-uri unice și intervale de câștig valide", () => {
+describe("anunțurile", () => {
+  it("au id-uri unice, date valide și linkul direct către anunț", () => {
     expect(new Set(JOBS.map((j) => j.id)).size).toBe(JOBS.length);
     for (const j of JOBS) {
-      expect(j.monthly[0]).toBeLessThanOrEqual(j.monthly[1]);
-      expect(j.hoursPerWeek[0]).toBeLessThanOrEqual(j.hoursPerWeek[1]);
+      expect(j.id).toMatch(/^\d+$/);
+      expect(j.postedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(JOB_TYPES).toContain(j.type);
+      expect(j.requirements.length).toBeGreaterThan(0);
     }
-  });
-
-  it("linkurile de căutare sunt pentru Iași", () => {
-    const [linkedin, indeed] = searchLinks(byId("barista"));
-    expect(linkedin.url).toContain("location=Ia%C8%99i");
-    expect(indeed.url).toContain("ro.indeed.com");
+    expect(jobUrl(byId("4468148314"))).toBe("https://www.linkedin.com/jobs/view/4468148314/");
   });
 });
 
 describe("filtre", () => {
-  it("combină tipul, câștigul minim, programul flexibil și căutarea fără diacritice", () => {
-    const f = { ...DEFAULT_FILTERS, types: ["part-time" as const], flexibleOnly: true };
-    const results = JOBS.filter((j) => matchesFilters(j, f));
-    expect(results.length).toBeGreaterThan(0);
-    expect(results.every((j) => j.type === "part-time" && j.flexible)).toBe(true);
+  it("combină tipul, studenții, experiența și căutarea fără diacritice", () => {
+    const internships = JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, types: ["internship"], studentsOnly: true }));
+    expect(internships.length).toBeGreaterThan(0);
+    expect(internships.every((j) => j.type === "internship" && j.forStudents)).toBe(true);
 
-    expect(JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, minMonthly: 6000 })).every((j) => j.monthly[1] >= 6000)).toBe(true);
-    expect(JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, query: "cafenea" })).map((j) => j.id)).toContain("barista");
+    expect(JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, noExperience: true })).every((j) => j.noExperience)).toBe(true);
+    expect(JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, query: "germana" })).map((j) => j.id)).toContain("4445517444");
   });
 
-  it("ordonarea după salariu pune primul câștigul maxim", () => {
-    const sorted = sortJobs(JOBS, { ...DEFAULT_FILTERS, sort: "salariu" }, {});
-    expect(sorted[0].monthly[1]).toBe(Math.max(...JOBS.map((j) => j.monthly[1])));
+  it("modul de lucru nu potrivește anunțurile care nu îl spun", () => {
+    const hybrid = JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, modes: ["hibrid"] }));
+    expect(hybrid.every((j) => j.mode === "hibrid")).toBe(true);
+  });
+
+  it("„Cele mai noi” pune primul anunțul publicat cel mai recent", () => {
+    const sorted = sortJobs(JOBS, { ...DEFAULT_FILTERS, sort: "recente" }, {});
+    expect(sorted[0].postedAt).toBe(JOBS.map((j) => j.postedAt).sort().at(-1));
   });
 });
 
 describe("recomandări", () => {
-  it("un student la Informatică primește joburi IT flexibile, nu full-time", () => {
-    const top = recommendJobs(JOBS, { study: "Facultatea de Informatică", monthlyGap: 500 });
-    expect(top.map((j) => j.id)).toContain("internship-it");
-    expect(top.every((j) => j.type !== "full-time")).toBe(true);
+  it("un student la Calculatoare primește întâi internshipuri legate de facultate", () => {
+    const top = recommendJobs(JOBS, { study: "Automatică și Calculatoare" });
+    expect(top.every((j) => j.type === "internship" && fitsStudy(j, "Automatică și Calculatoare"))).toBe(true);
   });
 
   it("explică de ce recomandă", () => {
-    expect(fitsStudy(byId("traduceri"), "Litere – engleză")).toBe(true);
-    expect(reasonsFor(byId("meditatii"), { study: "Matematică", monthlyGap: 800 })).toEqual([
-      "legat de facultatea ta",
-      "acoperă cei 800 lei lipsă",
-      "program compatibil cu cursurile",
-    ]);
+    expect(fitsStudy(byId("4479358628"), "FEAA – Contabilitate")).toBe(true);
+    expect(reasonsFor(byId("4479358628"), { study: "Economie" })).toEqual(["legat de facultatea ta", "pentru studenți", "fără experiență cerută"]);
   });
 });

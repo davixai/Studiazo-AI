@@ -8,13 +8,13 @@ import { signOut } from "@/features/auth/actions";
 import { AvailabilityForm } from "@/features/profile/components/availability-form";
 import { DeleteAccount } from "@/features/profile/components/delete-account";
 import { ProfileForm } from "@/features/profile/components/profile-form";
-import { getProfile } from "@/features/profile/queries";
+import { getProfile, getStudyProfile } from "@/features/profile/queries";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Profil" };
 
 export default async function ProfilePage() {
-  const [profile, user] = await Promise.all([getProfile(), getCurrentUser()]);
+  const [profile, user, study] = await Promise.all([getProfile(), getCurrentUser(), getStudyProfile()]);
   if (!profile) return null;
 
   return (
@@ -22,7 +22,7 @@ export default async function ProfilePage() {
       <PageHeader title="Profil" description="Datele tale de student și felul în care preferi să înveți." />
 
       <Card className="stagger p-5 sm:p-8" style={{ "--i": 1 } as React.CSSProperties}>
-        <ProfileForm profile={profile} mode="profile" />
+        <ProfileForm profile={profile} preferredTimes={study?.times} mode="profile" />
       </Card>
 
       <Card id="disponibilitate" className="stagger scroll-mt-24 p-5 sm:p-8" style={{ "--i": 2 } as React.CSSProperties}>

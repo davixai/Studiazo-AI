@@ -182,7 +182,17 @@ const enumList = <T extends readonly [string, ...string[]]>(values: T) =>
   z.array(z.enum(values)).transform((list) => [...new Set(list)]);
 
 /** Răspunsurile din configurare după care asistentul își adaptează sfaturile. */
-export type StudyProfile = { age: number | null; needs: StudyNeed[]; worries: StudyWorry[]; goal: StudyGoal | null };
+export type StudyProfile = {
+  age: number | null;
+  needs: StudyNeed[];
+  worries: StudyWorry[];
+  goal: StudyGoal | null;
+  /** Momentele zilei în care se concentrează (gol = nu contează). */
+  times: PreferredTime[];
+};
+
+/** Mai multe momente ale zilei; „Nu contează” nu se păstrează în listă (lista goală înseamnă exact asta). */
+export const preferredTimesList = enumList(PREFERRED_TIMES).transform((list) => list.filter((t) => t !== "fara_preferinta"));
 
 export const OnboardingSchema = z.object({
   fullName: z.string().trim().min(2, "Spune-ne cum te numești.").max(120, "Numele poate avea cel mult 120 de caractere."),
@@ -207,7 +217,7 @@ export const OnboardingSchema = z.object({
   needs: enumList(STUDY_NEEDS),
   worries: enumList(STUDY_WORRIES),
   goal: optionalEnum(STUDY_GOALS),
-  preferredTime: z.enum(PREFERRED_TIMES).catch("fara_preferinta"),
+  preferredTimes: preferredTimesList,
   subjects: z
     .array(z.string().max(120, "Numele unei materii poate avea cel mult 120 de caractere."))
     .transform(uniqueSubjects)

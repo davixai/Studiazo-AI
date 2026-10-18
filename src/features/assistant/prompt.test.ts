@@ -9,7 +9,7 @@ describe("buildInstructions", () => {
     const text = buildInstructions({
       now,
       profile: { ...PREVIEW_PROFILE, preferredTime: "seara" },
-      study: { age: 20, needs: ["examene", "teme"], worries: ["volum", "promovare"], goal: "nota_buna" },
+      study: { age: 20, needs: ["examene", "teme"], worries: ["volum", "promovare"], goal: "nota_buna", times: [] },
       subjects: [],
       subject: null,
     });
@@ -20,11 +20,22 @@ describe("buildInstructions", () => {
     );
   });
 
+  it("trimite toate momentele zilei alese", () => {
+    const text = buildInstructions({
+      now,
+      profile: { ...PREVIEW_PROFILE, preferredTime: "dimineata" },
+      study: { age: null, needs: [], worries: [], goal: null, times: ["dimineata", "seara"] },
+      subjects: [],
+      subject: null,
+    });
+    expect(text).toContain("- Profilul de studiu: se concentrează cel mai bine dimineața și seara.");
+  });
+
   it("nu adaugă rândul dacă studentul nu a răspuns", () => {
     const text = buildInstructions({
       now,
       profile: { ...PREVIEW_PROFILE, preferredTime: "fara_preferinta" },
-      study: { age: null, needs: [], worries: [], goal: null },
+      study: { age: null, needs: [], worries: [], goal: null, times: [] },
       subjects: [],
       subject: null,
     });

@@ -11,7 +11,7 @@ const base = {
   needs: [] as string[],
   worries: [] as string[],
   goal: "",
-  preferredTime: "",
+  preferredTimes: [] as string[],
   subjects: [],
   next: "materii",
 };
@@ -27,7 +27,7 @@ describe("OnboardingSchema", () => {
       needs: [],
       worries: [],
       goal: null,
-      preferredTime: "fara_preferinta",
+      preferredTimes: [],
       subjects: [],
       next: "materii",
     });

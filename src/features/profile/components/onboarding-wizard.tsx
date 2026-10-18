@@ -1,16 +1,20 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, Minus, Plus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ImagePlus, Minus, Plus, X } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { initialFormState, type FormState } from "@/features/auth/schemas";
-import type { PreferredTime, Profile } from "@/lib/contracts/domain";
+import { EVENT_KIND_LABELS, type Profile } from "@/lib/contracts/domain";
+import { formatDateLong } from "@/lib/time/format";
+import { fromLocal, toDateKey } from "@/lib/time/zone";
 import { cn, firstName } from "@/lib/utils";
-import { finishOnboarding, skipOnboarding } from "../actions";
+import { finishOnboarding, readSchedule, skipOnboarding } from "../actions";
+import { SCHEDULE_IMAGE_MAX_CHARS, WEEKDAY_NAMES, forGroup, scheduleGroups, semesterEnd, type ScheduleEntry } from "../schedule";
 import {
   AGE_MAX,
   AGE_MIN,
@@ -26,7 +30,7 @@ import {
   uniqueSubjects,
 } from "../onboarding";
 
-const STEPS = ["nume", "varsta", "universitate", "facultate", "an", "nevoie", "materii", "ingrijorare", "obiectiv", "ritm", "final"] as const;
+const STEPS = ["nume", "varsta", "universitate", "facultate", "an", "nevoie", "materii", "ingrijorare", "obiectiv", "ritm", "orar", "final"] as const;
 
 /** Cât rămâne vizibilă alegerea înainte de pasul următor. */
 const ADVANCE_DELAY_MS = 280;
@@ -41,8 +45,12 @@ type Answers = {
   needs: string[];
   worries: string[];
   goal: string;
-  preferredTime: PreferredTime | "";
+  preferredTimes: string[];
   subjects: string[];
+  /** Grupa scrisă sau aleasă la importul orarului. */
+  group: string;
+  /** Orele confirmate din poza cu orarul; se salvează în calendar la final. */
+  schedule: ScheduleEntry[];
 };
 
 function initialAnswers(profile: Profile): Answers {
@@ -56,8 +64,10 @@ function initialAnswers(profile: Profile): Answers {
     needs: [],
     worries: [],
     goal: "",
-    preferredTime: profile.onboardingCompletedAt ? profile.preferredTime : "",
+    preferredTimes: profile.onboardingCompletedAt && profile.preferredTime !== "fara_preferinta" ? [profile.preferredTime] : [],
     subjects: [],
+    group: "",
+    schedule: [],
   };
 }
 
@@ -130,6 +140,16 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
   /** Pașii cu mai multe răspunsuri: atingerea doar bifează sau debifează. */
   function toggle(key: "needs" | "worries", value: string) {
     setAnswers((a) => ({ ...a, [key]: a[key].includes(value) ? a[key].filter((v) => v !== value) : [...a[key], value] }));
+  }
+
+  /** Ca toggle, dar „Nu contează” le exclude pe celelalte (și invers). */
+  function toggleTime(value: string) {
+    setAnswers((a) => {
+      const has = a.preferredTimes.includes(value);
+      const others = a.preferredTimes.filter((t) => t !== value && t !== "fara_preferinta");
+      const preferredTimes = value === "fara_preferinta" ? (has ? [] : [value]) : has ? others : [...others, value];
+      return { ...a, preferredTimes };
+    });
   }
 
   function submitName(e: React.FormEvent) {
@@ -463,20 +483,36 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
           ) : null}
 
           {step === "ritm" ? (
-            <>
-              <StepTitle title="Când te concentrezi cel mai bine?" subtitle="Îți propunem sesiuni de studiu în momentele potrivite." />
+            <div className="flex flex-1 flex-col">
+              <StepTitle title="Când te concentrezi cel mai bine?" subtitle="Poți alege mai multe. Îți propunem sesiuni de studiu în momentele astea." />
               <div className="mt-8 flex flex-col gap-3">
                 {PREFERRED_TIME_OPTIONS.map((o, i) => (
                   <RowChoice
                     key={o.value}
                     i={i + 1}
                     {...o}
-                    selected={answers.preferredTime === o.value}
-                    onClick={() => choose("preferredTime", o.value)}
+                    multiple
+                    selected={answers.preferredTimes.includes(o.value)}
+                    onClick={() => toggleTime(o.value)}
                   />
                 ))}
               </div>
-            </>
+              <MultiFooter count={answers.preferredTimes.length} onNext={() => go(index + 1)} />
+            </div>
+          ) : null}
+
+          {step === "orar" ? (
+            <ScheduleStep
+              answers={answers}
+              onDone={(schedule, group) => {
+                setAnswers((a) => ({ ...a, schedule, group }));
+                go(index + 1);
+              }}
+              onSkip={() => {
+                set("schedule", []);
+                go(index + 1);
+              }}
+            />
           ) : null}
 
           {step === "final" ? (
@@ -696,6 +732,275 @@ function SubjectsStep({
   );
 }
 
+type SchedulePhase =
+  | { name: "pick"; error?: string }
+  | { name: "reading"; preview: string }
+  | { name: "review"; entries: ScheduleEntry[]; note: string | null };
+
+/** „Vrei să-ți imporți orarul?”: poză din galerie → AI-ul citește → studentul verifică ce păstrează. */
+function ScheduleStep({
+  answers,
+  onDone,
+  onSkip,
+}: {
+  answers: Answers;
+  onDone: (entries: ScheduleEntry[], group: string) => void;
+  onSkip: () => void;
+}) {
+  const [group, setGroup] = useState(answers.group);
+  const [phase, setPhase] = useState<SchedulePhase>(() =>
+    answers.schedule.length > 0 ? { name: "review", entries: answers.schedule, note: null } : { name: "pick" },
+  );
+
+  async function read(file: File | undefined) {
+    if (!file) return;
+    const preview = URL.createObjectURL(file);
+    setPhase({ name: "reading", preview });
+    try {
+      const result = await readSchedule({
+        image: await scheduleImage(file),
+        university: answers.university,
+        faculty: answers.faculty,
+        specialization: answers.specialization,
+        studyYear: answers.studyYear,
+        group: group.trim(),
+        subjects: answers.subjects,
+      });
+      setPhase(result.ok ? { name: "review", entries: result.entries, note: result.note } : { name: "pick", error: result.message });
+    } catch {
+      setPhase({ name: "pick", error: "Nu am putut trimite poza. Verifică conexiunea sau încearcă o captură de ecran." });
+    } finally {
+      URL.revokeObjectURL(preview);
+    }
+  }
+
+  if (phase.name === "reading") {
+    return (
+      <div className="flex flex-1 flex-col">
+        <StepTitle title="Citim orarul…" subtitle="Durează cam o jumătate de minut. Nu închide pagina." />
+        <div className="animate-rise-in relative mx-auto mt-8 w-full max-w-sm overflow-hidden rounded-xl border border-line bg-surface p-2 shadow-md">
+          {/* eslint-disable-next-line @next/next/no-img-element -- poză locală (object URL), nu trece prin optimizarea Next */}
+          <img src={phase.preview} alt="Poza cu orarul" className="max-h-[50vh] w-full rounded-lg object-contain opacity-80" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="animate-shimmer h-full w-1/2 bg-linear-to-r from-transparent via-accent/25 to-transparent" />
+          </div>
+        </div>
+        <p role="status" className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-ink-muted">
+          <Spinner />
+          Găsim materiile, orele, sălile și profesorii
+        </p>
+      </div>
+    );
+  }
+
+  if (phase.name === "review") {
+    return (
+      <ScheduleReview
+        entries={phase.entries}
+        note={phase.note}
+        initialGroup={group}
+        onRetry={() => setPhase({ name: "pick" })}
+        onConfirm={(kept, chosenGroup) => onDone(kept, chosenGroup)}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <StepTitle
+        title="Vrei să-ți imporți orarul?"
+        subtitle="Alege o poză sau o captură cu orarul. Îl citim și îl punem în calendar: ce ai, când, unde și cu cine."
+      />
+      <div className="mt-8 flex flex-col gap-5">
+        <div className="stagger" style={{ "--i": 1 } as React.CSSProperties}>
+          <label htmlFor="ob-group" className="mb-2 block text-sm font-medium text-ink">
+            Grupa ta <span className="font-normal text-ink-muted">(opțional)</span>
+          </label>
+          <Input
+            id="ob-group"
+            placeholder="ex. 2A sau IE21"
+            maxLength={40}
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            className="h-13 rounded-xl text-[16px] sm:h-13"
+          />
+          <p className="mt-1.5 text-[13px] leading-5 text-ink-muted">Dacă orarul are mai multe grupe, păstrăm doar orele tale.</p>
+        </div>
+
+        <label
+          className={cn(choiceBase, "stagger flex min-h-[112px] cursor-pointer flex-col justify-center p-5 pr-24 sm:min-h-[124px] sm:p-6 sm:pr-32")}
+          style={{ "--i": 2 } as React.CSSProperties}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => {
+              void read(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          <span className="flex items-center gap-2 text-[17px] leading-6 font-semibold tracking-[-0.01em] text-ink sm:text-[19px] sm:leading-7">
+            <ImagePlus className="size-5 text-accent" aria-hidden="true" />
+            Alege poza cu orarul
+          </span>
+          <span className="mt-1.5 block text-[14px] leading-6 text-ink-muted sm:text-[15px]">Din galerie, o poză sau o captură de ecran.</span>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-1 -bottom-3 text-[64px] leading-none drop-shadow-sm transition-transform duration-300 ease-[var(--ease-spring)] select-none group-hover:scale-110 group-hover:-rotate-6 sm:text-[76px]"
+          >
+            🗓️
+          </span>
+        </label>
+
+        {phase.error ? <Alert tone="danger">{phase.error}</Alert> : null}
+      </div>
+      <Footer>
+        <SecondaryButton onClick={onSkip}>Sari peste, îl adaug mai târziu</SecondaryButton>
+      </Footer>
+    </div>
+  );
+}
+
+/** Orarul citit, pe zile: studentul își alege grupa și scoate orele greșite înainte să-l adauge. */
+function ScheduleReview({
+  entries,
+  note,
+  initialGroup,
+  onRetry,
+  onConfirm,
+}: {
+  entries: ScheduleEntry[];
+  note: string | null;
+  initialGroup: string;
+  onRetry: () => void;
+  onConfirm: (kept: ScheduleEntry[], group: string) => void;
+}) {
+  const groups = scheduleGroups(entries);
+  const [group, setGroup] = useState<string | null>(
+    () => groups.find((g) => g.toLocaleLowerCase("ro") === initialGroup.trim().toLocaleLowerCase("ro")) ?? null,
+  );
+  const [removed, setRemoved] = useState<Set<ScheduleEntry>>(() => new Set());
+  const kept = forGroup(entries, group).filter((e) => !removed.has(e));
+  const days = [...new Set(kept.map((e) => e.day))];
+  const subjects = new Set(kept.map((e) => e.subject.toLocaleLowerCase("ro"))).size;
+  const untilLabel = formatDateLong(fromLocal(semesterEnd(toDateKey(new Date())), "12:00"));
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <StepTitle
+        title="Verifică-ți orarul"
+        subtitle={`${kept.length === 1 ? "O oră" : `${kept.length} ore`} pe săptămână, ${subjects === 1 ? "o materie" : `${subjects} materii`}. Scoate ce nu e al tău.`}
+      />
+
+      {groups.length > 1 ? (
+        <section aria-labelledby="ob-groups" className="stagger mt-8" style={{ "--i": 1 } as React.CSSProperties}>
+          <p id="ob-groups" className="mb-2.5 text-[13px] font-semibold text-ink-soft">
+            Ce grupă ești?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {[null, ...groups].map((g) => (
+              <button
+                key={g ?? "toate"}
+                type="button"
+                aria-pressed={group === g}
+                onClick={() => setGroup(g)}
+                className="min-h-10 rounded-full border border-line bg-surface px-4 text-[14px] font-semibold text-ink-soft shadow-xs transition-[transform,border-color,color,background-color] duration-150 hover:border-accent-line active:scale-[0.97] aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
+              >
+                {g ?? "Toate grupele"}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {note ? (
+        <div className="mt-6">
+          <Alert tone="info">{note}</Alert>
+        </div>
+      ) : null}
+
+      <div className="mt-6 flex flex-col gap-5">
+        {days.map((day, i) => (
+          <section key={day} aria-label={WEEKDAY_NAMES[day - 1]} className="stagger" style={{ "--i": i + 2 } as React.CSSProperties}>
+            <h2 className="mb-2 text-[13px] font-bold tracking-[0.12em] text-ink-muted uppercase">{WEEKDAY_NAMES[day - 1]}</h2>
+            <ul className="flex flex-col gap-2">
+              {kept
+                .filter((e) => e.day === day)
+                .map((e, j) => (
+                  <li
+                    key={`${e.subject}-${e.kind}-${e.start}-${e.groups.join(",")}-${j}`}
+                    className="animate-fade-in flex items-start gap-3 rounded-xl border border-line bg-surface p-3.5 shadow-xs sm:gap-4 sm:p-4"
+                  >
+                    <span className="tabular w-[68px] shrink-0 pt-0.5 text-[13px] leading-5 font-semibold text-ink sm:w-[76px] sm:text-[14px]">
+                      {e.start}
+                      <span className="block font-medium text-ink-muted">{e.end}</span>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15px] leading-5 font-semibold text-ink sm:text-[16px]">{e.subject}</span>
+                      <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-5 text-ink-muted">
+                        <Badge tone={e.kind === "curs" ? "accent" : "neutral"}>{EVENT_KIND_LABELS[e.kind]}</Badge>
+                        {e.biweekly ? <Badge tone="warning">la 2 săptămâni</Badge> : null}
+                        {[e.room, e.professor].filter(Boolean).join(" · ")}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRemoved((r) => new Set(r).add(e))}
+                      aria-label={`Scoate ${e.subject}, ${WEEKDAY_NAMES[day - 1]} ${e.start}`}
+                      className="-m-1 flex size-10 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink"
+                    >
+                      <X className="size-4" aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </section>
+        ))}
+        {kept.length === 0 ? <Alert tone="warning">Nu a rămas nicio oră. Alege altă grupă sau încearcă altă poză.</Alert> : null}
+      </div>
+
+      <p className="mt-5 text-center text-[13px] leading-5 text-ink-muted">
+        Se repetă în calendar până pe {untilLabel}. Le poți modifica oricând din Calendar.
+      </p>
+      <Footer>
+        <PrimaryButton disabled={kept.length === 0} onClick={() => onConfirm(kept, group ?? "")}>
+          {kept.length > 0 ? `Adaug orarul · ${kept.length} ore` : "Adaug orarul"}
+        </PrimaryButton>
+        <SecondaryButton onClick={onRetry}>Încearcă altă poză</SecondaryButton>
+      </Footer>
+    </div>
+  );
+}
+
+/** Pregătește poza pentru AI: JPEG micșorat cât să încapă în limita cererii, dar cu textul încă lizibil. */
+async function scheduleImage(file: File) {
+  const bitmap = await createImageBitmap(file);
+  try {
+    for (const [side, quality] of [
+      [2200, 0.85],
+      [1800, 0.8],
+      [1500, 0.75],
+      [1200, 0.7],
+    ] as const) {
+      const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) break;
+      ctx.fillStyle = "white"; // PNG-urile transparente nu devin negre
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const url = canvas.toDataURL("image/jpeg", quality);
+      if (url.length <= SCHEDULE_IMAGE_MAX_CHARS) return url;
+    }
+  } finally {
+    bitmap.close();
+  }
+  throw new Error("Poza e prea mare.");
+}
+
 /* ───────────────────────── finalul ───────────────────────── */
 
 function HiddenAnswers({ answers }: { answers: Answers }) {
@@ -707,8 +1012,8 @@ function HiddenAnswers({ answers }: { answers: Answers }) {
     ["specialization", answers.specialization],
     ["studyYear", answers.studyYear],
     ["goal", answers.goal],
-    ["preferredTime", answers.preferredTime || "fara_preferinta"],
   ];
+  if (answers.schedule.length > 0) fields.push(["schedule", JSON.stringify(answers.schedule)]);
   return (
     <>
       {fields.map(([key, value]) => (
@@ -719,6 +1024,9 @@ function HiddenAnswers({ answers }: { answers: Answers }) {
       ))}
       {answers.worries.map((w) => (
         <input key={w} type="hidden" name="worry" value={w} />
+      ))}
+      {answers.preferredTimes.map((t) => (
+        <input key={t} type="hidden" name="preferredTimes" value={t} />
       ))}
       {answers.subjects.map((s) => (
         <input key={s} type="hidden" name="subject" value={s} />

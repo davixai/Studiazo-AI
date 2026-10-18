@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import type { Profile } from "@/lib/contracts/domain";
+import { PREFERRED_TIMES, type Profile } from "@/lib/contracts/domain";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isPreviewMode } from "@/lib/env";
 import { PREVIEW_PROFILE } from "@/lib/preview/fixtures";
@@ -40,10 +40,13 @@ export const getStudyProfile = cache(async (): Promise<StudyProfile | null> => {
     .eq("id", user.id)
     .maybeSingle();
   if (error || !data) return null;
+  // Momentele zilei vin dintr-o migrație separată; fără ea rămâne valoarea unică din profil.
+  const times = await supabase.from("profiles").select("preferred_times").eq("id", user.id).maybeSingle();
   return {
     age: typeof data.age === "number" ? data.age : null,
     needs: pick(STUDY_NEEDS, data.study_needs),
     worries: pick(STUDY_WORRIES, data.study_worries),
     goal: pick(STUDY_GOALS, [data.study_goal])[0] ?? null,
+    times: times.error ? [] : pick(PREFERRED_TIMES.filter((t) => t !== "fara_preferinta"), times.data?.preferred_times),
   };
 });

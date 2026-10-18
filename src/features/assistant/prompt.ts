@@ -40,7 +40,7 @@ Cum adaptezi ajutorul după „Profilul de studiu” din context (când există)
 - Nevoi. Examene în curând: plan până la examen, cu recapitulare activă (își pune singur întrebări, teste grilă, subiecte din anii trecuți) și repetare la intervale. Teme și proiecte: indicii pas cu pas și proiectul împărțit pe etape, cu termene intermediare. Note mai bune: învățare activă în loc de recitit, întâi temele slabe din teste. Organizare: pornești de la program și termene și propui sesiuni fixe în calendar.
 - Griji. Nu știe de unde să înceapă: un singur prim pas concret, de 20–30 de minute, nu tot planul deodată. Prea mult material: alegi ce intră sigur la examen și împarți restul pe zile. Nu înțelege explicațiile: explici mai simplu, cu o analogie și un exemplu, apoi verifici cu o întrebare scurtă. Nu are timp: sesiuni scurte, în golurile reale din program, doar pe esențial. Teama că nu va trece: calm și onest, fără vorbe goale; arăți concret ce înseamnă minimul de trecere, subiectele care apar des și propui o simulare.
 - Obiectiv. Doar să treacă: esențialul și tipurile de subiecte sigure. Notă bună (8): toată materia, cu exercițiile tipice. Nota maximă (10): aprofundare, cazuri dificile și exerciții grele.
-- Momentul preferat al zilei: când propui sesiuni, alegi întâi intervalele libere din acel moment (dimineața 7–12, la prânz 12–15, după-amiaza 15–19, seara 19–23), dacă există.
+- Momentele preferate ale zilei (pot fi mai multe): când propui sesiuni, alegi întâi intervalele libere din ele (dimineața 7–12, la prânz 12–15, după-amiaza 15–19, seara 19–23) și le împarți între ele, ca să nu pui totul în același moment. Abia dacă nu ajung, folosești alte intervale libere și spui de ce.
 - Vârsta: potrivești tonul și exemplele, fără să o comentezi.`;
 
 type PromptContext = {
@@ -59,13 +59,15 @@ const titles = (options: { value: string; title: string }[], values: string[]) =
 /** Răspunsurile din configurare, într-un singur rând de context. Null dacă studentul nu a răspuns la nimic. */
 function studyLine(profile: Profile | null, study: StudyProfile | null) {
   const goal = STUDY_GOAL_OPTIONS.find((o) => o.value === study?.goal);
-  const time = profile?.preferredTime !== "fara_preferinta" ? PREFERRED_TIME_OPTIONS.find((o) => o.value === profile?.preferredTime) : null;
+  // Lista nouă (mai multe momente); fără ea, valoarea unică din profil.
+  const chosen = study?.times.length ? study.times : profile && profile.preferredTime !== "fara_preferinta" ? [profile.preferredTime] : [];
+  const times = PREFERRED_TIME_OPTIONS.filter((o) => chosen.includes(o.value)).map((o) => o.title.toLocaleLowerCase("ro"));
   const parts = [
     study?.age ? `are ${study.age} de ani` : null,
     study?.needs.length ? `are nevoie de: ${titles(STUDY_NEED_OPTIONS, study.needs).join(", ")}` : null,
     study?.worries.length ? `îl îngrijorează: ${titles(STUDY_WORRY_OPTIONS, study.worries).join(", ")}` : null,
     goal ? `obiectiv: „${goal.title}” (${goal.description?.toLocaleLowerCase("ro")})` : null,
-    time ? `se concentrează cel mai bine ${time.title.toLocaleLowerCase("ro")}` : null,
+    times.length ? `se concentrează cel mai bine ${times.join(" și ")}` : null,
   ].filter(Boolean);
   return parts.length > 0 ? `- Profilul de studiu: ${parts.join("; ")}.` : null;
 }

@@ -18,7 +18,10 @@ export const ProfileFormSchema = z.object({
     .string()
     .transform((v) => (v === "" ? null : Number(v)))
     .pipe(z.number().int().min(1).max(6).nullable()),
-  preferredTime: z.enum(PREFERRED_TIMES),
+  /** Mai multe momente ale zilei; listă goală = nu contează. */
+  preferredTimes: z
+    .array(z.enum(PREFERRED_TIMES))
+    .transform((list) => [...new Set(list)].filter((t) => t !== "fara_preferinta")),
   sessionMinutes: z.coerce.number().int().min(15, "Minimum 15 minute.").max(180, "Maximum 180 de minute."),
   dailyStudyLimitMinutes: z.coerce.number().int().min(30).max(720),
 });

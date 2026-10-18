@@ -5,7 +5,7 @@ import { Alert } from "@/components/ui/alert";
 import { Field, Input, Select, describedBy } from "@/components/ui/field";
 import { SubmitButton } from "@/features/auth/components/form-parts";
 import { initialFormState, type FormState } from "@/features/auth/schemas";
-import { PREFERRED_TIMES, PREFERRED_TIME_LABELS, type Profile } from "@/lib/contracts/domain";
+import { PREFERRED_TIMES, PREFERRED_TIME_LABELS, type PreferredTime, type Profile } from "@/lib/contracts/domain";
 import { IASI_UNIVERSITIES } from "@/lib/iasi";
 import { formatDuration } from "@/lib/time/format";
 import { cn } from "@/lib/utils";
@@ -14,18 +14,22 @@ import { DAILY_LIMIT_OPTIONS, SESSION_LENGTH_OPTIONS } from "../schemas";
 
 type ProfileFormProps = {
   profile: Profile;
+  /** Momentele zilei salvate în lista nouă (goală dacă migrația lipsește sau „nu contează”). */
+  preferredTimes?: PreferredTime[];
   mode: "onboarding" | "profile";
   /** Acțiuni suplimentare lângă butonul principal (ex. „Completez mai târziu”). */
   secondaryAction?: React.ReactNode;
 };
 
-export function ProfileForm({ profile, mode, secondaryAction }: ProfileFormProps) {
+export function ProfileForm({ profile, preferredTimes = [], mode, secondaryAction }: ProfileFormProps) {
   const [state, action] = useActionState<FormState, FormData>(
     mode === "onboarding" ? completeOnboarding : saveProfile,
     initialFormState,
   );
   const e = state.fieldErrors ?? {};
   const v = (key: string, fallback: string | number | null) => state.values?.[key] ?? (fallback == null ? "" : String(fallback));
+  const savedTimes = preferredTimes.length > 0 ? preferredTimes : [profile.preferredTime];
+  const chosenTimes = state.values?.preferredTimes !== undefined ? state.values.preferredTimes.split(",") : savedTimes;
 
   return (
     <form action={action} noValidate className="flex flex-col gap-10">
@@ -84,11 +88,21 @@ export function ProfileForm({ profile, mode, secondaryAction }: ProfileFormProps
           toată lumea.
         </p>
 
-        <div className="sm:col-span-2">
-          <p id="preferredTime-label" className="mb-2 text-sm font-medium">
-            Când te concentrezi cel mai bine?
-          </p>
-          <div role="radiogroup" aria-labelledby="preferredTime-label" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <fieldset className="sm:col-span-2">
+          <legend className="mb-2 text-sm font-medium">
+            Când te concentrezi cel mai bine? <span className="font-normal text-ink-muted">Poți alege mai multe.</span>
+          </legend>
+          <div
+            className="grid grid-cols-2 gap-2 sm:grid-cols-5"
+            onChange={(event) => {
+              // „Nu contează” le debifează pe celelalte, iar orice moment ales debifează „Nu contează”.
+              const box = event.target as HTMLInputElement;
+              if (!box.checked) return;
+              for (const other of event.currentTarget.querySelectorAll<HTMLInputElement>("input[name=preferredTimes]")) {
+                if (other !== box && (box.value === "fara_preferinta" || other.value === "fara_preferinta")) other.checked = false;
+              }
+            }}
+          >
             {PREFERRED_TIMES.map((t) => (
               <label
                 key={t}
@@ -99,18 +113,12 @@ export function ProfileForm({ profile, mode, secondaryAction }: ProfileFormProps
                   t === "fara_preferinta" && "col-span-2 sm:col-span-1",
                 )}
               >
-                <input
-                  type="radio"
-                  name="preferredTime"
-                  value={t}
-                  defaultChecked={v("preferredTime", profile.preferredTime) === t}
-                  className="sr-only"
-                />
+                <input type="checkbox" name="preferredTimes" value={t} defaultChecked={chosenTimes.includes(t)} className="sr-only" />
                 {PREFERRED_TIME_LABELS[t]}
               </label>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         <Field id="sessionMinutes" label="Durata unei sesiuni" error={e.sessionMinutes}>
           <Select id="sessionMinutes" name="sessionMinutes" defaultValue={v("sessionMinutes", profile.sessionMinutes)}>

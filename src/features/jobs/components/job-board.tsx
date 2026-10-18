@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { countLabel } from "@/features/subjects/format";
 import { cn } from "@/lib/utils";
-import { JOB_DOMAINS, JOB_DOMAIN_LABELS, JOB_TYPES, JOB_TYPE_LABELS, JOBS, WORK_MODE_LABELS, type WorkMode } from "../data";
+import { JOB_AREAS, JOB_AREA_LABELS, JOB_DOMAINS, JOB_DOMAIN_LABELS, JOB_TYPES, JOB_TYPE_LABELS, JOBS, WORK_MODE_LABELS, type WorkMode } from "../data";
 import { DEFAULT_FILTERS, fitsStudy, matchesFilters, sortJobs, type JobFilters, type StudentContext } from "../recommend";
 import { JobCard } from "./job-card";
 
@@ -38,6 +38,14 @@ export function JobBoard({ context }: { context: StudentContext }) {
             className="pl-9"
           />
         </div>
+
+        <ChipGroup legend="Unde">
+          {JOB_AREAS.map((a) => (
+            <Chip key={a} active={filters.areas.includes(a)} onClick={() => set({ areas: toggle(filters.areas, a) })}>
+              {JOB_AREA_LABELS[a]}
+            </Chip>
+          ))}
+        </ChipGroup>
 
         <ChipGroup legend="Tip de job">
           {JOB_TYPES.map((t) => (

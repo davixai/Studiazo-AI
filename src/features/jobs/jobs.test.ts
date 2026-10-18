@@ -27,6 +27,16 @@ describe("filtre", () => {
     expect(JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, query: "germana" })).map((j) => j.id)).toContain("4445517444");
   });
 
+  it("„Unde”: în Iași, lângă Iași și remote; cele remote se fac de acasă", () => {
+    for (const area of ["iasi", "imprejurimi", "remote"] as const) {
+      const found = JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, areas: [area] }));
+      expect(found.length, area).toBeGreaterThan(0);
+      expect(found.every((j) => j.area === area)).toBe(true);
+    }
+    expect(JOBS.filter((j) => j.area === "remote").every((j) => j.mode === "remote")).toBe(true);
+    expect(JOBS.filter((j) => j.area === "imprejurimi").every((j) => j.place)).toBe(true);
+  });
+
   it("modul de lucru nu potrivește anunțurile care nu îl spun", () => {
     const hybrid = JOBS.filter((j) => matchesFilters(j, { ...DEFAULT_FILTERS, modes: ["hibrid"] }));
     expect(hybrid.every((j) => j.mode === "hibrid")).toBe(true);

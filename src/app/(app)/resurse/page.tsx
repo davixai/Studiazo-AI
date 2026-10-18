@@ -104,7 +104,7 @@ export default async function ResourcesPage() {
             >
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-ink">Joburi pentru studenți</span>
-                <span className="mt-1 block text-[13px] leading-5 text-ink-muted">Anunțuri reale din Iași: internshipuri și part-time.</span>
+                <span className="mt-1 block text-[13px] leading-5 text-ink-muted">Anunțuri reale din Iași și remote: internshipuri și part-time.</span>
                 <span className="mt-2 block text-xs text-ink-faint">în aplicație</span>
               </span>
               <ArrowRight

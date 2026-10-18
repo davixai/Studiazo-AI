@@ -10,6 +10,7 @@ const TYPE_TONE = {
   "part-time": "accent",
   "full-time": "neutral",
   internship: "success",
+  contract: "warning",
 } as const;
 
 /** Cardul unui anunț real: esențialul la vedere, detaliile la deschidere, linkul direct către anunț. */
@@ -33,7 +34,7 @@ export function JobCard({ job, fitsStudy = false, className }: { job: Job; fitsS
           </h3>
           <p className="mt-0.5 text-[13px] text-ink-soft">
             {job.company}
-            {job.place ? <span className="text-ink-muted"> · {job.place}</span> : null}
+            {job.place ? <span className="text-ink-muted"> · {job.place}{job.area === "imprejurimi" ? ", lângă Iași" : ""}</span> : null}
           </p>
         </div>
       </div>

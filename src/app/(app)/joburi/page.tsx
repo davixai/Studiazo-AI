@@ -19,7 +19,7 @@ export default async function JobsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Joburi pentru studenți"
-        description="Anunțuri reale din Iași, publicate de angajatori: internshipuri, part-time și primele joburi. Apeși pe un anunț și ajungi direct la el, ca să aplici. Le ordonăm după facultatea ta."
+        description="Anunțuri reale în Iași, în localitățile de lângă și remote, de acasă: internshipuri, part-time și primele joburi. Apeși pe un anunț și ajungi direct la el, ca să aplici. Le ordonăm după facultatea ta."
       />
       <JobBoard context={{ study, monthlyGap }} />
       <p className="text-[12px] leading-5 text-ink-muted">

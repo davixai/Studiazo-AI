@@ -1,9 +1,11 @@
-import type { Job, JobDomain, JobType, WorkMode } from "./data";
+import type { Job, JobArea, JobDomain, JobType, WorkMode } from "./data";
 
 // Filtrarea și recomandările de joburi. Funcții pure, testate în jobs.test.ts.
 
 export type JobFilters = {
   query: string;
+  /** În Iași, lângă Iași sau remote. */
+  areas: JobArea[];
   types: JobType[];
   domains: JobDomain[];
   modes: WorkMode[];
@@ -16,6 +18,7 @@ export type JobFilters = {
 
 export const DEFAULT_FILTERS: JobFilters = {
   query: "",
+  areas: [],
   types: [],
   domains: [],
   modes: [],
@@ -29,6 +32,7 @@ function normalize(s: string) {
 }
 
 export function matchesFilters(job: Job, f: JobFilters) {
+  if (f.areas.length && !f.areas.includes(job.area)) return false;
   if (f.types.length && !f.types.includes(job.type)) return false;
   if (f.domains.length && !f.domains.includes(job.domain)) return false;
   if (f.modes.length && (!job.mode || !f.modes.includes(job.mode))) return false;

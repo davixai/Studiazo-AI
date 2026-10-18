@@ -1,5 +1,5 @@
 import type { MaterialStatus } from "@/lib/contracts/domain";
-import type { MaterialKind } from "./schemas";
+import { KIND_EXTENSION, kindFromMime, type MaterialKind } from "./schemas";
 
 export type Material = {
   id: string;
@@ -25,7 +25,7 @@ export function toMaterial(r: Record<string, unknown>): Material {
     id: r.id as string,
     subjectId: r.subject_id as string,
     title: r.title as string,
-    kind: mimeType === "application/pdf" ? "pdf" : "image",
+    kind: kindFromMime(mimeType),
     mimeType,
     sizeBytes: r.size_bytes as number,
     pageCount: (r.page_count as number | null) ?? null,
@@ -37,9 +37,9 @@ export function toMaterial(r: Record<string, unknown>): Material {
   };
 }
 
-/** Calea în bucketul privat: {user_id}/{subject_id}/{material_id}.{pdf|jpg}. Construită doar pe server. */
+/** Calea în bucketul privat: {user_id}/{subject_id}/{material_id}.{pdf|docx|pptx|txt|jpg}. Construită doar pe server. */
 export function storagePathFor(userId: string, subjectId: string, materialId: string, kind: MaterialKind) {
-  return `${userId}/${subjectId}/${materialId}.${kind === "pdf" ? "pdf" : "jpg"}`;
+  return `${userId}/${subjectId}/${materialId}.${KIND_EXTENSION[kind]}`;
 }
 
 /** Miniatura unei poze stă lângă original: …/{material_id}.thumb.jpg */

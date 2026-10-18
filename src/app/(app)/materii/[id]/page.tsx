@@ -82,7 +82,7 @@ export default async function SubjectPage({ params, searchParams }: PageProps<"/
 
 /** Numerele din antet; „pagini gata” = paginile PDF-urilor procesate (ce poate citi asistentul). */
 function numbersFor(materials: Material[], notes: number): SubjectNumbers {
-  const pdfs = materials.filter((m) => m.kind === "pdf");
+  const pdfs = materials.filter((m) => m.kind !== "image");
   return {
     pdfs: pdfs.length,
     photos: materials.length - pdfs.length,

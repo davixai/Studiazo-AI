@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button";
 import { countLabel } from "@/features/subjects/format";
 import { cn } from "@/lib/utils";
 import { prepareImage } from "../image-prep";
-import { PDF_MIME, type MaterialKind } from "../schemas";
+import { DOCUMENT_ACCEPT, documentKindOf, type MaterialKind } from "../schemas";
 import { PdfList, type MaterialItem } from "./pdf-list";
 import { PhotoGrid } from "./photo-grid";
 import { UploadQueue, useUploadQueue } from "./upload-queue";
 
 /** Tipul unui fișier ales sau tras în pagină; null = format neacceptat aici. */
 function kindOf(file: File): MaterialKind | null {
-  if (file.type === PDF_MIME || /\.pdf$/i.test(file.name)) return "pdf";
+  const document = documentKindOf(file);
+  if (document) return document;
   if (file.type.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name)) return "image";
   return null;
 }
@@ -26,7 +27,7 @@ export function MaterialsPanel({ subjectId, materials }: { subjectId: string; ma
   const [dragging, setDragging] = useState(false);
   const [rejected, setRejected] = useState<string | null>(null);
 
-  const pdfs = materials.filter((m) => m.kind === "pdf");
+  const pdfs = materials.filter((m) => m.kind !== "image");
   const photos = materials.filter((m) => m.kind === "image");
   const empty = materials.length === 0 && queue.items.length === 0;
 
@@ -38,7 +39,7 @@ export function MaterialsPanel({ subjectId, materials }: { subjectId: string; ma
       return kind ? [{ file, kind }] : [];
     });
     const skipped = files.length - accepted.length;
-    setRejected(skipped > 0 ? `${countLabel(skipped, "fișier", "fișiere")} ${skipped === 1 ? "nu este PDF sau poză și a fost ignorat" : "nu sunt PDF-uri sau poze și au fost ignorate"}.` : null);
+    setRejected(skipped > 0 ? `${countLabel(skipped, "fișier", "fișiere")} ${skipped === 1 ? "nu este un document sau o poză acceptată și a fost ignorat" : "nu sunt documente sau poze acceptate și au fost ignorate"}.` : null);
     if (accepted.length) queue.add(accepted);
   }
 
@@ -79,14 +80,14 @@ export function MaterialsPanel({ subjectId, materials }: { subjectId: string; ma
             {dragging ? "Lasă fișierele aici" : empty ? "Încarcă primul curs" : "Adaugă materiale"}
           </h3>
           <p className="mt-1.5 max-w-md text-sm leading-6 text-ink-muted">
-            <span className="pointer-coarse:hidden">Trage aici cursuri în PDF sau poze cu tabla și notițele, ori alege-le din calculator.</span>
-            <span className="hidden pointer-coarse:inline">Încarcă un curs în PDF sau fă o poză la tablă, în caiet ori la un exercițiu.</span>
+            <span className="pointer-coarse:hidden">Trage aici cursuri (PDF, Word, PowerPoint) sau poze cu tabla și notițele, ori alege-le din calculator.</span>
+            <span className="hidden pointer-coarse:inline">Încarcă un curs (PDF, Word, PowerPoint) sau fă o poză la tablă, în caiet ori la un exercițiu.</span>
           </p>
 
           <div className="mt-5 grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center">
             <Button size="lg" onClick={() => pdfInput.current?.click()} className="col-span-2 w-full sm:w-auto">
               <FileUp aria-hidden="true" />
-              Încarcă PDF
+              Încarcă fișiere
             </Button>
             {/* Camera are sens doar pe ecranele tactile; pe laptop rămâne „Alege poze”. */}
             <Button
@@ -110,14 +111,14 @@ export function MaterialsPanel({ subjectId, materials }: { subjectId: string; ma
             </Button>
           </div>
           <p className="mt-4 max-w-md text-[12px] leading-5 text-ink-faint">
-            PDF cu text selectabil, maximum 20 MB · poze JPEG, PNG sau WebP, micșorate automat
+            PDF, Word (.docx), PowerPoint (.pptx) sau text, maximum 20 MB · poze JPEG, PNG sau WebP, micșorate automat
           </p>
         </div>
 
         <input
           ref={pdfInput}
           type="file"
-          accept="application/pdf,.pdf"
+          accept={DOCUMENT_ACCEPT}
           multiple
           className="sr-only"
           tabIndex={-1}
@@ -166,7 +167,7 @@ export function MaterialsPanel({ subjectId, materials }: { subjectId: string; ma
       {pdfs.length > 0 ? (
         <section aria-labelledby="pdf-heading" className="flex flex-col gap-3">
           <h3 id="pdf-heading" className="flex items-baseline gap-2 text-[15px] font-bold tracking-[-0.015em] text-ink">
-            Cursuri PDF
+            Cursuri
             <span className="tabular text-[13px] font-medium text-ink-muted">{pdfs.length}</span>
           </h3>
           <PdfList items={pdfs} />

@@ -7,17 +7,18 @@ import { isPreviewMode } from "@/lib/env";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import type { FormState } from "@/features/auth/schemas";
 import { SubjectIdSchema } from "@/features/subjects/schemas";
-import { extractPdf } from "./pdf";
+import { extractDocument } from "./documents";
 import {
   cleanTitle,
   FinishUploadSchema,
-  hasJpegSignature,
-  hasPdfSignature,
+  hasSignatureFor,
+  KIND_LABEL,
+  KIND_MIME,
+  kindFromMime,
   MaterialIdSchema,
   MAX_FILE_BYTES,
-  PDF_MIME,
   StartUploadSchema,
-  STORED_IMAGE_MIME,
+  type DocumentKind,
   type MaterialKind,
 } from "./schemas";
 import { storagePathFor, thumbPathFor } from "./types";
@@ -79,7 +80,7 @@ export async function startUpload(input: unknown): Promise<StartUploadResult> {
 }
 
 /**
- * Pasul 2 (după încărcare): verifică fișierul ajuns în Storage, creează rândul și, pentru PDF, extrage textul.
+ * Pasul 2 (după încărcare): verifică fișierul ajuns în Storage, creează rândul și, pentru documente, extrage textul.
  * Apelul repetat pentru același material nu creează duplicate.
  */
 export async function finishUpload(input: unknown): Promise<FinishUploadResult> {
@@ -108,17 +109,18 @@ export async function finishUpload(input: unknown): Promise<FinishUploadResult> 
     return { ok: false, message };
   };
   if (bytes.length === 0 || bytes.length > MAX_FILE_BYTES) return reject("Fișierul trebuie să aibă între 1 octet și 20 MB.");
-  if (kind === "pdf" && !hasPdfSignature(bytes)) return reject("Fișierul nu este un PDF valid.");
-  if (kind === "image" && !hasJpegSignature(bytes)) return reject("Poza nu a putut fi salvată. Încearcă din nou.");
+  if (!hasSignatureFor(kind, bytes)) {
+    return reject(kind === "image" ? "Poza nu a putut fi salvată. Încearcă din nou." : `Fișierul nu este un document ${KIND_LABEL[kind]} valid.`);
+  }
 
   const { error: insertError } = await supabase.from("materials").insert({
     id: materialId,
     subject_id: subjectId,
-    title: cleanTitle(parsed.data.title, kind === "pdf" ? "Curs fără nume" : "Poză"),
+    title: cleanTitle(parsed.data.title, kind === "image" ? "Poză" : "Curs fără nume"),
     storage_path: path,
-    mime_type: kind === "pdf" ? PDF_MIME : STORED_IMAGE_MIME,
+    mime_type: KIND_MIME[kind],
     size_bytes: bytes.length,
-    status: kind === "pdf" ? "in_procesare" : "procesat",
+    status: kind === "image" ? "procesat" : "in_procesare",
   });
   if (insertError?.code === "23505") return { ok: true, status: "in_procesare", message: null }; // dublu-click: deja creat
   if (insertError) return reject("Nu am putut salva materialul. Verifică dacă materia mai există și încearcă din nou.");
@@ -128,14 +130,14 @@ export async function finishUpload(input: unknown): Promise<FinishUploadResult> 
     return { ok: true, status: "procesat", message: null };
   }
 
-  const outcome = await processPdf(supabase, materialId, bytes);
+  const outcome = await processDocument(supabase, materialId, kind, bytes);
   revalidateSubject(subjectId);
   return { ok: true, ...outcome };
 }
 
 /** Extrage textul, îl salvează pe pagini și actualizează starea. Folosit și la „Încearcă din nou”. */
-async function processPdf(supabase: SupabaseServerClient, materialId: string, bytes: Uint8Array) {
-  const outcome = await extractPdf(bytes);
+async function processDocument(supabase: SupabaseServerClient, materialId: string, kind: DocumentKind, bytes: Uint8Array) {
+  const outcome = await extractDocument(kind, bytes);
   let status: MaterialStatus = outcome.status;
   let message = outcome.message;
 
@@ -188,14 +190,15 @@ async function readMaterial(supabase: SupabaseServerClient, formData: FormData):
   return (data as MaterialRow | null) ?? null;
 }
 
-/** „Încearcă din nou” pentru un PDF eșuat sau rămas în procesare. */
+/** „Încearcă din nou” pentru un document eșuat sau rămas în procesare. */
 export async function retryProcessing(_prev: FormState, formData: FormData): Promise<FormState> {
   if (isPreviewMode()) return { status: "error", message: PREVIEW_MESSAGE };
   await requireUser();
 
   const supabase = await createClient();
   const material = await readMaterial(supabase, formData);
-  if (!material || material.mime_type !== PDF_MIME) return { status: "error", message: NOT_FOUND };
+  const kind = material ? kindFromMime(material.mime_type) : "image";
+  if (!material || kind === "image") return { status: "error", message: NOT_FOUND };
   if (material.status !== "esuat" && material.status !== "in_procesare") return { status: "success" };
 
   await supabase.from("materials").update({ status: "in_procesare", status_message: null }).eq("id", material.id);
@@ -209,10 +212,10 @@ export async function retryProcessing(_prev: FormState, formData: FormData): Pro
     return { status: "error", message: "Fișierul lipsește. Șterge materialul și încarcă-l din nou." };
   }
 
-  const outcome = await processPdf(supabase, material.id, new Uint8Array(await blob.arrayBuffer()));
+  const outcome = await processDocument(supabase, material.id, kind, new Uint8Array(await blob.arrayBuffer()));
   revalidateSubject(material.subject_id);
   return outcome.status === "esuat"
-    ? { status: "error", message: outcome.message ?? "Nu am putut procesa PDF-ul." }
+    ? { status: "error", message: outcome.message ?? "Nu am putut procesa documentul." }
     : { status: "success" };
 }
 
@@ -245,7 +248,7 @@ export async function deleteMaterial(_prev: FormState, formData: FormData): Prom
   const material = await readMaterial(supabase, formData);
   if (!material) return { status: "error", message: NOT_FOUND };
 
-  const kind: MaterialKind = material.mime_type === PDF_MIME ? "pdf" : "image";
+  const kind: MaterialKind = kindFromMime(material.mime_type);
   const { error: storageError } = await supabase.storage.from("materials").remove(pathsFor(material.storage_path, kind));
   if (storageError) return { status: "error", message: "Nu am putut șterge fișierul. Încearcă din nou." };
 
@@ -253,5 +256,5 @@ export async function deleteMaterial(_prev: FormState, formData: FormData): Prom
   if (error) return { status: "error", message: "Nu am putut șterge materialul. Încearcă din nou." };
 
   revalidateSubject(material.subject_id);
-  return { status: "success", message: kind === "pdf" ? "PDF-ul a fost șters." : "Poza a fost ștearsă." };
+  return { status: "success", message: kind === "image" ? "Poza a fost ștearsă." : kind === "pdf" ? "PDF-ul a fost șters." : "Documentul a fost șters." };
 }

@@ -107,7 +107,7 @@ export function DeleteMaterial({ target, kind }: { target: Target; kind: "pdf" |
         open={open}
         onClose={() => setOpen(false)}
         size="sm"
-        title={kind === "pdf" ? "Ștergi acest PDF?" : "Ștergi această poză?"}
+        title={kind === "pdf" ? "Ștergi acest curs?" : "Ștergi această poză?"}
         description={
           kind === "pdf"
             ? `„${target.title}” și textul extras din el se șterg definitiv. Asistentul nu le va mai putea folosi.`

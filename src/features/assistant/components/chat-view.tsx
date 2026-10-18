@@ -1,12 +1,14 @@
 "use client";
 
-import { ArrowUp, Camera, History, ImageIcon, ListChecks, RotateCcw, Sparkles, SquarePen, Trash2, X } from "lucide-react";
+import { ArrowUp, Camera, CircleCheck, History, ImageIcon, ListChecks, Paperclip, RotateCcw, Sparkles, SquarePen, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { UploadQueue, useUploadQueue } from "@/features/materials/components/upload-queue";
+import { DOCUMENT_ACCEPT, documentKindOf, titleFromFileName } from "@/features/materials/schemas";
 import { ProposalCard } from "@/features/proposals/components/proposal-card";
 import { createQuiz } from "@/features/quizzes/actions";
 import type { Subject } from "@/lib/contracts/domain";
@@ -73,10 +75,20 @@ export function ChatView({
   const endRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const documentRef = useRef<HTMLInputElement>(null);
+  // Cursurile adăugate din chat se salvează la materie (aceeași încărcare ca pe pagina materiei).
+  const uploads = useUploadQueue(subject?.id ?? "");
+  const [savedFiles, setSavedFiles] = useState<Array<{ key: string; title: string }>>([]);
+
+  // Confirmarea rămâne în conversație și după ce rândul de încărcare dispare.
+  const justSaved = uploads.items.filter((it) => it.phase === "done" && !it.warning && !savedFiles.some((s) => s.key === it.key));
+  if (justSaved.length > 0) {
+    setSavedFiles([...savedFiles, ...justSaved.map((it) => ({ key: it.key, title: titleFromFileName(it.file.name) }))]);
+  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, pendingQuestion, error]);
+  }, [messages, pendingQuestion, error, uploads.items.length, savedFiles.length]);
 
   const send = (text: string, attached: string | null) => {
     const question = text.trim();
@@ -134,9 +146,29 @@ export function ChatView({
     });
   };
 
+  /** Documentele (PDF, Word, PowerPoint, text) se salvează la materie; asistentul le poate citi apoi integral. */
+  const addDocuments = (files: File[]) => {
+    setImageError(null);
+    const accepted = files.flatMap((file) => {
+      const kind = documentKindOf(file);
+      return kind ? [{ file, kind }] : [];
+    });
+    if (accepted.length < files.length) setImageError("Poți adăuga PDF, Word (.docx), PowerPoint (.pptx) sau fișiere text.");
+    if (accepted.length === 0) return;
+    if (!subject) {
+      setImageError("Deschide chatul unei materii ca să salvezi fișierul la ea.");
+      return;
+    }
+    uploads.add(accepted);
+  };
+
   const attach = async (file: File | undefined) => {
     setImageError(null);
     if (!file) return;
+    if (documentKindOf(file)) {
+      addDocuments([file]);
+      return;
+    }
     if (!file.type.startsWith("image/")) {
       setImageError("Alege o poză (JPEG, PNG sau WebP).");
       return;
@@ -149,7 +181,7 @@ export function ChatView({
   };
 
   const examples = subject ? subjectExamples(subject.name) : GENERAL_EXAMPLES;
-  const empty = messages.length === 0 && !pendingQuestion;
+  const empty = messages.length === 0 && !pendingQuestion && uploads.items.length === 0 && savedFiles.length === 0;
 
   return (
     <div className="flex min-h-[calc(100dvh-14rem)] min-w-0 flex-col lg:min-h-[calc(100dvh-10rem)]">
@@ -209,7 +241,9 @@ export function ChatView({
             </div>
             <p className="mt-4 text-[17px] font-bold tracking-[-0.02em] text-ink">Cu ce te pot ajuta?</p>
             <p className="mt-1.5 max-w-sm text-sm leading-6 text-ink-muted">
-              Întreabă orice sau trimite o poză cu un exercițiu. Nimic nu se salvează în calendar fără confirmarea ta.
+              {subject
+                ? "Întreabă orice, trimite o poză cu un exercițiu sau adaugă un curs (PDF, Word, PowerPoint) cu agrafa. Nimic nu se salvează în calendar fără confirmarea ta."
+                : "Întreabă orice sau trimite o poză cu un exercițiu. Nimic nu se salvează în calendar fără confirmarea ta."}
             </p>
             <div className="mt-6 flex w-full max-w-md flex-col gap-2">
               {examples.map((example, i) => (
@@ -266,6 +300,20 @@ export function ChatView({
             <p className="text-sm text-ink-muted">Pregătesc un test grilă din materialele tale… durează câteva secunde.</p>
           </div>
         ) : null}
+
+        {savedFiles.map((f) => (
+          <p
+            key={f.key}
+            className="mx-auto flex max-w-full items-center gap-2 rounded-full border border-line/70 bg-surface px-4 py-2 text-[13px] text-ink-soft shadow-xs animate-rise-in"
+          >
+            <CircleCheck className="size-4 shrink-0 text-success" aria-hidden="true" />
+            <span className="min-w-0">
+              <span className="font-semibold text-ink">„{f.title}”</span> e salvat la {subject?.name}. Întreabă-mă orice din el.
+            </span>
+          </p>
+        ))}
+
+        <UploadQueue items={uploads.items} onRetry={uploads.retry} onDismiss={uploads.dismiss} onCancel={uploads.cancelCurrent} />
 
         {error ? (
           <Alert
@@ -329,6 +377,31 @@ export function ChatView({
           >
             <Camera className="size-5" strokeWidth={1.8} />
           </button>
+          {subject ? (
+            <>
+              <input
+                ref={documentRef}
+                type="file"
+                accept={DOCUMENT_ACCEPT}
+                multiple
+                className="sr-only"
+                tabIndex={-1}
+                onChange={(e) => {
+                  addDocuments([...(e.target.files ?? [])]);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => documentRef.current?.click()}
+                className="-ml-1.5 flex size-10 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink"
+                aria-label={`Adaugă un curs la ${subject.name} (PDF, Word, PowerPoint sau text)`}
+                title="Adaugă PDF, Word, PowerPoint sau text la materie"
+              >
+                <Paperclip className="size-5" strokeWidth={1.8} />
+              </button>
+            </>
+          ) : null}
           <label htmlFor="chat-input" className="sr-only">
             Mesaj pentru asistent
           </label>

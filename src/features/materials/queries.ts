@@ -11,7 +11,7 @@ import { MATERIAL_COLUMNS, toMaterial, type Material } from "./types";
 // Proprietar: Sergiu. Exportă pentru David (asistentul AI): listMaterials, getMaterialPages, getMaterialImageUrl.
 // Nicio funcție nu primește user_id: RLS limitează rezultatele la utilizatorul curent.
 
-/** Materialele unei materii (PDF-uri și poze), cele mai noi primele. */
+/** Materialele unei materii (documente și poze), cele mai noi primele. */
 export async function listMaterials(subjectId: string): Promise<Material[]> {
   if (!SubjectIdSchema.safeParse(subjectId).success) return [];
   if (isPreviewMode()) return PREVIEW_MATERIALS.filter((m) => m.subjectId === subjectId);
@@ -28,7 +28,7 @@ export async function listMaterials(subjectId: string): Promise<Material[]> {
 }
 
 /**
- * Textul paginilor PDF-urilor procesate ale unei materii, pentru asistent (citări „pagina N”).
+ * Textul paginilor documentelor procesate ale unei materii, pentru asistent (citări „pagina N”).
  * Cu `query`: doar paginile relevante (fără diacritice), cele mai potrivite întâi; listă goală dacă nimic nu se potrivește.
  * Rezultatul are în total cel mult `maxChars` caractere (implicit AI_LIMITS.maxMaterialChars) și e în ordinea citirii.
  */
@@ -43,7 +43,7 @@ export async function getMaterialPages(
     .from("materials")
     .select("id, title")
     .eq("subject_id", subjectId)
-    .eq("mime_type", "application/pdf")
+    .not("mime_type", "like", "image/%")
     .eq("status", "procesat")
     .order("created_at", { ascending: true });
   if (error) throw new Error(`Nu am putut citi materialele: ${error.message}`);

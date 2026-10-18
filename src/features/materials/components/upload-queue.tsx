@@ -8,7 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { discardUpload, finishUpload, startUpload } from "../actions";
 import { formatBytes } from "../format";
-import { checkFile, hasPdfSignature, PDF_MIME, titleFromFileName, type MaterialKind } from "../schemas";
+import { checkFile, hasSignatureFor, KIND_LABEL, KIND_MIME, titleFromFileName, type DocumentKind, type MaterialKind } from "../schemas";
 import { readHead, uploadToSignedUrl, UploadError } from "../upload-client";
 
 type Phase = "waiting" | "preparing" | "uploading" | "processing" | "done" | "error";
@@ -20,22 +20,25 @@ export type UploadItem = {
   phase: Phase;
   progress: number;
   message: string | null;
-  /** Mesajul final, când PDF-ul s-a încărcat, dar fără text sau cu probleme. */
+  /** Mesajul final, când documentul s-a încărcat, dar fără text sau cu probleme. */
   warning: boolean;
   /** Fals pentru fișierele invalide (alt format, prea mari): reîncercarea n-ar schimba nimic. */
   retryable: boolean;
 };
 
-/** Ce trimitem efectiv: PDF-ul ca atare; pozele sunt pregătite în browser (S3b). */
+/** Ce trimitem efectiv: documentul ca atare; pozele sunt pregătite în browser (S3b). */
 export type PreparedUpload = { body: Blob; contentType: string; title: string; thumb: Blob | null };
 
 export type Preparer = (file: File) => Promise<PreparedUpload>;
 
-async function preparePdf(file: File): Promise<PreparedUpload> {
-  const problem = checkFile(file, "pdf");
+async function prepareDocument(file: File, kind: DocumentKind): Promise<PreparedUpload> {
+  const problem = checkFile(file, kind);
   if (problem) throw new UploadError(problem);
-  if (!hasPdfSignature(await readHead(file))) throw new UploadError(`„${file.name}” nu este un PDF valid.`);
-  return { body: file, contentType: PDF_MIME, title: titleFromFileName(file.name), thumb: null };
+  // Textul se verifică întreg pe server (UTF-8 valid); aici doar semnătura PDF/ZIP.
+  if (kind !== "txt" && !hasSignatureFor(kind, await readHead(file))) {
+    throw new UploadError(`„${file.name}” nu este un fișier ${KIND_LABEL[kind]} valid.`);
+  }
+  return { body: file, contentType: KIND_MIME[kind], title: titleFromFileName(file.name), thumb: null };
 }
 
 /**
@@ -65,7 +68,8 @@ export function useUploadQueue(subjectId: string, prepareImage?: Preparer) {
       let prepared: PreparedUpload | null = null;
       try {
         patch(key, { phase: "preparing", progress: 0, message: null, warning: false, retryable: true });
-        prepared = kind === "pdf" ? await preparePdf(file) : await (prepareImage ?? preparePdf)(file);
+        if (kind === "image" && !prepareImage) throw new UploadError("Aici se pot adăuga doar documente.");
+        prepared = kind === "image" ? await prepareImage!(file) : await prepareDocument(file, kind);
 
         const start = await startUpload({ subjectId, kind, size: prepared.body.size });
         if (!start.ok) throw new UploadError(start.message);
@@ -92,7 +96,7 @@ export function useUploadQueue(subjectId: string, prepareImage?: Preparer) {
           phase: "done",
           progress: 1,
           warning,
-          message: warning ? done.message : kind === "pdf" ? "Gata pentru asistent" : "Poza a fost salvată",
+          message: warning ? done.message : kind === "image" ? "Poza a fost salvată" : "Gata pentru asistent",
         });
         if (!warning) setTimeout(() => setItems((list) => list.filter((it) => it.key !== key)), 2200);
       } catch (error) {
@@ -184,7 +188,7 @@ export function UploadQueue({
   return (
     <ul aria-label="Încărcări" aria-live="polite" className="flex flex-col gap-2">
       {items.map((it) => {
-        const Icon = it.kind === "pdf" ? FileText : ImageIcon;
+        const Icon = it.kind === "image" ? ImageIcon : FileText;
         const percent = Math.round(it.progress * 100);
         const failed = it.phase === "error";
         const finished = it.phase === "done";

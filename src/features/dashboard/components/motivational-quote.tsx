@@ -27,8 +27,9 @@ export function MotivationalQuote({ initialIndex }: { initialIndex: number }) {
   }
 
   return (
-    <div className="quote-frame stagger rounded-xl p-px">
-      <figure ref={ref} onPointerMove={spotlight} className="quote-card group/quote relative overflow-hidden rounded-[calc(var(--radius-xl)-1px)] px-5 py-6 sm:px-8 sm:py-8">
+    // @container: fonturile și spațierile se adaptează la lățimea cardului (îngust lângă salut, lat pe tabletă).
+    <div className="quote-frame stagger @container h-full rounded-xl p-px">
+      <figure ref={ref} onPointerMove={spotlight} className="quote-card group/quote relative h-full overflow-hidden rounded-[calc(var(--radius-xl)-1px)] px-5 py-5 @xl:px-7 @xl:py-6">
         {/* Fundal: lumini care plutesc, textură fină și spotul de sub cursor */}
         <span aria-hidden="true" className="quote-blob -top-24 -left-16 size-72 bg-accent/45" />
         <span aria-hidden="true" className="quote-blob -right-20 -bottom-28 size-80 bg-accent-blue/35 [animation-delay:-8s]" />
@@ -38,7 +39,7 @@ export function MotivationalQuote({ initialIndex }: { initialIndex: number }) {
         <span aria-hidden="true" className="quote-stars" />
 
         {/* Ghilimele uriașe, decorative */}
-        <span aria-hidden="true" className="quote-mark pointer-events-none absolute -top-4 left-2 font-quote text-[150px] leading-none select-none sm:-top-6 sm:left-4 sm:text-[210px]">
+        <span aria-hidden="true" className="quote-mark pointer-events-none absolute -top-3 left-2 font-quote text-[120px] leading-none select-none @xl:-top-5 @xl:left-4 @xl:text-[160px]">
           “
         </span>
 
@@ -49,7 +50,7 @@ export function MotivationalQuote({ initialIndex }: { initialIndex: number }) {
               Gândul zilei
             </p>
 
-            <blockquote key={index} className="mt-4 font-quote text-[22px] leading-[1.3] font-medium text-pretty text-white italic sm:mt-5 sm:text-[30px] sm:leading-[1.25]">
+            <blockquote key={index} className="mt-3 font-quote text-[19px] leading-[1.35] font-medium text-pretty break-words text-white italic @md:text-[21px] @2xl:mt-4 @2xl:text-[25px] @2xl:leading-[1.3]">
               {words.map((word, i) => (
                 <span key={i} className="quote-word" style={{ "--w": i } as React.CSSProperties}>
                   {word}
@@ -60,10 +61,10 @@ export function MotivationalQuote({ initialIndex }: { initialIndex: number }) {
 
             <figcaption
               key={`a-${index}`}
-              className="quote-author mt-4 flex items-center gap-3 text-[12px] font-semibold tracking-[0.16em] text-ink-soft uppercase sm:mt-5 sm:text-[13px]"
+              className="quote-author mt-3 flex items-center gap-3 text-[11px] font-semibold tracking-[0.16em] text-ink-soft uppercase @md:text-[12px] @2xl:mt-4"
               style={{ "--w": words.length } as React.CSSProperties}
             >
-              <span aria-hidden="true" className="h-0.5 w-8 rounded-full bg-brand sm:w-10" />
+              <span aria-hidden="true" className="h-0.5 w-7 shrink-0 rounded-full bg-brand @xl:w-9" />
               {quote.author}
             </figcaption>
           </div>

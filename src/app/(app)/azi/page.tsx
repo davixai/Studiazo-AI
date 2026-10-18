@@ -36,7 +36,9 @@ export default async function TodayPage() {
 
   return (
     <div className="flex flex-col gap-6 lg:gap-7">
-      <header className="stagger flex flex-col gap-1">
+      {/* Salutul în stânga, Gândul zilei în dreapta (laptop/PC); pe telefon și tabletă, citatul vine sub salut. */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-center lg:gap-7">
+      <header className="stagger flex min-w-0 flex-col gap-1 lg:col-span-5">
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <p className="inline-flex items-center gap-2 rounded-full border border-line/70 bg-surface/60 px-3 py-1 text-[12px] font-semibold text-ink-soft backdrop-blur-sm">
             <span aria-hidden="true" className="relative flex size-2">
@@ -59,6 +61,10 @@ export default async function TodayPage() {
         </h1>
         <p className="text-sm text-ink-muted">Hai să facem ziua de azi una productivă.</p>
       </header>
+        <div className="min-w-0 lg:col-span-7">
+          <MotivationalQuote initialIndex={Math.floor(now.getTime() / 1000) % QUOTES.length} />
+        </div>
+      </div>
 
       {/* Mobil: ce urmează + streak + scurtături */}
       <div className="flex min-w-0 flex-col gap-4 lg:hidden">
@@ -174,8 +180,6 @@ export default async function TodayPage() {
         />
       </section>
 
-      {/* Gândul zilei: la final, ca un moment de respiro după ce ai văzut ce ai de făcut. */}
-      <MotivationalQuote initialIndex={Math.floor(now.getTime() / 1000) % QUOTES.length} />
     </div>
   );
 }

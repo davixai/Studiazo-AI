@@ -5,7 +5,7 @@
 
 do $$
 declare
-  v_email text := 'baltadavid123@gmail.com';
+  v_email text := 'baltadavid@gmail.com';
   v_uid uuid;
   v_today date := (now() at time zone 'Europe/Bucharest')::date;
   v_month date := date_trunc('month', (now() at time zone 'Europe/Bucharest'))::date;

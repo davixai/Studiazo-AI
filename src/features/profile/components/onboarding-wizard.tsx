@@ -9,6 +9,7 @@ import { buttonStyles } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { TimeInput } from "@/components/ui/time-input";
 import { Spinner } from "@/components/ui/spinner";
+import { SquareLoader } from "@/components/ui/square-loader";
 import { initialFormState, type FormState } from "@/features/auth/schemas";
 import { EVENT_KIND_LABELS, type Profile } from "@/lib/contracts/domain";
 import { formatDateLong } from "@/lib/time/format";
@@ -792,16 +793,15 @@ function ScheduleStep({
   if (phase.name === "reading") {
     return (
       <div className="flex flex-1 flex-col">
-        <StepTitle title="Citim orarul…" subtitle="Durează cam o jumătate de minut. Nu închide pagina." />
+        <StepTitle title="Citim orarul…" subtitle="Poate dura 1–2 minute. Rămâi pe pagină până e gata." />
         <div className="animate-rise-in relative mx-auto mt-8 w-full max-w-sm overflow-hidden rounded-xl border border-line bg-surface p-2 shadow-md">
           {/* eslint-disable-next-line @next/next/no-img-element -- poză locală (object URL), nu trece prin optimizarea Next */}
-          <img src={phase.preview} alt="Poza cu orarul" className="max-h-[50vh] w-full rounded-lg object-contain opacity-80" />
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="animate-shimmer h-full w-1/2 bg-linear-to-r from-transparent via-accent/25 to-transparent" />
+          <img src={phase.preview} alt="Poza cu orarul" className="max-h-[50vh] min-h-40 w-full rounded-lg object-contain opacity-40" />
+          <div className="pointer-events-none absolute inset-0 grid place-items-center">
+            <SquareLoader />
           </div>
         </div>
-        <p role="status" className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-ink-muted">
-          <Spinner />
+        <p role="status" className="mt-6 text-center text-sm font-medium text-ink-muted">
           Găsim materiile, orele, sălile și profesorii
         </p>
       </div>
@@ -923,7 +923,7 @@ function ScheduleReview({
     <div className="flex flex-1 flex-col">
       <StepTitle
         title="Verifică-ți orarul"
-        subtitle={`${kept.length === 1 ? "O oră" : `${kept.length} ore`} pe săptămână, ${subjectNames.length === 1 ? "o materie" : `${subjectNames.length} materii`}. Corectează ce nu e bine.`}
+        subtitle={`${kept.length === 1 ? "O activitate" : `${kept.length} activități`} pe săptămână, ${subjectNames.length === 1 ? "o materie" : `${subjectNames.length} materii`}. Corectează ce nu e bine.`}
       />
 
       {groups.length > 1 ? (
@@ -1012,7 +1012,7 @@ function ScheduleReview({
                     }}
                     className="h-11 min-w-0 flex-1 rounded-xl text-[15px] font-semibold sm:h-11"
                   />
-                  <span className="tabular w-12 shrink-0 text-right text-[13px] text-ink-muted">{hours === 1 ? "1 oră" : `${hours} ore`}</span>
+                  <span className="tabular w-12 shrink-0 text-right text-[13px] text-ink-muted">{hours}×</span>
                 </li>
               );
             })}
@@ -1084,7 +1084,7 @@ function ScheduleReview({
       </p>
       <Footer>
         <PrimaryButton disabled={kept.length === 0} onClick={() => onConfirm(kept, group ?? "", parity)}>
-          {kept.length > 0 ? `Adaug orarul · ${kept.length} ore` : "Adaug orarul"}
+          {kept.length > 0 ? `Adaug orarul · ${kept.length === 1 ? "o activitate" : `${kept.length} activități`}` : "Adaug orarul"}
         </PrimaryButton>
         <SecondaryButton onClick={onRetry}>Încearcă altă poză</SecondaryButton>
       </Footer>

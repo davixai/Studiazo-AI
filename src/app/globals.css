@@ -720,3 +720,44 @@ html[data-cursor="on"] .cursor-glow {
 .theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--9 { transform: translateX(-50%) rotate(225deg) translateY(0.625em) scale(0); }
 .theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--10 { transform: translateX(-50%) rotate(270deg) translateY(0.625em) scale(0); }
 .theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--11 { transform: translateX(-50%) rotate(315deg) translateY(0.625em) scale(0); }
+
+/* Loader cu patru pătrate care se rotesc (citirea orarului din poză) */
+.square-loader {
+  position: relative;
+  width: var(--loader-size, 4.5rem);
+  height: var(--loader-size, 4.5rem);
+  animation: square-loader-pulse 2000ms ease-in-out infinite;
+}
+.square-loader::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--color-accent) 22%, transparent) 0%, transparent 70%);
+}
+.square-loader__square {
+  --sq: var(--color-accent);
+  position: absolute;
+  width: 45%;
+  height: 45%;
+  border-radius: 18%;
+  background-color: var(--sq);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--sq) 66%, transparent), 0 0 32px color-mix(in oklab, var(--sq) 45%, transparent);
+  animation: square-loader-move 4000ms cubic-bezier(1, 0, 0, 1) infinite, square-loader-blink 1000ms ease-in-out infinite;
+}
+.square-loader__square:nth-of-type(2) { --sq: var(--color-accent-blue); animation-delay: -1000ms, -75ms; }
+.square-loader__square:nth-of-type(3) { --sq: var(--color-accent-pink); animation-delay: -2000ms, -150ms; }
+.square-loader__square:nth-of-type(4) { --sq: var(--color-success); animation-delay: -3000ms, -225ms; }
+@keyframes square-loader-move {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(120%, 0); }
+  50% { transform: translate(120%, 120%); }
+  75% { transform: translate(0, 120%); }
+}
+@keyframes square-loader-blink {
+  0%, 20%, 80%, 100% { filter: brightness(110%); }
+  50% { filter: brightness(80%); }
+}
+@keyframes square-loader-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.7); }
+}

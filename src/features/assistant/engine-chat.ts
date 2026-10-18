@@ -71,6 +71,10 @@ export async function runChatAssistant({ instructions, input, execute }: RunInpu
       const result = await execute(call.function.name, call.function.arguments);
       if (result.proposalId) proposalIds.push(result.proposalId);
       if (result.citations) citations.push(...result.citations);
+      if (result.usage) {
+        usage.inputTokens += result.usage.inputTokens;
+        usage.outputTokens += result.usage.outputTokens;
+      }
       messages.push({ role: "tool", tool_call_id: call.id, content: result.output });
     }
   }

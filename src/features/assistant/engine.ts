@@ -73,6 +73,10 @@ export async function runAssistant({ instructions, input, userId, execute }: Run
       const result = await execute(call.name, call.arguments);
       if (result.proposalId) proposalIds.push(result.proposalId);
       if (result.citations) citations.push(...result.citations);
+      if (result.usage) {
+        usage.inputTokens += result.usage.inputTokens;
+        usage.outputTokens += result.usage.outputTokens;
+      }
       items.push({ type: "function_call_output", call_id: call.call_id, output: result.output });
     }
   }

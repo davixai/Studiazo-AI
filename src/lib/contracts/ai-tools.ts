@@ -25,6 +25,12 @@ export const AI_TOOL_ARGS = {
   }),
   /** Notițe și text extras din materialele unei materii, cu număr de pagină. */
   get_subject_material: z.object({ subject_id: z.string().max(64), query: z.string().max(200).nullable() }),
+  /** Citește un material ÎNTREG (toate paginile) și întoarce notițe pe secțiuni, cu pagini. */
+  digest_material: z.object({
+    subject_id: z.string().max(64),
+    material: z.string().max(200).nullable(),
+    focus: z.string().max(300).nullable(),
+  }),
   /** Temele la care studentul greșește în testele grilă recente (pe materie sau toate). */
   get_weak_topics: z.object({ subject_id: z.string().max(64).nullable() }),
   /** Pregătește teme/examene pentru salvare — NU salvează; creează o propunere 'pending'. */

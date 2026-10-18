@@ -1,4 +1,4 @@
-import { GraduationCap, LogOut } from "lucide-react";
+import { GraduationCap, LogOut, Palette } from "lucide-react";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -8,13 +8,15 @@ import { signOut } from "@/features/auth/actions";
 import { AvailabilityForm } from "@/features/profile/components/availability-form";
 import { DeleteAccount } from "@/features/profile/components/delete-account";
 import { ProfileForm } from "@/features/profile/components/profile-form";
+import { ThemeSwitch } from "@/features/profile/components/theme-switch";
 import { getProfile, getStudyProfile } from "@/features/profile/queries";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getTheme } from "@/lib/theme/server";
 
 export const metadata: Metadata = { title: "Profil" };
 
 export default async function ProfilePage() {
-  const [profile, user, study] = await Promise.all([getProfile(), getCurrentUser(), getStudyProfile()]);
+  const [profile, user, study, theme] = await Promise.all([getProfile(), getCurrentUser(), getStudyProfile(), getTheme()]);
   if (!profile) return null;
 
   return (
@@ -27,6 +29,17 @@ export default async function ProfilePage() {
 
       <Card id="disponibilitate" className="stagger scroll-mt-24 p-5 sm:p-8" style={{ "--i": 2 } as React.CSSProperties}>
         <AvailabilityForm availability={profile.availability} />
+      </Card>
+
+      <Card className="stagger flex items-center justify-between gap-4 p-5 sm:p-6" style={{ "--i": 3 } as React.CSSProperties}>
+        <div className="flex items-start gap-4">
+          <IconBadge icon={Palette} color="violet" />
+          <div>
+            <h2 className="text-[15px] font-semibold">Temă</h2>
+            <p className="mt-1 max-w-md text-sm leading-6 text-ink-muted">Întunecată, cu mov (implicit), sau deschisă. Se ține minte pe acest dispozitiv.</p>
+          </div>
+        </div>
+        <ThemeSwitch initialTheme={theme} />
       </Card>
 
       <Card className="stagger flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" style={{ "--i": 3 } as React.CSSProperties}>

@@ -145,6 +145,87 @@
   }
 }
 
+/* ─── Tema deschisă (Profil → Temă). Aceiași tokeni, alte valori; implicit rămâne tema întunecată. ───
+   `night` rămâne închis: e panoul de contrast (tooltipuri, biblioteca) cu text alb. */
+html[data-theme="light"] {
+  color-scheme: light;
+  --color-canvas: #f4f5fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f2f9;
+  --color-surface-sunken: #e9ebf5;
+  --color-line: #e2e5f1;
+  --color-line-strong: #cdd2e5;
+
+  --color-ink: #14162e;
+  --color-ink-soft: #353b5e;
+  --color-ink-muted: #5a6085;
+  --color-ink-faint: #868cab;
+
+  --color-accent: #6a47f5;
+  --color-accent-hover: #5935ea;
+  --color-accent-soft: #efebff;
+  --color-accent-line: #d7cdff;
+  --color-accent-ink: #5532e0;
+  --color-accent-deep: #4a2bcc;
+  --color-accent-blue: #2f74f0;
+  --color-accent-pink: #b03cec;
+
+  --color-success: #0e8f64;
+  --color-success-soft: #e2f6ee;
+  --color-warning: #a96b06;
+  --color-warning-soft: #fdf2d8;
+  --color-danger: #d61f4a;
+  --color-danger-hover: #b8173e;
+  --color-danger-soft: #fde9ee;
+
+  --color-cat-blue: #3567ec;
+  --color-cat-teal: #0d8f86;
+  --color-cat-green: #15913f;
+  --color-cat-amber: #c76e05;
+  --color-cat-rose: #dc2650;
+  --color-cat-violet: #7440e6;
+  --color-cat-slate: #5f6c86;
+
+  --color-viz-income: #0e8a76;
+  --color-viz-expense: #7151e6;
+
+  --color-night: #171a3a;
+
+  --shadow-xs: 0 1px 2px rgb(20 24 60 / 0.06);
+  --shadow-sm: 0 1px 2px rgb(20 24 60 / 0.05), 0 10px 28px -16px rgb(20 24 60 / 0.2);
+  --shadow-md: 0 2px 4px rgb(20 24 60 / 0.06), 0 18px 38px -18px rgb(20 24 60 / 0.28), 0 0 0 1px rgb(106 71 245 / 0.1);
+  --shadow-lg: 0 24px 60px -18px rgb(20 24 60 / 0.32), 0 8px 16px -8px rgb(20 24 60 / 0.12);
+  --shadow-accent: 0 14px 34px -12px rgb(106 71 245 / 0.45), 0 0 22px -8px rgb(47 116 240 / 0.3);
+}
+html[data-theme="light"] body::before {
+  background: radial-gradient(closest-side, rgb(124 92 255 / 0.16), transparent);
+}
+html[data-theme="light"] body::after {
+  background: radial-gradient(closest-side, rgb(61 139 255 / 0.12), transparent);
+}
+html[data-theme="light"] dialog::backdrop {
+  background: rgb(20 22 48 / 0.35);
+}
+html[data-theme="light"] .glass {
+  background-color: rgb(255 255 255 / 0.78);
+}
+
+/* Trecerea lină dintre teme: doar culorile, câteva sute de milisecunde după apăsare (theme-switch.tsx). */
+@media (prefers-reduced-motion: no-preference) {
+  /* Fără comutator: el își animă singur soarele și luna (transform). */
+  html.theme-changing,
+  html.theme-changing *:not(.theme-switch, .theme-switch *),
+  html.theme-changing *:not(.theme-switch, .theme-switch *)::before,
+  html.theme-changing *:not(.theme-switch, .theme-switch *)::after {
+    transition:
+      background-color 450ms var(--ease-out),
+      border-color 450ms var(--ease-out),
+      color 450ms var(--ease-out),
+      fill 450ms var(--ease-out),
+      box-shadow 450ms var(--ease-out) !important;
+  }
+}
+
 @layer base {
   html {
     color-scheme: dark;
@@ -510,3 +591,132 @@ html[data-cursor="on"] .cursor-glow {
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
 }
+
+/* ─── Comutatorul de temă (Profil): soare ↔ lună, animat. Bifat = tema întunecată. ─── */
+.theme-switch {
+  --ts-dark: #14162e;
+  --ts-light: #eef0ff;
+  --ts-dur: 0.4s;
+  --ts-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  position: relative;
+  display: inline-block;
+  font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
+}
+.theme-switch__input,
+.theme-switch__input::before {
+  background-color: var(--ts-dark);
+}
+.theme-switch__input {
+  position: relative;
+  display: block;
+  width: 3em;
+  height: 1.5em;
+  border-radius: 0.75em;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: 0 0 0 1px var(--color-line-strong);
+  transition: background-color var(--ts-dur) var(--ts-ease), box-shadow 200ms var(--ease-out);
+}
+.theme-switch__input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.theme-switch__input::before {
+  content: "";
+  position: absolute;
+  top: 0.125em;
+  left: 0.125em;
+  width: 1.25em;
+  height: 1.25em;
+  border-radius: 50%;
+  transition: background-color var(--ts-dur) var(--ts-ease), transform var(--ts-dur) var(--ts-ease);
+}
+.theme-switch__icon,
+.theme-switch__icon-part {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+}
+.theme-switch__icon {
+  top: 0.125em;
+  left: 0.125em;
+  width: 1.25em;
+  height: 1.25em;
+  overflow: hidden;
+  border-radius: 50%;
+  background-color: var(--ts-light);
+  pointer-events: none;
+  transition: transform var(--ts-dur) var(--ts-ease);
+}
+.theme-switch__icon-part {
+  transition: box-shadow var(--ts-dur) var(--ts-ease), transform var(--ts-dur) var(--ts-ease);
+}
+.theme-switch__icon-part--1,
+.theme-switch__icon-part--2,
+.theme-switch__icon-part--3 {
+  border-radius: 50%;
+}
+.theme-switch__icon-part--1 {
+  top: calc(50% - 0.375em);
+  left: calc(50% - 0.375em);
+  width: 0.75em;
+  height: 0.75em;
+  background-color: var(--ts-light);
+}
+.theme-switch__icon-part--2 {
+  top: calc(50% - 0.4375em);
+  left: calc(50% - 0.0625em);
+  width: 0.5em;
+  height: 0.5em;
+  background-color: var(--ts-dark);
+  transform: translate(-0.1875em, 0.1875em) scale(0.2);
+}
+.theme-switch__icon-part--3 {
+  width: 1.25em;
+  height: 1.25em;
+  box-shadow: 0 0 0 0.625em var(--ts-dark) inset;
+  transform: scale(0.25);
+}
+.theme-switch__icon-part--3 ~ .theme-switch__icon-part {
+  top: 50%;
+  left: 50%;
+  width: 0.125em;
+  height: 0.1875em;
+  border-radius: 0.0625em;
+  background-color: var(--ts-dark);
+  transform-origin: 50% 0;
+}
+.theme-switch__icon-part--4 { transform: translateX(-50%) rotate(0) translateY(0.25em); }
+.theme-switch__icon-part--5 { transform: translateX(-50%) rotate(45deg) translateY(0.25em); }
+.theme-switch__icon-part--6 { transform: translateX(-50%) rotate(90deg) translateY(0.25em); }
+.theme-switch__icon-part--7 { transform: translateX(-50%) rotate(135deg) translateY(0.25em); }
+.theme-switch__icon-part--8 { transform: translateX(-50%) rotate(180deg) translateY(0.25em); }
+.theme-switch__icon-part--9 { transform: translateX(-50%) rotate(225deg) translateY(0.25em); }
+.theme-switch__icon-part--10 { transform: translateX(-50%) rotate(270deg) translateY(0.25em); }
+.theme-switch__icon-part--11 { transform: translateX(-50%) rotate(315deg) translateY(0.25em); }
+
+.theme-switch__input:checked {
+  background-color: var(--ts-light);
+}
+.theme-switch__input:checked::before,
+.theme-switch__input:checked ~ .theme-switch__icon {
+  transform: translateX(1.5em);
+}
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--2 {
+  transform: translate(0, 0) scale(1);
+}
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--3 {
+  box-shadow: 0 0 0 0.25em var(--ts-dark) inset;
+  transform: scale(1);
+}
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--4 { transform: translateX(-50%) rotate(0) translateY(0.625em) scale(0); }
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--5 { transform: translateX(-50%) rotate(45deg) translateY(0.625em) scale(0); }
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--6 { transform: translateX(-50%) rotate(90deg) translateY(0.625em) scale(0); }
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--7 { transform: translateX(-50%) rotate(135deg) translateY(0.625em) scale(0); }
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--8 { transform: translateX(-50%) rotate(180deg) translateY(0.625em) scale(0); }
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--9 { transform: translateX(-50%) rotate(225deg) translateY(0.625em) scale(0); }
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--10 { transform: translateX(-50%) rotate(270deg) translateY(0.625em) scale(0); }
+.theme-switch__input:checked ~ .theme-switch__icon .theme-switch__icon-part--11 { transform: translateX(-50%) rotate(315deg) translateY(0.625em) scale(0); }

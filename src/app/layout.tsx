@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { CursorEffects } from "@/components/layout/cursor-effects";
+import { THEME_COLOR } from "@/lib/theme/theme";
+import { getTheme } from "@/lib/theme/server";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin", "latin-ext"], display: "swap" });
@@ -19,17 +21,21 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  interactiveWidget: "resizes-content",
-  themeColor: "#080b1a",
-};
+export async function generateViewport(): Promise<Viewport> {
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    interactiveWidget: "resizes-content",
+    themeColor: THEME_COLOR[await getTheme()],
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Tema vine din cookie, deci pagina sosește direct în tema aleasă (Profil → Temă).
+  const theme = await getTheme();
   return (
-    <html lang="ro" className={`${jakarta.variable} ${fraunces.variable} h-full`}>
+    <html lang="ro" data-theme={theme} className={`${jakarta.variable} ${fraunces.variable} h-full`}>
       <body className="min-h-full">
         {children}
         <CursorEffects />

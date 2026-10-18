@@ -8,8 +8,8 @@ const base = {
   faculty: "",
   specialization: "",
   studyYear: "",
-  need: "",
-  worry: "",
+  needs: [] as string[],
+  worries: [] as string[],
   goal: "",
   preferredTime: "",
   subjects: [],
@@ -24,8 +24,8 @@ describe("OnboardingSchema", () => {
       age: null,
       university: null,
       studyYear: null,
-      need: null,
-      worry: null,
+      needs: [],
+      worries: [],
       goal: null,
       preferredTime: "fara_preferinta",
       subjects: [],
@@ -42,8 +42,15 @@ describe("OnboardingSchema", () => {
 
   it("respinge valorile necunoscute pentru obiectiv și grijă", () => {
     expect(OnboardingSchema.safeParse({ ...base, goal: "nota_11" }).success).toBe(false);
-    expect(OnboardingSchema.safeParse({ ...base, worry: "altceva" }).success).toBe(false);
-    expect(OnboardingSchema.parse({ ...base, goal: "nota_maxima", need: "teme" })).toMatchObject({ goal: "nota_maxima", need: "teme" });
+    expect(OnboardingSchema.safeParse({ ...base, worries: ["timp", "altceva"] }).success).toBe(false);
+    expect(OnboardingSchema.parse({ ...base, goal: "nota_maxima", needs: ["teme"] })).toMatchObject({ goal: "nota_maxima", needs: ["teme"] });
+  });
+
+  it("acceptă mai multe nevoi și griji, fără dubluri", () => {
+    expect(OnboardingSchema.parse({ ...base, needs: ["examene", "teme", "examene"], worries: ["timp", "volum"] })).toMatchObject({
+      needs: ["examene", "teme"],
+      worries: ["timp", "volum"],
+    });
   });
 
   it("cere un nume de cel puțin 2 caractere", () => {

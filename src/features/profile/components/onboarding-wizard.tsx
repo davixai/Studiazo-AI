@@ -38,8 +38,8 @@ type Answers = {
   faculty: string;
   specialization: string;
   studyYear: string;
-  need: string;
-  worry: string;
+  needs: string[];
+  worries: string[];
   goal: string;
   preferredTime: PreferredTime | "";
   subjects: string[];
@@ -53,8 +53,8 @@ function initialAnswers(profile: Profile): Answers {
     faculty: profile.faculty ?? "",
     specialization: profile.specialization ?? "",
     studyYear: profile.studyYear ? String(profile.studyYear) : "",
-    need: "",
-    worry: "",
+    needs: [],
+    worries: [],
     goal: "",
     preferredTime: profile.onboardingCompletedAt ? profile.preferredTime : "",
     subjects: [],
@@ -103,6 +103,7 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
 
   const step = STEPS[index];
   const name = firstName(answers.fullName);
+  const percent = Math.round(((index + 1) / STEPS.length) * 100);
 
   function set<K extends keyof Answers>(key: K, value: Answers[K]) {
     setAnswers((a) => ({ ...a, [key]: value }));
@@ -124,6 +125,11 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
     window.setTimeout(() => {
       if (advancing.current) go(from + 1);
     }, ADVANCE_DELAY_MS);
+  }
+
+  /** Pașii cu mai multe răspunsuri: atingerea doar bifează sau debifează. */
+  function toggle(key: "needs" | "worries", value: string) {
+    setAnswers((a) => ({ ...a, [key]: a[key].includes(value) ? a[key].filter((v) => v !== value) : [...a[key], value] }));
   }
 
   function submitName(e: React.FormEvent) {
@@ -183,14 +189,15 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
           aria-valuemin={1}
           aria-valuemax={STEPS.length}
           aria-valuenow={index + 1}
-          aria-valuetext={`Pasul ${index + 1} din ${STEPS.length}`}
+          aria-valuetext={`Pasul ${index + 1} din ${STEPS.length}, ${percent}%`}
           className="h-2 flex-1 overflow-hidden rounded-full bg-surface-sunken"
         >
           <div
             className="bg-brand h-full origin-left rounded-full transition-transform duration-500 ease-[var(--ease-out)]"
-            style={{ transform: `scaleX(${(index + 1) / STEPS.length})` }}
+            style={{ transform: `scaleX(${percent / 100})` }}
           />
         </div>
+        <Percent value={percent} />
 
         <form action={skipOnboarding}>
           <button
@@ -392,20 +399,21 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
           ) : null}
 
           {step === "nevoie" ? (
-            <>
-              <StepTitle title="De ce ai nevoie cel mai mult acum?" />
+            <div className="flex flex-1 flex-col">
+              <StepTitle title="De ce ai nevoie cel mai mult acum?" subtitle="Poți alege mai multe." />
               <div className="mt-8 flex flex-col gap-3">
                 {STUDY_NEED_OPTIONS.map((o, i) => (
                   <HeroChoice
                     key={o.value}
                     i={i + 1}
                     {...o}
-                    selected={answers.need === o.value}
-                    onClick={() => choose("need", o.value)}
+                    selected={answers.needs.includes(o.value)}
+                    onClick={() => toggle("needs", o.value)}
                   />
                 ))}
               </div>
-            </>
+              <MultiFooter count={answers.needs.length} onNext={() => go(index + 1)} />
+            </div>
           ) : null}
 
           {step === "materii" ? (
@@ -419,20 +427,22 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
           ) : null}
 
           {step === "ingrijorare" ? (
-            <>
-              <StepTitle title="Ce te îngrijorează cel mai mult?" subtitle="Răspunsul ne ajută să știm cum să te sprijinim." />
+            <div className="flex flex-1 flex-col">
+              <StepTitle title="Ce te îngrijorează cel mai mult?" subtitle="Poți alege mai multe. Așa știm cum să te sprijinim." />
               <div className="mt-8 flex flex-col gap-3">
                 {STUDY_WORRY_OPTIONS.map((o, i) => (
                   <RowChoice
                     key={o.value}
                     i={i + 1}
                     {...o}
-                    selected={answers.worry === o.value}
-                    onClick={() => choose("worry", o.value)}
+                    multiple
+                    selected={answers.worries.includes(o.value)}
+                    onClick={() => toggle("worries", o.value)}
                   />
                 ))}
               </div>
-            </>
+              <MultiFooter count={answers.worries.length} onNext={() => go(index + 1)} />
+            </div>
           ) : null}
 
           {step === "obiectiv" ? (
@@ -696,8 +706,6 @@ function HiddenAnswers({ answers }: { answers: Answers }) {
     ["faculty", answers.faculty],
     ["specialization", answers.specialization],
     ["studyYear", answers.studyYear],
-    ["need", answers.need],
-    ["worry", answers.worry],
     ["goal", answers.goal],
     ["preferredTime", answers.preferredTime || "fara_preferinta"],
   ];
@@ -705,6 +713,12 @@ function HiddenAnswers({ answers }: { answers: Answers }) {
     <>
       {fields.map(([key, value]) => (
         <input key={key} type="hidden" name={key} value={value} />
+      ))}
+      {answers.needs.map((n) => (
+        <input key={n} type="hidden" name="need" value={n} />
+      ))}
+      {answers.worries.map((w) => (
+        <input key={w} type="hidden" name="worry" value={w} />
       ))}
       {answers.subjects.map((s) => (
         <input key={s} type="hidden" name="subject" value={s} />
@@ -849,8 +863,8 @@ function HeroChoice({
   );
 }
 
-/** Rând cu emoji în stânga (ca în lista de griji). */
-function RowChoice({ i, emoji, title, description, selected, type = "button", ...props }: ChoiceProps) {
+/** Rând cu emoji în stânga (ca în lista de griji). `multiple`: bifă pătrată, pentru pașii cu mai multe răspunsuri. */
+function RowChoice({ i, emoji, title, description, selected, multiple, type = "button", ...props }: ChoiceProps & { multiple?: boolean }) {
   return (
     <button
       type={type}
@@ -871,11 +885,57 @@ function RowChoice({ i, emoji, title, description, selected, type = "button", ..
       </span>
       <span
         aria-hidden="true"
-        className="flex size-6 shrink-0 items-center justify-center rounded-full border border-line-strong transition-colors group-aria-pressed:border-accent group-aria-pressed:bg-accent group-aria-pressed:text-white"
+        className={cn(
+          "flex size-6 shrink-0 items-center justify-center border border-line-strong transition-colors group-aria-pressed:border-accent group-aria-pressed:bg-accent group-aria-pressed:text-white",
+          multiple ? "rounded-[7px]" : "rounded-full",
+        )}
       >
         {selected ? <Check className="animate-pop-in size-3.5" strokeWidth={3} /> : null}
       </span>
     </button>
+  );
+}
+
+/** Procentul parcurs, numărat lin până la valoarea nouă (instant la prefers-reduced-motion). */
+function Percent({ value }: { value: number }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+
+  useEffect(() => {
+    const start = from.current;
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 520;
+    const t0 = performance.now();
+    let frame = 0;
+    const tick = (t: number) => {
+      const p = duration ? Math.min(1, (t - t0) / duration) : 1;
+      const current = Math.round(start + (value - start) * (1 - (1 - p) ** 3));
+      from.current = current;
+      setShown(current);
+      if (p < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "tabular w-10 shrink-0 text-right text-[13px] font-semibold transition-colors duration-300 sm:w-11 sm:text-[14px]",
+        shown === 100 ? "text-accent-ink" : "text-ink-soft",
+      )}
+    >
+      {shown}%
+    </span>
+  );
+}
+
+/** Butonul de jos al pașilor cu mai multe răspunsuri. */
+function MultiFooter({ count, onNext }: { count: number; onNext: () => void }) {
+  return (
+    <Footer>
+      <PrimaryButton onClick={onNext}>{count > 1 ? `Continuă · ${count} alese` : count === 1 ? "Continuă" : "Sari peste"}</PrimaryButton>
+    </Footer>
   );
 }
 

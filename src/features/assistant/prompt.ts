@@ -1,3 +1,10 @@
+import {
+  PREFERRED_TIME_OPTIONS,
+  STUDY_GOAL_OPTIONS,
+  STUDY_NEED_OPTIONS,
+  STUDY_WORRY_OPTIONS,
+  type StudyProfile,
+} from "@/features/profile/onboarding";
 import type { Profile, Subject } from "@/lib/contracts/domain";
 import { formatDayLong, formatTime } from "@/lib/time/format";
 import { toDateKey } from "@/lib/time/zone";
@@ -25,17 +32,45 @@ Reguli stricte:
 - Sesiunile de studiu le pui DOAR în intervale întoarse de find_free_slots, cu pauze, fără să umpli toată ziua și fără să depășești limita zilnică. Dacă obiectivul nu încape realist, pune fits_available_time=false și explică în warnings ce rămâne neacoperit.
 - Datele și orele sunt locale (România), în formatul YYYY-MM-DD și HH:MM. Folosește doar id-urile de materie din lista de mai jos.
 - Formulele le scrii în text obișnuit, cu simboluri Unicode (x², √x, ≤, ≠, ∫, π, ½), fără LaTeX și fără delimitatori ca \\( \\).
-- Formatare: paragrafe scurte, liste cu „- ” când ajută, **îngroșat** doar pentru ideile cheie. Fără titluri mari și fără tabele.`;
+- Formatare: paragrafe scurte, liste cu „- ” când ajută, **îngroșat** doar pentru ideile cheie. Fără titluri mari și fără tabele.
+
+Cum adaptezi ajutorul după „Profilul de studiu” din context (când există):
+- Răspunsurile lui decid ce propui și cum explici. Nu le enumera și nu i le aminti în fiecare mesaj; trebuie să se vadă în felul în care îl ajuți.
+- Sfaturile sunt realiste și aplicabile azi: pași mici, cu durată estimată, ce face primul și ce poate lăsa deoparte. Nu promite note, nu spune că se poate învăța totul într-o noapte; dacă timpul nu ajunge, spune-o onest și alege ce contează cel mai mult.
+- Nevoi. Examene în curând: plan până la examen, cu recapitulare activă (își pune singur întrebări, teste grilă, subiecte din anii trecuți) și repetare la intervale. Teme și proiecte: indicii pas cu pas și proiectul împărțit pe etape, cu termene intermediare. Note mai bune: învățare activă în loc de recitit, întâi temele slabe din teste. Organizare: pornești de la program și termene și propui sesiuni fixe în calendar.
+- Griji. Nu știe de unde să înceapă: un singur prim pas concret, de 20–30 de minute, nu tot planul deodată. Prea mult material: alegi ce intră sigur la examen și împarți restul pe zile. Nu înțelege explicațiile: explici mai simplu, cu o analogie și un exemplu, apoi verifici cu o întrebare scurtă. Nu are timp: sesiuni scurte, în golurile reale din program, doar pe esențial. Teama că nu va trece: calm și onest, fără vorbe goale; arăți concret ce înseamnă minimul de trecere, subiectele care apar des și propui o simulare.
+- Obiectiv. Doar să treacă: esențialul și tipurile de subiecte sigure. Notă bună (8): toată materia, cu exercițiile tipice. Nota maximă (10): aprofundare, cazuri dificile și exerciții grele.
+- Momentul preferat al zilei: când propui sesiuni, alegi întâi intervalele libere din acel moment (dimineața 7–12, la prânz 12–15, după-amiaza 15–19, seara 19–23), dacă există.
+- Vârsta: potrivești tonul și exemplele, fără să o comentezi.`;
 
 type PromptContext = {
   now: Date;
   profile: Profile | null;
+  /** Răspunsurile din configurare (null dacă nu există sau migrația nu e aplicată). */
+  study?: StudyProfile | null;
   subjects: Subject[];
   /** Materia chatului curent (null = chatul general). */
   subject: Subject | null;
 };
 
-export function buildInstructions({ now, profile, subjects, subject }: PromptContext) {
+const titles = (options: { value: string; title: string }[], values: string[]) =>
+  options.filter((o) => values.includes(o.value)).map((o) => `„${o.title}”`);
+
+/** Răspunsurile din configurare, într-un singur rând de context. Null dacă studentul nu a răspuns la nimic. */
+function studyLine(profile: Profile | null, study: StudyProfile | null) {
+  const goal = STUDY_GOAL_OPTIONS.find((o) => o.value === study?.goal);
+  const time = profile?.preferredTime !== "fara_preferinta" ? PREFERRED_TIME_OPTIONS.find((o) => o.value === profile?.preferredTime) : null;
+  const parts = [
+    study?.age ? `are ${study.age} de ani` : null,
+    study?.needs.length ? `are nevoie de: ${titles(STUDY_NEED_OPTIONS, study.needs).join(", ")}` : null,
+    study?.worries.length ? `îl îngrijorează: ${titles(STUDY_WORRY_OPTIONS, study.worries).join(", ")}` : null,
+    goal ? `obiectiv: „${goal.title}” (${goal.description?.toLocaleLowerCase("ro")})` : null,
+    time ? `se concentrează cel mai bine ${time.title.toLocaleLowerCase("ro")}` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? `- Profilul de studiu: ${parts.join("; ")}.` : null;
+}
+
+export function buildInstructions({ now, profile, study, subjects, subject }: PromptContext) {
   const lines = [
     RULES,
     "",
@@ -47,6 +82,8 @@ export function buildInstructions({ now, profile, subjects, subject }: PromptCon
     lines.push(`- Student: ${profile.fullName}${study ? ` (${study})` : ""}${profile.university ? `, ${profile.university}` : ""}.`);
     lines.push(`- Preferă sesiuni de ${profile.sessionMinutes} de minute, maximum ${profile.dailyStudyLimitMinutes} de minute de studiu pe zi.`);
   }
+  const studyContext = studyLine(profile, study ?? null);
+  if (studyContext) lines.push(studyContext);
   lines.push(
     subjects.length > 0
       ? `- Materiile lui (id: nume): ${subjects.map((s) => `${s.id}: ${s.name}`).join("; ")}.`

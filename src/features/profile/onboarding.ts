@@ -178,6 +178,11 @@ const emptyToNull = (v: string) => (v.trim() === "" ? null : v.trim());
 const optionalText = (max: number) => z.string().trim().max(max).transform((v) => (v === "" ? null : v));
 const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
   z.string().transform(emptyToNull).pipe(z.enum(values).nullable());
+const enumList = <T extends readonly [string, ...string[]]>(values: T) =>
+  z.array(z.enum(values)).transform((list) => [...new Set(list)]);
+
+/** Răspunsurile din configurare după care asistentul își adaptează sfaturile. */
+export type StudyProfile = { age: number | null; needs: StudyNeed[]; worries: StudyWorry[]; goal: StudyGoal | null };
 
 export const OnboardingSchema = z.object({
   fullName: z.string().trim().min(2, "Spune-ne cum te numești.").max(120, "Numele poate avea cel mult 120 de caractere."),
@@ -199,8 +204,8 @@ export const OnboardingSchema = z.object({
     .string()
     .transform((v) => (v === "" ? null : Number(v)))
     .pipe(z.number().int().min(1).max(6).nullable()),
-  need: optionalEnum(STUDY_NEEDS),
-  worry: optionalEnum(STUDY_WORRIES),
+  needs: enumList(STUDY_NEEDS),
+  worries: enumList(STUDY_WORRIES),
   goal: optionalEnum(STUDY_GOALS),
   preferredTime: z.enum(PREFERRED_TIMES).catch("fara_preferinta"),
   subjects: z

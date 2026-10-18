@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { ResponseInputItem } from "openai/resources/responses/responses";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getProfile } from "@/features/profile/queries";
+import { getProfile, getStudyProfile } from "@/features/profile/queries";
 import { listSubjects } from "@/features/subjects/queries";
 import { describeAiError } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
@@ -60,7 +60,7 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
     return { ok: false, message: "Ai trimis multe întrebări în ultima oră. Mai încearcă puțin mai târziu.", retryable: false };
   }
 
-  const [profile, subjects] = await Promise.all([getProfile(), listSubjects()]);
+  const [profile, study, subjects] = await Promise.all([getProfile(), getStudyProfile(), listSubjects()]);
   const subject = subjectId ? (subjects.find((s) => s.id === subjectId) ?? null) : null;
   if (subjectId && !subject) return { ok: false, message: "Materia nu mai există.", retryable: false };
 
@@ -93,7 +93,7 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
   let turn;
   try {
     turn = await runAssistant({
-      instructions: buildInstructions({ now, profile, subjects, subject }),
+      instructions: buildInstructions({ now, profile, study, subjects, subject }),
       input: [...history, current],
       userId: user.id,
       execute: (name, args) => executeTool(name, args, { now, profile, subjects, subjectId, conversationId }),

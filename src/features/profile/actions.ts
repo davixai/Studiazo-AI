@@ -82,7 +82,12 @@ export async function finishOnboarding(_prev: FormState, formData: FormData): Pr
   const user = await requireUser();
 
   const values = rawValues(formData);
-  const parsed = OnboardingSchema.safeParse({ ...values, subjects: formData.getAll("subject").map(String) });
+  const parsed = OnboardingSchema.safeParse({
+    ...values,
+    needs: formData.getAll("need").map(String),
+    worries: formData.getAll("worry").map(String),
+    subjects: formData.getAll("subject").map(String),
+  });
   if (!parsed.success) return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error), values };
   const v = parsed.data;
 
@@ -127,7 +132,7 @@ export async function finishOnboarding(_prev: FormState, formData: FormData): Pr
 
   const extra = await supabase
     .from("profiles")
-    .update({ age: v.age, study_need: v.need, study_worry: v.worry, study_goal: v.goal })
+    .update({ age: v.age, study_needs: v.needs, study_worries: v.worries, study_goal: v.goal })
     .eq("id", user.id);
   if (extra.error && !isMissingColumn(extra.error)) {
     return { status: "error", message: "Nu am putut salva toate răspunsurile. Încearcă din nou.", values };

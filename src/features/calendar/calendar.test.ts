@@ -46,8 +46,14 @@ describe("EventFormSchema", () => {
     expect(result).toMatchObject({ kind: "curs", subjectId: null, location: null, recurrenceUntil: null, allowOverlap: false });
   });
 
-  it("respinge ora de sfârșit înaintea celei de început", () => {
-    const result = EventFormSchema.safeParse(form({ startTime: "12:00", endTime: "10:00" }));
+  it("acceptă orice interval; sfârșitul înaintea începutului înseamnă a doua zi", () => {
+    for (const [startTime, endTime] of [["10:00", "12:00"], ["00:00", "23:55"], ["12:00", "10:00"], ["22:00", "02:00"], ["10:00", "00:00"]]) {
+      expect(EventFormSchema.safeParse(form({ startTime, endTime })).success).toBe(true);
+    }
+  });
+
+  it("respinge doar aceeași oră la început și la sfârșit", () => {
+    const result = EventFormSchema.safeParse(form({ startTime: "10:00", endTime: "10:00" }));
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["endTime"]);
   });

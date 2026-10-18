@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea, describedBy } from "@/components/ui/field";
+import { TimeInput } from "@/components/ui/time-input";
 import { TASK_KINDS, TASK_KIND_LABELS, type Subject, type Task, type TaskKind } from "@/lib/contracts/domain";
 import { formatDuration } from "@/lib/time/format";
 import { toDateKey, toTimeOfDay } from "@/lib/time/zone";
@@ -188,17 +189,7 @@ export function TaskDialog({ task, subjects, defaults, returnHref }: TaskDialogP
             />
           </Field>
           <Field id="time" label={timed ? "Ora" : "Până la ora"} error={e.time}>
-            <Input
-              id="time"
-              name="time"
-              type="time"
-              step={300}
-              defaultValue={initial.time}
-              className="tabular"
-              aria-invalid={Boolean(e.time) || undefined}
-              aria-describedby={describedBy("time", { error: e.time })}
-              required
-            />
+            <TimeInput id="time" name="time" defaultValue={initial.time} invalid={Boolean(e.time)} aria-describedby={describedBy("time", { error: e.time })} />
           </Field>
         </div>
 

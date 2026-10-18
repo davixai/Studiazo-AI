@@ -47,7 +47,7 @@ export function formatDuration(minutes: number) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   if (h === 0) return `${m} min`;
-  if (m === 0) return h === 1 ? "1 oră" : `${h} ore`;
+  if (m === 0) return h === 1 ? "1 oră" : `${h}${h >= 20 ? " de" : ""} ore`;
   return `${h} h ${m} min`;
 }
 

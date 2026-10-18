@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea, describedBy } from "@/components/ui/field";
+import { TimeInput } from "@/components/ui/time-input";
 import { Segmented } from "@/components/ui/segmented";
 import {
   EVENT_KINDS,
@@ -16,7 +17,7 @@ import {
   type RecurrenceKind,
   type Subject,
 } from "@/lib/contracts/domain";
-import { formatDayLong } from "@/lib/time/format";
+import { formatDayLong, formatDuration } from "@/lib/time/format";
 import { dayBounds, toDateKey, toTimeOfDay } from "@/lib/time/zone";
 import { deleteEvent, saveEvent, setEventCompleted } from "../actions";
 import { KindPicker } from "./kind-picker";
@@ -66,6 +67,19 @@ export function EventDialog({ event, subjects, occurrenceDate, defaults, returnH
   const [recurrence, setRecurrence] = useState<RecurrenceKind>((sv?.recurrence as RecurrenceKind) ?? event?.recurrence ?? "none");
 
   const e = state.fieldErrors ?? {};
+  const [startTime, setStartTime] = useState(initial.startTime);
+  const [endTime, setEndTime] = useState(initial.endTime);
+  // Erorile de oră de la ultima trimitere dispar cât timp studentul schimbă orele.
+  const [timesEditedFor, setTimesEditedFor] = useState<EventFormState | null>(null);
+  const timesEdited = timesEditedFor === state;
+  const startError = timesEdited ? undefined : e.startTime;
+  const endError = timesEdited ? undefined : e.endTime;
+  const changeTime = (start: string, end: string) => {
+    setStartTime(start);
+    setEndTime(end);
+    setTimesEditedFor(state);
+  };
+  const durationHint = spanHint(startTime, endTime);
   const isRecurring = event ? event.recurrence !== "none" : false;
   const busy = saving || pending;
 
@@ -241,30 +255,24 @@ export function EventDialog({ event, subjects, occurrenceDate, defaults, returnH
               required
             />
           </Field>
-          <Field id="startTime" label="De la" error={e.startTime}>
-            <Input
+          <Field id="startTime" label="De la" error={startError}>
+            <TimeInput
               id="startTime"
               name="startTime"
-              type="time"
-              step={300}
-              defaultValue={initial.startTime}
-              className="tabular"
-              aria-invalid={Boolean(e.startTime) || undefined}
-              aria-describedby={describedBy("startTime", { error: e.startTime })}
-              required
+              value={startTime}
+              onChange={(t) => changeTime(t, endTime)}
+              invalid={Boolean(startError)}
+              aria-describedby={describedBy("startTime", { error: startError })}
             />
           </Field>
-          <Field id="endTime" label="Până la" error={e.endTime}>
-            <Input
+          <Field id="endTime" label="Până la" error={endError} hint={durationHint}>
+            <TimeInput
               id="endTime"
               name="endTime"
-              type="time"
-              step={300}
-              defaultValue={initial.endTime}
-              className="tabular"
-              aria-invalid={Boolean(e.endTime) || undefined}
-              aria-describedby={describedBy("endTime", { error: e.endTime })}
-              required
+              value={endTime}
+              onChange={(t) => changeTime(startTime, t)}
+              invalid={Boolean(endError)}
+              aria-describedby={describedBy("endTime", { hint: durationHint, error: endError })}
             />
           </Field>
         </div>
@@ -305,4 +313,14 @@ export function EventDialog({ event, subjects, occurrenceDate, defaults, returnH
       </form>
     </Dialog>
   );
+}
+
+const minutesOf = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+
+/** „2 h 30 min” sau „Se termină a doua zi · 4 h”, ca studentul să vadă ce salvează. */
+function spanHint(start: string, end: string) {
+  if (start === end) return undefined;
+  const overnight = end < start;
+  const minutes = minutesOf(end) - minutesOf(start) + (overnight ? 24 * 60 : 0);
+  return overnight ? `Se termină a doua zi · ${formatDuration(minutes)}` : `Durată: ${formatDuration(minutes)}`;
 }

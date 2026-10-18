@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayBounds, fromLocal, isoWeekday, shiftDateKey, startOfWeekKey, toDateKey, toTimeOfDay } from "./zone";
+import { dayBounds, fromLocal, isoWeekday, localSpan, shiftDateKey, startOfWeekKey, toDateKey, toTimeOfDay } from "./zone";
 
 describe("fus orar Europe/Bucharest", () => {
   it("convertește ora locală de vară (UTC+3)", () => {
@@ -31,5 +31,30 @@ describe("fus orar Europe/Bucharest", () => {
     expect(isoWeekday("2026-10-18")).toBe(7); // duminică
     expect(startOfWeekKey("2026-10-18")).toBe("2026-10-12");
     expect(shiftDateKey("2026-12-31", 1)).toBe("2027-01-01");
+  });
+});
+
+describe("localSpan", () => {
+  it("în aceeași zi când sfârșitul e după început", () => {
+    const { start, end } = localSpan("2026-10-19", "10:00", "12:00");
+    expect(end.getTime() - start.getTime()).toBe(2 * 3_600_000);
+  });
+
+  it("trece de miezul nopții când sfârșitul e înaintea începutului", () => {
+    const { start, end } = localSpan("2026-10-19", "22:00", "02:00");
+    expect(toDateKey(start)).toBe("2026-10-19");
+    expect(toDateKey(end)).toBe("2026-10-20");
+    expect(toTimeOfDay(end)).toBe("02:00");
+    expect(end.getTime() - start.getTime()).toBe(4 * 3_600_000);
+  });
+
+  it("10:00 – 00:00 durează până la miezul nopții", () => {
+    const { start, end } = localSpan("2026-10-19", "10:00", "00:00");
+    expect(end.getTime() - start.getTime()).toBe(14 * 3_600_000);
+  });
+
+  it("noaptea trecerii la ora de iarnă (25.10.2026) are o oră în plus", () => {
+    const { start, end } = localSpan("2026-10-24", "22:00", "06:00");
+    expect(end.getTime() - start.getTime()).toBe(9 * 3_600_000);
   });
 });

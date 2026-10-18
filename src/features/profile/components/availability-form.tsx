@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Alert } from "@/components/ui/alert";
-import { Input } from "@/components/ui/field";
+import { TimeInput } from "@/components/ui/time-input";
 import { SubmitButton } from "@/features/auth/components/form-parts";
 import { initialFormState, type FormState } from "@/features/auth/schemas";
 import type { AvailabilityWindow } from "@/lib/contracts/domain";
@@ -58,27 +58,23 @@ export function AvailabilityForm({ availability }: AvailabilityFormProps) {
                 />
                 <span className={cn("text-sm font-medium", on ? "text-ink" : "text-ink-muted")}>{label}</span>
               </label>
-              <Input
-                type="time"
+              <TimeInput
                 name={`${key}_start`}
-                step={900}
+                step={15}
                 aria-label={`${label}, de la`}
                 defaultValue={v(`${key}_start`, window?.start ?? "08:00")}
                 disabled={!on}
-                aria-invalid={Boolean(e[key]) || undefined}
+                invalid={Boolean(e[key])}
                 aria-describedby={e[key] ? `${key}-error` : undefined}
-                className="tabular"
               />
-              <Input
-                type="time"
+              <TimeInput
                 name={`${key}_end`}
-                step={900}
+                step={15}
                 aria-label={`${label}, până la`}
                 defaultValue={v(`${key}_end`, window?.end ?? "22:00")}
                 disabled={!on}
-                aria-invalid={Boolean(e[key]) || undefined}
+                invalid={Boolean(e[key])}
                 aria-describedby={e[key] ? `${key}-error` : undefined}
-                className="tabular"
               />
               {e[key] ? (
                 <p id={`${key}-error`} className="col-span-2 text-[13px] font-medium text-danger sm:col-span-3 sm:col-start-2">

@@ -10,7 +10,7 @@ import { isPreviewMode } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { formatDayLong, formatTimeRange } from "@/lib/time/format";
 import { expandEvent } from "@/lib/time/recurrence";
-import { APP_TIMEZONE, fromLocal } from "@/lib/time/zone";
+import { APP_TIMEZONE, fromLocal, localSpan } from "@/lib/time/zone";
 import { conflictRange, firstConflicts } from "./conflicts";
 import { getOccurrencesBetween } from "./queries";
 import {
@@ -53,10 +53,10 @@ export async function saveEvent(_prev: EventFormState, formData: FormData): Prom
   if (!parsed.success) return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error), values };
   const v = parsed.data;
 
-  const startsAt = fromLocal(v.date, v.startTime);
-  const endsAt = fromLocal(v.date, v.endTime);
+  const { start: startsAt, end: endsAt } = localSpan(v.date, v.startTime, v.endTime);
   if (endsAt <= startsAt) {
-    return { status: "error", fieldErrors: { endTime: "Ora de sfârșit trebuie să fie după ora de început." }, values };
+    // Doar în noaptea schimbării orei, când ora aleasă nu există.
+    return { status: "error", fieldErrors: { endTime: "Ora aleasă nu există în noaptea schimbării orei. Alege alta." }, values };
   }
 
   const eventId = id?.data ?? null;

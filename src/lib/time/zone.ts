@@ -39,6 +39,16 @@ export function fromLocal(dateKey: string, time: string, tz = APP_TIMEZONE): Dat
   return new Date(d.getTime());
 }
 
+/**
+ * Intervalul unei activități dintr-o zi: dacă ora de sfârșit nu e după cea de început,
+ * activitatea trece de miezul nopții și se termină a doua zi (ex. un job 22:00 – 02:00).
+ */
+export function localSpan(dateKey: string, startTime: string, endTime: string, tz = APP_TIMEZONE) {
+  const start = fromLocal(dateKey, startTime, tz);
+  const end = fromLocal(endTime > startTime ? dateKey : shiftDateKey(dateKey, 1), endTime, tz);
+  return { start, end };
+}
+
 /** Începutul și sfârșitul (exclusiv) zilei locale. Zilele cu schimbare de oră au 23 sau 25 de ore. */
 export function dayBounds(dateKey: string, tz = APP_TIMEZONE) {
   const start = fromLocal(dateKey, "00:00", tz);

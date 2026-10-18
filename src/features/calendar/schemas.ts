@@ -26,9 +26,10 @@ export const EventFormSchema = z
     /** „Salvează oricum” după avertismentul de suprapunere. */
     allowOverlap: z.preprocess((v) => v === "1", z.boolean()),
   })
-  .refine((v) => v.endTime > v.startTime, {
+  // Sfârșitul înaintea începutului = se termină a doua zi (localSpan); doar aceeași oră nu are sens.
+  .refine((v) => v.endTime !== v.startTime, {
     path: ["endTime"],
-    message: "Ora de sfârșit trebuie să fie după ora de început.",
+    message: "Alege o oră de sfârșit diferită de cea de început.",
   })
   .refine((v) => v.recurrence === "none" || !v.recurrenceUntil || v.recurrenceUntil >= v.date, {
     path: ["recurrenceUntil"],

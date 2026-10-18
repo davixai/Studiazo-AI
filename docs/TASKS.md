@@ -67,7 +67,7 @@ S6 (explicații din material) depinde de S3: are nevoie de textul extras în `ma
 ⬜ Fluxul din DEMO.md cap-coadă · ⬜ izolarea datelor (2 conturi) · ⬜ refuzul salvării fără confirmare · ⬜ suprapuneri și duplicate · ⬜ OpenAI indisponibil · ⬜ telefon real (iOS și Android) + desktop.
 
 ## Etapa 4 — Simplu
-⬜ Resurse Iași: mai multe linkuri oficiale verificate (burse, voluntariat), cu data verificării.
+✅ Resurse Iași după universitatea și facultatea din profil: site-ul facultății, burse, cazare, cantină, note, carieră (linkuri oficiale verificate pe 18.10.2026) · ⬜ voluntariat.
 
 ## Etapa 5 — După stabilizare
 ⬜ Finisaj · ⬜ site de prezentare (separat, cu secțiunea „Ține flacăra aprinsă”) · ⬜ PDF-uri scanate întregi (OCR pe mai multe pagini).

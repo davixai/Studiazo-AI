@@ -29,6 +29,8 @@ export const NewPasswordSchema = z
 export type FormState = {
   status: "idle" | "error" | "success";
   message?: string;
+  /** La înregistrare: emailul are deja cont → formularul arată „Intră în cont” / „Resetează parola”. */
+  accountExists?: boolean;
   fieldErrors?: Record<string, string>;
   /** Valorile trimise, ca formularul să nu se golească la eroare (fără parole). */
   values?: Record<string, string>;

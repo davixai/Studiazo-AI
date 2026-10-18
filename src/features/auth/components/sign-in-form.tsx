@@ -8,7 +8,7 @@ import { signIn } from "../actions";
 import { initialFormState } from "../schemas";
 import { PasswordInput, SubmitButton } from "./form-parts";
 
-export function SignInForm({ next, linkError }: { next?: string; linkError?: boolean }) {
+export function SignInForm({ next, email, linkError }: { next?: string; email?: string; linkError?: boolean }) {
   const [state, action] = useActionState(signIn, initialFormState);
   const e = state.fieldErrors ?? {};
 
@@ -30,7 +30,7 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: boo
           type="email"
           autoComplete="email"
           inputMode="email"
-          defaultValue={state.values?.email}
+          defaultValue={state.values?.email ?? email}
           aria-invalid={Boolean(e.email) || undefined}
           aria-describedby={describedBy("email", { error: e.email })}
           required

@@ -76,6 +76,18 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
       emailRedirectTo: `${publicEnv.appUrl}/auth/callback?next=/bun-venit`,
     },
   });
+  // Cont existent: cu confirmarea emailului oprită, Supabase dă eroarea „user_already_exists”;
+  // cu ea pornită, nu dă eroare și nu trimite niciun email, dar întoarce un utilizator fără identități.
+  const exists = error ? error.code === "user_already_exists" || error.code === "email_exists" : data.user?.identities?.length === 0;
+  if (exists) {
+    return {
+      status: "error",
+      accountExists: true,
+      message: `Există deja un cont cu ${parsed.data.email}. Intră în cont sau, dacă nu mai știi parola, resetează-o.`,
+      fieldErrors: { email: "Adresa are deja un cont." },
+      values,
+    };
+  }
   if (error) {
     return { status: "error", message: authMessage(error.code, "Nu am putut crea contul. Încearcă din nou."), values };
   }

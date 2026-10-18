@@ -3,6 +3,7 @@
 import { MailCheck } from "lucide-react";
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
+import { ButtonLink } from "@/components/ui/button";
 import { Field, Input, describedBy } from "@/components/ui/field";
 import { signUp } from "../actions";
 import { PASSWORD_MIN, initialFormState } from "../schemas";
@@ -31,7 +32,21 @@ export function SignUpForm() {
 
   return (
     <form action={action} noValidate className="flex flex-col gap-5">
-      {state.message ? <Alert tone="danger">{state.message}</Alert> : null}
+      {state.accountExists ? (
+        <Alert tone="warning" title="Ai deja cont" className="animate-rise-in">
+          {state.message}
+          <span className="mt-3 flex flex-wrap gap-2">
+            <ButtonLink href={`/autentificare?email=${encodeURIComponent(state.values?.email ?? "")}`} size="sm">
+              Intră în cont
+            </ButtonLink>
+            <ButtonLink href="/recuperare" variant="secondary" size="sm">
+              Resetează parola
+            </ButtonLink>
+          </span>
+        </Alert>
+      ) : state.message ? (
+        <Alert tone="danger">{state.message}</Alert>
+      ) : null}
 
       <Field id="fullName" label="Nume și prenume" error={e.fullName}>
         <Input

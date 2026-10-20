@@ -1,7 +1,48 @@
 import { describe, expect, it } from "vitest";
 import { UNIVERSITY_RESOURCES } from "@/features/resources/data";
-import { formatDistance, nativeMapsUrl, osmDirectionsUrl } from "./osm";
-import { PLACES, filterPlaces } from "./places";
+import { buildSteps, formatDistance, nativeMapsUrl, osmDirectionsUrl } from "./osm";
+import { PLACES, filterPlaces, placeFromParam, placeToParam } from "./places";
+
+describe("indicațiile pas cu pas", () => {
+  const step = (type: string, name: string, distance: number, modifier?: string, exit?: number) => ({ name, distance, maneuver: { type, modifier, exit } });
+
+  it("se traduc în română și comasează pașii de pe aceeași stradă", () => {
+    const steps = buildSteps([
+      step("depart", "Strada Berthelot", 80, "left"),
+      step("turn", "Bulevardul Carol I", 250, "left"),
+      step("turn", "Bulevardul Carol I", 30, "straight"),
+      step("roundabout", "Strada Palas", 120, "right", 2),
+      step("turn", "", 40, "right"),
+      step("turn", "", 60, "left"),
+      step("arrive", "", 0),
+    ]);
+    expect(steps.map((s) => s.text)).toEqual([
+      "Pornește pe Strada Berthelot",
+      "Virează la stânga pe Bulevardul Carol I",
+      "La sensul giratoriu, ieși pe a 2-a ieșire pe Strada Palas",
+      "Continuă pe alei și străzi mici",
+      "Ai ajuns la destinație",
+    ]);
+    expect(steps[1].distance).toBe(280);
+    expect(steps[3].distance).toBe(100);
+  });
+});
+
+describe("linkul traseului", () => {
+  it("păstrează locurile din listă după id și punctele după coordonate", () => {
+    const info = PLACES.find((p) => p.id === "uaic-info")!;
+    expect(placeToParam(info)).toBe("uaic-info");
+    expect(placeFromParam("uaic-info")).toBe(info);
+    const pt = placeFromParam(placeToParam({ id: "x", name: "Punct", group: "Repere", lat: 47.16012, lng: 27.58876 }));
+    expect(pt).toMatchObject({ lat: 47.16012, lng: 27.58876 });
+  });
+
+  it("ignoră valori greșite sau puncte din afara Iașiului", () => {
+    expect(placeFromParam("nu-exista")).toBeNull();
+    expect(placeFromParam("44.43,26.10")).toBeNull();
+    expect(placeFromParam("<script>")).toBeNull();
+  });
+});
 
 describe("locurile din Trasee", () => {
   it("au id-uri unice și coordonate în Iași", () => {

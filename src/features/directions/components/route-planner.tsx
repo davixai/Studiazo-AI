@@ -1,14 +1,34 @@
 "use client";
 
-import { ArrowDownUp, ArrowUpRight, Clock3, Crosshair, LoaderCircle, Navigation, Route as RouteIcon, Smartphone } from "lucide-react";
+import {
+  ArrowDownUp,
+  ArrowUp,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  CircleDot,
+  Clock3,
+  CornerUpLeft,
+  CornerUpRight,
+  Crosshair,
+  Flag,
+  LoaderCircle,
+  Navigation,
+  RotateCw,
+  Route as RouteIcon,
+  Share2,
+  Smartphone,
+  Undo2,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Segmented } from "@/components/ui/segmented";
 import { formatDuration } from "@/lib/time/format";
 import { APP_LOCALE, APP_TIMEZONE } from "@/lib/time/zone";
 import { cn } from "@/lib/utils";
-import { fetchRoute, formatDistance, nativeMapsUrl, osmDirectionsUrl, type RouteResult, type TravelMode } from "../osm";
-import type { Place } from "../places";
+import { fetchRoute, formatDistance, nativeMapsUrl, osmDirectionsUrl, reversePlace, type RouteResult, type RouteStep, type TravelMode } from "../osm";
+import { PLACES, placeToParam, type LatLng, type Place } from "../places";
 import { PlaceInput } from "./place-input";
 import { RouteMap } from "./route-map";
 
@@ -17,6 +37,19 @@ const MODES: { value: TravelMode; label: string }[] = [
   { value: "car", label: "Mașină" },
   { value: "bike", label: "Bicicletă" },
 ];
+
+const STEP_ICON: Record<RouteStep["icon"], LucideIcon> = {
+  depart: CircleDot,
+  arrive: Flag,
+  left: CornerUpLeft,
+  right: CornerUpRight,
+  straight: ArrowUp,
+  uturn: Undo2,
+  roundabout: RotateCw,
+};
+
+/** Scurtături sub câmpuri: destinații dese pentru orice student. */
+const QUICK_IDS = ["bcu", "gara", "palas"];
 
 const arrival = new Intl.DateTimeFormat(APP_LOCALE, { timeZone: APP_TIMEZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 
@@ -36,14 +69,24 @@ const dot = (kind: "from" | "to") => (
   </span>
 );
 
-export function RoutePlanner() {
-  const [from, setFrom] = useState<Place | null>(null);
-  const [to, setTo] = useState<Place | null>(null);
-  const [mode, setMode] = useState<TravelMode>("foot");
+type Props = {
+  initialFrom?: Place | null;
+  initialTo?: Place | null;
+  initialMode?: TravelMode;
+  /** Facultatea din profil, pentru scurtătura „Facultatea ta”. */
+  homePlace?: Place | null;
+};
+
+export function RoutePlanner({ initialFrom = null, initialTo = null, initialMode = "foot", homePlace = null }: Props) {
+  const [from, setFrom] = useState<Place | null>(initialFrom);
+  const [to, setTo] = useState<Place | null>(initialTo);
+  const [mode, setMode] = useState<TravelMode>(initialMode);
   const [route, setRoute] = useState<(RouteResult & { arrivesAt: number }) | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "none">("idle");
+  const [attempt, setAttempt] = useState(0);
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
+  const [shared, setShared] = useState(false);
   const platform = usePlatform();
 
   const ready = from && to && (from.lat !== to.lat || from.lng !== to.lng);
@@ -65,7 +108,17 @@ export function RoutePlanner() {
         }
       });
     return () => ctrl.abort();
-  }, [from, to, mode, ready]);
+  }, [from, to, mode, ready, attempt]);
+
+  // Linkul paginii ține traseul (?de=…&la=…&mod=…), ca să poată fi trimis unui coleg sau redeschis.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (from) params.set("de", placeToParam(from));
+    if (to) params.set("la", placeToParam(to));
+    if (mode !== "foot") params.set("mod", mode);
+    const query = params.toString();
+    window.history.replaceState(window.history.state, "", query ? `?${query}` : window.location.pathname);
+  }, [from, to, mode]);
 
   function locate() {
     if (!("geolocation" in navigator)) {
@@ -91,13 +144,47 @@ export function RoutePlanner() {
     );
   }
 
+  /** Atingere pe hartă: completează câmpul gol (întâi plecarea), apoi află numele străzii. */
+  function pickOnMap(at: LatLng) {
+    const target = !from ? "from" : "to";
+    const id = `pt-${at.lat.toFixed(5)},${at.lng.toFixed(5)}`;
+    const place: Place = { id, name: "Punct pe hartă", group: "Repere", ...at };
+    const set = target === "from" ? setFrom : setTo;
+    set(place);
+    reversePlace(at)
+      .then((found) => {
+        // Doar dacă între timp nu s-a ales alt loc în același câmp.
+        if (found) set((cur) => (cur?.id === id ? { ...cur, name: found.name, detail: found.detail } : cur));
+      })
+      .catch(() => {});
+  }
+
+  async function share() {
+    const url = window.location.href;
+    const title = from && to ? `Traseu: ${from.name} → ${to.name}` : "Traseu în Iași";
+    try {
+      if (platform !== "desktop" && navigator.share) {
+        await navigator.share({ title, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      window.setTimeout(() => setShared(false), 2000);
+    } catch {
+      // Partajarea anulată de utilizator: nimic de făcut.
+    }
+  }
+
   const shownRoute = ready ? route : null;
   const minutes = shownRoute ? Math.max(1, Math.round(shownRoute.duration / 60)) : 0;
+  const quick = [homePlace ? { ...homePlace, short: "Facultatea ta" } : null, ...QUICK_IDS.map((id) => PLACES.find((p) => p.id === id))]
+    .filter((p): p is Place & { short?: string } => !!p)
+    .filter((p, i, all) => all.findIndex((q) => q.id === p.id) === i);
 
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,400px)_minmax(0,1fr)] xl:gap-6">
-      <section aria-label="Alege traseul" className="stagger flex flex-col self-start gap-5 rounded-xl border border-line/70 bg-surface p-5 shadow-sm sm:p-6">
-        <div className="relative flex flex-col gap-4">
+      <section aria-label="Alege traseul" className="stagger flex flex-col gap-5 self-start rounded-xl border border-line/70 bg-surface p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4">
           <PlaceInput
             id="plecare"
             label="Plecare"
@@ -118,20 +205,48 @@ export function RoutePlanner() {
               </button>
             }
           />
-          <button
-            type="button"
-            onClick={() => {
-              setFrom(to);
-              setTo(from);
-            }}
-            disabled={!from && !to}
-            title="Inversează plecarea cu sosirea"
-            aria-label="Inversează plecarea cu sosirea"
-            className="absolute top-[calc(50%-2px)] right-[60px] z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-muted shadow-sm transition-colors hover:border-accent-line hover:text-accent-ink disabled:opacity-50"
-          >
-            <ArrowDownUp className="size-4" aria-hidden="true" />
-          </button>
-          <PlaceInput id="sosire" label="Sosire" marker={dot("to")} value={to} onChange={setTo} placeholder="Unde vrei să ajungi?" />
+          <PlaceInput
+            id="sosire"
+            label="Sosire"
+            marker={dot("to")}
+            value={to}
+            onChange={setTo}
+            placeholder="Unde vrei să ajungi?"
+            action={
+              <button
+                type="button"
+                onClick={() => {
+                  setFrom(to);
+                  setTo(from);
+                }}
+                disabled={!from && !to}
+                title="Inversează plecarea cu sosirea"
+                aria-label="Inversează plecarea cu sosirea"
+                className="flex size-12 shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface-muted/60 text-ink-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent-ink disabled:opacity-50"
+              >
+                <ArrowDownUp className="size-5" aria-hidden="true" />
+              </button>
+            }
+          />
+          {quick.length ? (
+            <div className="-mt-1 flex flex-wrap items-center gap-1.5">
+              <span className="mr-0.5 text-[12px] text-ink-faint">Rapid:</span>
+              {quick.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => (from ? setTo(p) : setFrom(p))}
+                  title={p.name}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
+                    p.short ? "border-accent-line bg-accent-soft text-accent-ink hover:bg-accent-soft/70" : "border-line bg-surface-muted/60 text-ink-soft hover:border-accent-line hover:text-ink",
+                  )}
+                >
+                  {p.short ?? p.name.replace(/ „.*”$/, "")}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
         {geoError ? <Alert tone="warning">{geoError}</Alert> : null}
 
@@ -142,14 +257,23 @@ export function RoutePlanner() {
           {!ready ? (
             <div className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line-strong px-4 py-6 text-center">
               <RouteIcon className="size-6 text-ink-faint" aria-hidden="true" />
-              <p className="text-sm text-ink-muted">Alege de unde pleci și unde vrei să ajungi.</p>
+              <p className="text-sm text-ink-muted">Alege de unde pleci și unde vrei să ajungi, din listă sau atingând harta.</p>
             </div>
           ) : status === "loading" && !shownRoute ? (
             <div className="flex min-h-[110px] items-center justify-center gap-2 rounded-lg bg-surface-muted/60 text-sm text-ink-muted">
               <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> Calculez traseul…
             </div>
           ) : status === "error" ? (
-            <Alert tone="danger">Nu am putut calcula traseul acum. Verifică conexiunea și încearcă din nou.</Alert>
+            <Alert
+              tone="danger"
+              action={
+                <button type="button" onClick={() => setAttempt((n) => n + 1)} className="text-[13px] font-semibold text-danger underline-offset-2 hover:underline">
+                  Încearcă din nou
+                </button>
+              }
+            >
+              Nu am putut calcula traseul acum. Verifică conexiunea.
+            </Alert>
           ) : status === "none" || !shownRoute ? (
             <Alert tone="warning">Nu am găsit un drum între aceste două locuri pentru modul ales.</Alert>
           ) : (
@@ -175,34 +299,78 @@ export function RoutePlanner() {
           )}
         </div>
 
+        {shownRoute && shownRoute.steps.length > 1 ? (
+          <details className="group rounded-lg border border-line/70 bg-surface-muted/40 [&_summary::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-4 py-3 text-[14px] font-semibold text-ink select-none">
+              Indicații pas cu pas
+              <span className="flex items-center gap-2 text-[12px] font-medium text-ink-muted">
+                {shownRoute.steps.length} pași
+                <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+              </span>
+            </summary>
+            <ol className="max-h-80 overflow-y-auto overscroll-contain border-t border-line/70 px-2 py-2">
+              {shownRoute.steps.map((step, i) => {
+                const Icon = STEP_ICON[step.icon];
+                return (
+                  <li key={i} className="flex items-start gap-3 rounded-md px-2 py-2">
+                    <span
+                      className={cn(
+                        "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full",
+                        step.icon === "arrive" ? "bg-accent text-white" : step.icon === "depart" ? "bg-accent-blue text-white" : "bg-surface text-accent-ink ring-1 ring-line",
+                      )}
+                    >
+                      <Icon className="size-3.5" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1 text-[13px] leading-5 text-ink-soft">{step.text}</span>
+                    {step.distance > 0 ? <span className="mt-0.5 shrink-0 font-clock text-[12px] text-ink-muted">{formatDistance(step.distance)}</span> : null}
+                  </li>
+                );
+              })}
+            </ol>
+          </details>
+        ) : null}
+
         {ready ? (
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-col gap-2">
             <a
               href={osmDirectionsUrl(from, to, mode)}
               target="_blank"
               rel="noopener noreferrer"
-              className="shine relative inline-flex h-11 flex-auto items-center justify-center gap-2 rounded-md bg-brand px-4 text-[14px] font-semibold text-white shadow-accent transition-transform active:scale-[0.98]"
+              className="shine relative inline-flex h-11 items-center justify-center gap-2 rounded-md bg-brand px-4 text-[14px] font-semibold text-white shadow-accent transition-transform active:scale-[0.98]"
             >
               <Navigation className="size-4" aria-hidden="true" />
               Pornește în OpenStreetMap
               <span className="sr-only">(se deschide într-o filă nouă)</span>
             </a>
-            {platform !== "desktop" ? (
-              <a
-                href={nativeMapsUrl(to, to.name, platform)}
-                className="inline-flex h-11 flex-auto items-center justify-center gap-2 rounded-md border border-line-strong bg-surface px-4 text-[14px] font-semibold text-ink transition-colors hover:border-accent-line"
+            <div className="flex gap-2">
+              {platform !== "desktop" ? (
+                <a
+                  href={nativeMapsUrl(to, to.name, platform)}
+                  className="inline-flex h-11 flex-auto items-center justify-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-[14px] font-semibold text-ink transition-colors hover:border-accent-line"
+                >
+                  <Smartphone className="size-4" aria-hidden="true" />
+                  Aplicația de hărți
+                  <ArrowUpRight className="size-3.5 text-ink-faint" aria-hidden="true" />
+                </a>
+              ) : null}
+              <button
+                type="button"
+                onClick={share}
+                className="inline-flex h-11 flex-auto items-center justify-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-[14px] font-semibold text-ink transition-colors hover:border-accent-line"
               >
-                <Smartphone className="size-4" aria-hidden="true" />
-                Aplicația de hărți
-                <ArrowUpRight className="size-3.5 text-ink-faint" aria-hidden="true" />
-              </a>
-            ) : null}
+                {shared ? <Check className="size-4 text-success" aria-hidden="true" /> : <Share2 className="size-4" aria-hidden="true" />}
+                {shared ? "Link copiat" : "Trimite traseul"}
+              </button>
+            </div>
           </div>
         ) : null}
       </section>
 
-      <div className="stagger relative h-[360px] overflow-hidden rounded-xl border border-line/70 bg-surface-muted shadow-sm sm:h-[460px] xl:sticky xl:top-6 xl:h-[calc(100dvh-9rem)] xl:min-h-[520px]" style={{ "--i": 1 } as React.CSSProperties}>
-        <RouteMap from={from} to={to} path={shownRoute?.path ?? null} />
+      <div
+        className="stagger relative h-[360px] overflow-hidden rounded-xl border border-line/70 bg-surface-muted shadow-sm sm:h-[460px] xl:sticky xl:top-6 xl:h-[calc(100dvh-9rem)] xl:min-h-[520px]"
+        style={{ "--i": 1 } as React.CSSProperties}
+      >
+        <RouteMap from={from} to={to} path={shownRoute?.path ?? null} onPick={pickOnMap} />
       </div>
     </div>
   );

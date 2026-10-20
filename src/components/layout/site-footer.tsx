@@ -2,11 +2,11 @@
 
 import { ArrowUp, ArrowUpRight, MessageCircleQuestion } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { Logo } from "@/components/brand/logo";
-import { OPEN_ASSISTANT_EVENT } from "@/features/assistant/components/ai-dock";
+import { SupportDialog } from "./support-dialog";
 
-// Subsolul paginilor din aplicație: linkuri utile pe coloane, universitățile din Iași și „Suport online” (asistentul AI).
+// Subsolul paginilor din aplicație: linkuri utile pe coloane, universitățile din Iași și „Suport online” (formular de contact).
 
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
@@ -52,8 +52,7 @@ const linkClass =
   "inline-flex min-h-9 items-center text-[14px] text-ink-muted transition-colors duration-150 hover:text-accent-ink focus-visible:text-accent-ink";
 
 export function SiteFooter() {
-  const pathname = usePathname();
-  const onAssistant = pathname.startsWith("/asistent");
+  const [supportOpen, setSupportOpen] = useState(false);
 
   return (
     <footer className="mt-16 border-t border-line bg-surface/40 backdrop-blur-sm lg:mt-20">
@@ -64,16 +63,15 @@ export function SiteFooter() {
             <p className="max-w-xs text-[14px] leading-6 text-ink-muted">
               Programul, materiile și un asistent AI care te ajută să înveți la timp. Făcut pentru studenții din Iași.
             </p>
-            {onAssistant ? null : (
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new Event(OPEN_ASSISTANT_EVENT))}
-                className="group inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-[14px] font-semibold text-white shadow-accent transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
-              >
-                <MessageCircleQuestion className="size-5 transition-transform group-hover:-rotate-6" aria-hidden="true" />
-                Suport online
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setSupportOpen(true)}
+              className="group inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-[14px] font-semibold text-white shadow-accent transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
+            >
+              <MessageCircleQuestion className="size-5 transition-transform group-hover:-rotate-6" aria-hidden="true" />
+              Suport online
+            </button>
+            <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />
           </div>
 
           <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:col-span-4">
@@ -113,7 +111,7 @@ export function SiteFooter() {
 
         <div className="mt-10 flex flex-col gap-4 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13px] leading-5 text-ink-faint">
-            © 2026 Studiazo AI · Făcut cu grijă de studenți, pentru studenți ·Datele tale rămân private
+            © 2026 Studiazo AI · Făcut cu grijă de studenți, pentru studenți · Datele tale rămân private
           </p>
           <button
             type="button"

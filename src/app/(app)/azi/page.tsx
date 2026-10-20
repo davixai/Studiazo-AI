@@ -11,6 +11,7 @@ import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { StatTile } from "@/features/dashboard/components/stat-tile";
 import { UpcomingList } from "@/features/dashboard/components/upcoming-list";
 import { getTodayOverview, type TodayOverview } from "@/features/dashboard/queries";
+import { ThemeToggle } from "@/features/profile/components/theme-switch";
 import { getProfile } from "@/features/profile/queries";
 import { StreakCard, StreakStrip } from "@/features/progress/components/streak";
 import { getLearningStats } from "@/features/progress/queries";
@@ -19,6 +20,7 @@ import { formatDuration, formatRelativeDay, greetingFor } from "@/lib/time/forma
 import { daysBetween, toDateKey } from "@/lib/time/zone";
 import { MotivationalQuote } from "@/features/dashboard/components/motivational-quote";
 import { QUOTES } from "@/features/dashboard/quotes";
+import { getTheme } from "@/lib/theme/server";
 import { firstName } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Acasă" };
@@ -27,7 +29,7 @@ const EXAM_KINDS = ["examen", "colocviu", "test"];
 const delay = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
 export default async function TodayPage() {
-  const [overview, profile, stats] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats()]);
+  const [overview, profile, stats, theme] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats(), getTheme()]);
   const { now, agenda, upcoming } = overview;
   const name = firstName(profile?.fullName ?? "");
   const remaining = agenda.filter((i) => endOf(i) > now).length;
@@ -53,6 +55,7 @@ export default async function TodayPage() {
               {stats.currentStreak} {daysLabel(stats.currentStreak)} la rând
             </p>
           )}
+          <ThemeToggle initialTheme={theme} />
         </div>
         <h1 className="text-[26px] leading-tight font-bold tracking-[-0.03em] text-ink sm:text-[30px]">
           {greetingFor(now)}

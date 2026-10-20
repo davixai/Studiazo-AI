@@ -113,7 +113,7 @@ export function SiteFooter() {
 
         <div className="mt-10 flex flex-col gap-4 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13px] leading-5 text-ink-faint">
-            © 2026 Studiazo AI · Făcut cu grijă la Iași · Datele tale rămân private
+            © 2026 Studiazo AI · Făcut cu grijă de studenți, pentru studenți ·Datele tale rămân private
           </p>
           <button
             type="button"

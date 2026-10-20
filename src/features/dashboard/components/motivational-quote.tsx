@@ -1,14 +1,16 @@
 "use client";
 
-import { RefreshCw, Sparkles } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useRef, useState } from "react";
 import { QUOTES } from "../quotes";
 
 // Un citat motivațional ales la întâmplare la fiecare deschidere a paginii Azi (pe server, ca să nu „sară” la încărcare).
-// Card-erou: chenar luminos care se rotește, aurora în fundal, citatul apare cuvânt cu cuvânt, lumina urmărește mouse-ul.
+// Card editorial pe tokenii site-ului (merge și pe tema deschisă): lumină discretă în colț,
+// citatul apare cuvânt cu cuvânt, iar lumina urmărește mouse-ul.
 
 export function MotivationalQuote({ initialIndex }: { initialIndex: number }) {
   const [index, setIndex] = useState(initialIndex % QUOTES.length);
+  const [spin, setSpin] = useState(0);
   const ref = useRef<HTMLElement>(null);
   const quote = QUOTES[index];
   const words = quote.text.split(" ");
@@ -16,6 +18,7 @@ export function MotivationalQuote({ initialIndex }: { initialIndex: number }) {
   function next() {
     // Alt citat decât cel afișat.
     setIndex((i) => (i + 1 + Math.floor(Math.random() * (QUOTES.length - 1))) % QUOTES.length);
+    setSpin((s) => s + 1);
   }
 
   function spotlight(e: React.PointerEvent<HTMLElement>) {
@@ -28,58 +31,61 @@ export function MotivationalQuote({ initialIndex }: { initialIndex: number }) {
 
   return (
     // @container: fonturile și spațierile se adaptează la lățimea cardului (îngust lângă salut, lat pe tabletă).
-    <div className="quote-frame stagger @container h-full rounded-xl p-px">
-      <figure ref={ref} onPointerMove={spotlight} className="quote-card group/quote relative h-full overflow-hidden rounded-[calc(var(--radius-xl)-1px)] px-5 py-5 @xl:px-7 @xl:py-6">
-        {/* Fundal: lumini care plutesc, textură fină și spotul de sub cursor */}
-        <span aria-hidden="true" className="quote-blob -top-24 -left-16 size-72 bg-accent/45" />
-        <span aria-hidden="true" className="quote-blob -right-20 -bottom-28 size-80 bg-accent-blue/35 [animation-delay:-8s]" />
-        <span aria-hidden="true" className="quote-blob top-1/3 left-1/2 size-56 bg-accent-pink/25 [animation-delay:-15s]" />
-        <span aria-hidden="true" className="quote-grain" />
-        <span aria-hidden="true" className="quote-spotlight" />
-        <span aria-hidden="true" className="quote-stars" />
+    <figure
+      ref={ref}
+      onPointerMove={spotlight}
+      className="quote-card stagger @container relative isolate h-full overflow-hidden rounded-xl border border-line/70 bg-surface shadow-sm"
+    >
+      <span aria-hidden="true" className="quote-glow" />
+      <span aria-hidden="true" className="quote-dots" />
+      <span aria-hidden="true" className="quote-spotlight" />
 
-        {/* Ghilimele uriașe, decorative */}
-        <span aria-hidden="true" className="quote-mark pointer-events-none absolute -top-3 left-2 font-quote text-[120px] leading-none select-none @xl:-top-5 @xl:left-4 @xl:text-[160px]">
-          “
-        </span>
+      <div className="relative flex h-full flex-col gap-4 px-5 py-5 @xl:px-7 @xl:py-6">
+        <p className="inline-flex items-center gap-2.5 text-[12px] font-semibold tracking-[0.14em] text-ink-muted uppercase">
+          <span aria-hidden="true" className="icon-badge flex size-8 items-center justify-center rounded-md bg-accent-soft text-[17px] leading-none ring-1 ring-accent-line/60">
+            📚
+          </span>
+          Gândul zilei
+        </p>
 
-        <div className="relative flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[11px] font-semibold tracking-[0.14em] text-accent-ink uppercase backdrop-blur-sm">
-              <Sparkles className="size-3.5 animate-[twinkle_2.6s_ease-in-out_infinite]" aria-hidden="true" />
-              Gândul zilei
-            </p>
+        <blockquote
+          key={index}
+          className="quote-text flex-1 font-quote text-[19px] leading-[1.42] font-normal tracking-[-0.012em] text-pretty break-words text-ink italic @md:text-[21px] @2xl:text-[24px] @2xl:leading-[1.36]"
+        >
+          {words.map((word, i) => (
+            <span key={i} className="quote-word" style={{ "--w": i } as React.CSSProperties}>
+              {word}
+              {i < words.length - 1 ? " " : ""}
+            </span>
+          ))}
+        </blockquote>
 
-            <blockquote key={index} className="mt-3 font-quote text-[19px] leading-[1.35] font-medium text-pretty break-words text-white italic @md:text-[21px] @2xl:mt-4 @2xl:text-[25px] @2xl:leading-[1.3]">
-              {words.map((word, i) => (
-                <span key={i} className="quote-word" style={{ "--w": i } as React.CSSProperties}>
-                  {word}
-                  {i < words.length - 1 ? " " : ""}
-                </span>
-              ))}
-            </blockquote>
-
-            <figcaption
-              key={`a-${index}`}
-              className="quote-author mt-3 flex items-center gap-3 text-[11px] font-semibold tracking-[0.16em] text-ink-soft uppercase @md:text-[12px] @2xl:mt-4"
-              style={{ "--w": words.length } as React.CSSProperties}
-            >
-              <span aria-hidden="true" className="h-0.5 w-7 shrink-0 rounded-full bg-brand @xl:w-9" />
-              {quote.author}
-            </figcaption>
-          </div>
+        {/* Autorul ca semnătură, butonul pentru alt citat în dreapta */}
+        <div className="flex items-center justify-between gap-3">
+          <figcaption
+            key={`a-${index}`}
+            className="quote-author flex min-w-0 items-baseline gap-2 text-[14px] font-semibold tracking-[-0.01em] text-ink-soft @2xl:text-[15px]"
+            style={{ "--w": words.length } as React.CSSProperties}
+          >
+            <span aria-hidden="true" className="text-accent-ink">—</span>
+            <span className="truncate">{quote.author}</span>
+          </figcaption>
 
           <button
             type="button"
             onClick={next}
             aria-label="Alt citat"
             title="Alt citat"
-            className="group relative flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-ink-soft backdrop-blur-md transition-all duration-300 hover:border-accent-line hover:bg-accent/25 hover:text-white hover:shadow-accent"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line/70 bg-surface-muted/60 text-ink-muted transition-colors duration-200 hover:border-accent-line hover:bg-accent-soft hover:text-accent-ink"
           >
-            <RefreshCw className="size-4 transition-transform duration-500 group-active:rotate-180" aria-hidden="true" />
+            <RefreshCw
+              className="size-4"
+              style={{ transform: `rotate(${spin * 180}deg)`, transition: "transform 600ms var(--ease-spring)" }}
+              aria-hidden="true"
+            />
           </button>
         </div>
-      </figure>
-    </div>
+      </div>
+    </figure>
   );
 }

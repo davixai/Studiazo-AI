@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import { CursorEffects } from "@/components/layout/cursor-effects";
 import { THEME_COLOR } from "@/lib/theme/theme";
 import { getTheme } from "@/lib/theme/server";
@@ -7,7 +7,9 @@ import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin", "latin-ext"], display: "swap" });
 // Serif expresiv, doar pentru citatul „Gândul zilei”
-const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin", "latin-ext"], style: ["normal", "italic"], display: "swap" });
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin", "latin-ext"], style: ["normal", "italic"], axes: ["opsz", "SOFT"], display: "swap" });
+// Geometric, cu cifre de lățime egală, doar pentru ceasul din meniu
+const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin", "latin-ext"], display: "swap" });
 
 // Toate paginile depind de sesiune sau de configurarea de la rulare: nu se prerandează nimic
 // (evită ca o pagină privată sau o stare de configurare să fie „înghețată” la build).
@@ -35,7 +37,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Tema vine din cookie, deci pagina sosește direct în tema aleasă (Profil → Temă).
   const theme = await getTheme();
   return (
-    <html lang="ro" data-theme={theme} className={`${jakarta.variable} ${fraunces.variable} h-full`}>
+    <html lang="ro" data-theme={theme} className={`${jakarta.variable} ${fraunces.variable} ${spaceGrotesk.variable} h-full`}>
       <body className="min-h-full">
         {children}
         <CursorEffects />

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SetupRequired } from "@/components/layout/setup-required";
 import { OnboardingWizard } from "@/features/profile/components/onboarding-wizard";
 import { getProfile } from "@/features/profile/queries";
+import { scheduleVisionAvailable } from "@/features/profile/schedule-ai";
 import { requireUser } from "@/lib/auth/session";
 import { isPreviewMode, isSupabaseConfigured } from "@/lib/env";
 
@@ -14,5 +15,5 @@ export default async function OnboardingPage() {
   const profile = await getProfile();
   if (!profile) return <SetupRequired />;
 
-  return <OnboardingWizard profile={profile} />;
+  return <OnboardingWizard profile={profile} scheduleReadable={isPreviewMode() || scheduleVisionAvailable()} />;
 }

@@ -33,6 +33,18 @@ export function getAiConfig() {
   };
 }
 
+/**
+ * AI-ul care citește poze (orarul). Opțional și separat de cel principal, ca chat-ul să poată rămâne pe un
+ * serviciu fără cheie, iar pozele pe unul care vede imagini (ex. Groq, gratuit, fără card).
+ * Lipsă = se folosește AI-ul principal, dacă acesta primește poze (Responses API).
+ */
+export function getVisionConfig() {
+  const apiKey = process.env.AI_VISION_API_KEY?.trim() ?? "";
+  const model = process.env.AI_VISION_MODEL?.trim() ?? "";
+  if (apiKey.length < 20 || !model) return null;
+  return { apiKey, model, baseURL: process.env.AI_VISION_BASE_URL?.trim() || undefined, timeoutMs: 180_000 };
+}
+
 /** Starea afișată în interfață. Nu dezvăluie detalii tehnice utilizatorului final. */
 export type AiStatus = { available: true; model: string } | { available: false; reason: "not_configured" };
 

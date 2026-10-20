@@ -21,7 +21,7 @@ import {
   scheduleToEvents,
   type ScheduleEntry,
 } from "./schedule";
-import { ScheduleVisionUnavailableError, readScheduleImage } from "./schedule-ai";
+import { ScheduleVisionUnavailableError, readScheduleImage, scheduleVisionAvailable } from "./schedule-ai";
 import { DELETE_CONFIRMATION, ProfileFormSchema, availabilityFromForm, type ProfileFormValues } from "./schemas";
 
 const PREVIEW_STATE: FormState = {
@@ -217,6 +217,8 @@ const ReadScheduleSchema = z.object({
   subjects: z.array(z.string().trim().max(120)).max(ONBOARDING_SUBJECTS_MAX),
 });
 
+const SCHEDULE_UNAVAILABLE = "Citirea orarului din poze nu este activă acum. Sari peste acest pas și adaugă orele din Calendar.";
+
 export type ReadScheduleResult = { ok: true; entries: ScheduleEntry[]; note: string | null } | { ok: false; message: string };
 
 /** Pasul „Vrei să-ți imporți orarul?”: AI-ul citește poza; nimic nu se salvează până la finalul ghidului. */
@@ -227,7 +229,7 @@ export async function readSchedule(input: unknown): Promise<ReadScheduleResult> 
   const user = await requireUser();
 
   const config = getAiConfig();
-  if (!config.enabled) return { ok: false, message: "Citirea orarului nu este disponibilă acum. Îl poți adăuga oricând din Calendar." };
+  if (!scheduleVisionAvailable()) return { ok: false, message: SCHEDULE_UNAVAILABLE };
 
   const supabase = await createClient();
   const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
@@ -239,14 +241,14 @@ export async function readSchedule(input: unknown): Promise<ReadScheduleResult> 
   const { image, ...context } = parsed.data;
   try {
     const result = await readScheduleImage({ image, context, userId: user.id });
-    await supabase.from("ai_usage").insert({ kind: "orar", model: config.model, input_tokens: result.usage.inputTokens, output_tokens: result.usage.outputTokens });
+    await supabase.from("ai_usage").insert({ kind: "orar", model: result.model, input_tokens: result.usage.inputTokens, output_tokens: result.usage.outputTokens });
     if (result.entries.length === 0) {
       return { ok: false, message: result.note ?? "Nu am găsit ore în poză. Încearcă o poză mai clară, cu tot orarul." };
     }
     return { ok: true, entries: result.entries, note: result.note };
   } catch (error) {
     if (error instanceof ScheduleVisionUnavailableError) {
-      return { ok: false, message: "Citirea orarului din poze nu este disponibilă acum. Îl poți adăuga oricând din Calendar." };
+      return { ok: false, message: SCHEDULE_UNAVAILABLE };
     }
     await supabase.from("ai_usage").insert({ kind: "orar", model: config.model, ok: false });
     if (error instanceof SyntaxError) return { ok: false, message: "Nu am reușit să citesc orarul. Încearcă din nou sau cu o poză mai clară." };

@@ -97,7 +97,7 @@ function ageError(age: string) {
   return Number.isInteger(n) && n >= AGE_MIN && n <= AGE_MAX ? null : `Vârsta trebuie să fie între ${AGE_MIN} și ${AGE_MAX} de ani.`;
 }
 
-export function OnboardingWizard({ profile }: { profile: Profile }) {
+export function OnboardingWizard({ profile, scheduleReadable }: { profile: Profile; /** Citirea orarului din poză e configurată pe server. */ scheduleReadable: boolean }) {
   const [state, action] = useActionState<FormState, FormData>(finishOnboarding, initialFormState);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState(() => initialAnswers(profile));
@@ -520,6 +520,7 @@ export function OnboardingWizard({ profile }: { profile: Profile }) {
           {step === "orar" ? (
             <ScheduleStep
               answers={answers}
+              readable={scheduleReadable}
               onDone={(schedule, group, weekParity) => {
                 setAnswers((a) => ({ ...a, schedule, group, weekParity }));
                 go(index + 1);
@@ -756,10 +757,12 @@ type SchedulePhase =
 /** „Vrei să-ți imporți orarul?”: poză din galerie → AI-ul citește → studentul verifică ce păstrează. */
 function ScheduleStep({
   answers,
+  readable,
   onDone,
   onSkip,
 }: {
   answers: Answers;
+  readable: boolean;
   onDone: (entries: ScheduleEntry[], group: string, parity: WeekParity) => void;
   onSkip: () => void;
 }) {
@@ -829,7 +832,7 @@ function ScheduleStep({
         subtitle="Alege o poză sau o captură cu orarul. Îl citim și îl punem în calendar: ce ai, când, unde și cu cine."
       />
       <div className="mt-8 flex flex-col gap-5">
-        <div className="stagger" style={{ "--i": 1 } as React.CSSProperties}>
+        <div hidden={!readable} className="stagger" style={{ "--i": 1 } as React.CSSProperties}>
           <label htmlFor="ob-group" className="mb-2 block text-sm font-medium text-ink">
             Grupa ta <span className="font-normal text-ink-muted">(opțional)</span>
           </label>
@@ -844,7 +847,13 @@ function ScheduleStep({
           <p className="mt-1.5 text-[13px] leading-5 text-ink-muted">Dacă orarul are mai multe grupe, îți arătăm doar orele tale.</p>
         </div>
 
+        {!readable ? (
+          <Alert tone="info" title="Citirea orarului din poză nu este activă acum">
+            Sari peste acest pas: îți poți adăuga orele oricând din Calendar, iar cele recurente apar automat în fiecare săptămână.
+          </Alert>
+        ) : null}
         <label
+          hidden={!readable}
           className={cn(choiceBase, "stagger flex min-h-[112px] cursor-pointer flex-col justify-center p-5 pr-24 sm:min-h-[124px] sm:p-6 sm:pr-32")}
           style={{ "--i": 2 } as React.CSSProperties}
         >

@@ -1,10 +1,19 @@
 import "server-only";
 import OpenAI from "openai";
-import { getAiConfig } from "./config";
+import { getAiConfig, getVisionConfig } from "./config";
 
 // Punctul unic de acces la OpenAI. Pentru alt furnizor se schimbă doar acest modul și config.ts.
 
 let cached: OpenAI | null = null;
+let cachedVision: OpenAI | null = null;
+
+/** Clientul pentru poze (AI_VISION_*), sau null dacă nu e configurat separat. */
+export function getVisionOpenAI(): { client: OpenAI; model: string } | null {
+  const config = getVisionConfig();
+  if (!config) return null;
+  cachedVision ??= new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL, timeout: config.timeoutMs, maxRetries: 1 });
+  return { client: cachedVision, model: config.model };
+}
 
 export class AiUnavailableError extends Error {
   constructor() {

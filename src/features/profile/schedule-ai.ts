@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { getOpenAI, withFreeTierRetry } from "@/lib/ai/client";
+import OpenAI from "openai";
+import { getOpenAI, getVisionOpenAI, withFreeTierRetry } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import { SCHEDULE_JSON_SCHEMA, cleanSchedule, type ScheduleEntry } from "./schedule";
 
@@ -62,9 +63,61 @@ function describe(c: ScheduleContext) {
   ].join("\n");
 }
 
+/** Răspunsul JSON din Chat Completions (unele modele pun text în jurul lui). */
+function parseJsonObject(raw: string) {
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start < 0 || end <= start) throw new SyntaxError("Răspuns fără JSON");
+  return JSON.parse(raw.slice(start, end + 1));
+}
+
+/** Citirea cu AI-ul separat pentru poze (AI_VISION_*), prin Chat Completions, compatibil cu Groq, OpenRouter etc. */
+async function readWithVisionProvider(vision: { client: OpenAI; model: string }, image: string, context: ScheduleContext) {
+  try {
+    const chat = await withFreeTierRetry(() =>
+      vision.client.chat.completions.create(
+        {
+          model: vision.model,
+          messages: [
+            {
+              role: "system",
+              content: `${INSTRUCTIONS}\n\nRăspunde DOAR cu un obiect JSON valid, fără alt text, după această schemă JSON:\n${JSON.stringify(SCHEDULE_JSON_SCHEMA)}`,
+            },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: describe(context) },
+                { type: "image_url", image_url: { url: image, detail: "high" } },
+              ],
+            },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0,
+          max_tokens: 8000,
+        },
+        { timeout: 180_000 },
+      ),
+    );
+    const result: { entries: ScheduleEntry[]; note: string | null } = cleanSchedule(parseJsonObject(chat.choices[0]?.message?.content ?? ""));
+    return { ...result, model: vision.model, usage: { inputTokens: chat.usage?.prompt_tokens ?? 0, outputTokens: chat.usage?.completion_tokens ?? 0 } };
+  } catch (error) {
+    // Modelul ales nu primește imagini: mesaj clar, nu o eroare generică.
+    if (error instanceof OpenAI.BadRequestError && /image/i.test(error.message)) throw new ScheduleVisionUnavailableError();
+    throw error;
+  }
+}
+
+/** Dacă aplicația poate citi orarul din poză cu configurarea actuală. */
+export function scheduleVisionAvailable() {
+  return getVisionOpenAI() !== null || (getAiConfig().enabled && getAiConfig().apiStyle !== "chat");
+}
+
 export async function readScheduleImage({ image, context, userId }: { image: string; context: ScheduleContext; userId: string }) {
+  const vision = getVisionOpenAI();
+  if (vision) return readWithVisionProvider(vision, image, context);
+
   const config = getAiConfig();
-  // Furnizorii „chat” configurați în aplicație nu primesc poze (vezi engine-chat.ts).
+  // Furnizorii „chat” fără AI separat pentru poze (ex. Pollinations fără cheie) nu primesc imagini.
   if (config.apiStyle === "chat") throw new ScheduleVisionUnavailableError();
 
   const response = await withFreeTierRetry(() =>
@@ -93,5 +146,5 @@ export async function readScheduleImage({ image, context, userId }: { image: str
   );
 
   const result: { entries: ScheduleEntry[]; note: string | null } = cleanSchedule(JSON.parse(response.output_text || "{}"));
-  return { ...result, usage: { inputTokens: response.usage?.input_tokens ?? 0, outputTokens: response.usage?.output_tokens ?? 0 } };
+  return { ...result, model: config.model, usage: { inputTokens: response.usage?.input_tokens ?? 0, outputTokens: response.usage?.output_tokens ?? 0 } };
 }

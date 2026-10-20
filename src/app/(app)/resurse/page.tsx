@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, GraduationCap } from "lucide-react";
+import { ArrowRight, ArrowUpRight, GraduationCap, Route } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
@@ -28,6 +28,21 @@ export default async function ResourcesPage() {
             : "Linkurile oficiale de care ai nevoie ca student, după universitatea și facultatea ta."
         }
       />
+
+      {/* Pe telefon și tabletă, Trasee nu are loc în bara de jos: intrarea e aici. */}
+      <Link
+        href="/trasee"
+        className="lift group stagger flex items-center gap-4 rounded-lg border border-line/70 bg-surface p-4 shadow-sm active:scale-[0.99] lg:hidden"
+      >
+        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent-ink">
+          <Route className="size-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] leading-5 font-bold text-ink">Trasee prin Iași</span>
+          <span className="mt-0.5 block text-xs text-ink-muted">De la o facultate la alta, la bibliotecă sau oriunde, pe hartă</span>
+        </span>
+        <ArrowRight className="size-5 shrink-0 text-ink-faint" aria-hidden="true" />
+      </Link>
 
       {university ? (
         <>

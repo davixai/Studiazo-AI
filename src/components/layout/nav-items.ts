@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, CalendarDays, Compass, Flame, GraduationCap, House, LibraryBig, Sparkles, Wallet, type LucideIcon } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, Compass, Flame, GraduationCap, House, LibraryBig, Route, Sparkles, Wallet, type LucideIcon } from "lucide-react";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; /** Afișat în bara de jos pe mobil */ mobile: boolean };
 
@@ -14,6 +14,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/buget", label: "Buget", icon: Wallet, mobile: true },
   { href: "/joburi", label: "Joburi", icon: BriefcaseBusiness, mobile: true },
   { href: "/resurse", label: "Resurse Iași", icon: Compass, mobile: true },
+  // Pe mobil se deschide din Resurse Iași.
+  { href: "/trasee", label: "Trasee", icon: Route, mobile: false },
 ];
 
 export function isActive(pathname: string, href: string) {

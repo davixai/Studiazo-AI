@@ -16,6 +16,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   devIndicators: false,
   poweredByHeader: false,
+  // OCR-ul pentru orar își pornește propriul worker din node_modules; nu îl împachetăm.
+  serverExternalPackages: ["tesseract.js"],
   turbopack: {
     rules: {
       "*.css": {

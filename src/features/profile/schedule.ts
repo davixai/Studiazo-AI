@@ -107,12 +107,13 @@ export function cleanSchedule(raw: unknown): { entries: ScheduleEntry[]; note: s
   return { entries, note: notes.length > 0 ? notes.join(" ") : null };
 }
 
-/** „8:00” → „08:00”, „8.00” → „08:00”. */
+/** „8:00” → „08:00”, „8.00” → „08:00”, „8” sau 8 → „08:00”. */
 function normalizeTimes(entry: unknown) {
   if (typeof entry !== "object" || entry === null) return entry;
   const fix = (v: unknown) => {
-    const m = typeof v === "string" ? /^(\d{1,2})[:.](\d{2})$/.exec(v.trim()) : null;
-    return m ? `${m[1].padStart(2, "0")}:${m[2]}` : v;
+    const text = typeof v === "number" && Number.isInteger(v) ? String(v) : v;
+    const m = typeof text === "string" ? /^(\d{1,2})(?:[:.](\d{2}))?$/.exec(text.trim()) : null;
+    return m ? `${m[1].padStart(2, "0")}:${m[2] ?? "00"}` : v;
   };
   const e = entry as Record<string, unknown>;
   return { ...e, start: fix(e.start), end: fix(e.end) };

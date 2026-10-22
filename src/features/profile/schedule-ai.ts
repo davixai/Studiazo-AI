@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { getOpenAI, getVisionOpenAI, withFreeTierRetry } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import { SCHEDULE_JSON_SCHEMA, cleanSchedule, type ScheduleEntry } from "./schedule";
+import { OCR_MIN_FRAGMENTS, readScheduleLayout } from "./schedule-ocr";
 
 // Citirea orarului dintr-o poză, cu structured output. Răspunsurile din configurare (facultate, an,
 // grupă, materii) ajută la nume complete și la alegerea grupei; rezultatul e validat oră cu oră în cleanSchedule().
@@ -107,9 +108,46 @@ async function readWithVisionProvider(vision: { client: OpenAI; model: string },
   }
 }
 
-/** Dacă aplicația poate citi orarul din poză cu configurarea actuală. */
+// Pentru AI-ul care nu vede poze: primește textul citit cu OCR, cu pozițiile, în locul pozei.
+const OCR_PREAMBLE = `Nu vezi poza. Primești textul citit automat (OCR) din ea, ca fragmente cu poziția lor în pixeli. Refaci tabelul din poziții:
+- Fragmentele cu x apropiat sunt în aceeași coloană, cele cu y apropiat pe același rând. Antetele zilelor (Luni, Marți…) dau coloanele; etichetele orelor de pe margine (ex. „8-10”, „08:00”) dau rândurile.
+- O materie e în ziua al cărei antet are x cel mai apropiat de x-ul ei și la ora a cărei etichetă are y cel mai apropiat de y-ul ei. Chenarele nu se văd: dacă intervalul nu e scris, ora ține până la eticheta de oră următoare.
+- Sala (ex. „C2”, „AC0-1”, „D008”) NU e grupă; grupele sunt scrise de obicei în antetele coloanelor sau cu „gr.”.
+- OCR-ul poate greși litere (ex. „0”/„O”, „1”/„l”, litere mici în loc de mari: „so” = „SO”). Corectezi ce e evident.
+- start și end sunt texte „HH:MM”.`;
+
+/** Dacă aplicația poate citi orarul din poză cu configurarea actuală (cu AI care vede poze sau cu OCR + AI de text). */
 export function scheduleVisionAvailable() {
-  return getVisionOpenAI() !== null || (getAiConfig().enabled && getAiConfig().apiStyle !== "chat");
+  return getVisionOpenAI() !== null || getAiConfig().enabled;
+}
+
+/** Fără AI care vede poze (ex. Pollinations fără cheie): OCR pe server, apoi AI-ul de text reface orarul din fragmente. */
+async function readWithOcr(image: string, context: ScheduleContext) {
+  const config = getAiConfig();
+  const { fragments, layout } = await readScheduleLayout(image);
+  if (fragments.length < OCR_MIN_FRAGMENTS) {
+    return { entries: [], note: "Nu am găsit text în poză. Încearcă o captură de ecran sau o poză mai clară, cu tot orarul.", model: config.model, usage: { inputTokens: 0, outputTokens: 0 } };
+  }
+  const chat = await withFreeTierRetry(() =>
+    getOpenAI().chat.completions.create(
+      {
+        model: config.model,
+        messages: [
+          {
+            role: "system",
+            content: `${INSTRUCTIONS}\n\n${OCR_PREAMBLE}\n\nRăspunde DOAR cu un obiect JSON valid, fără alt text, după această schemă JSON:\n${JSON.stringify(SCHEDULE_JSON_SCHEMA)}`,
+          },
+          { role: "user", content: `${describe(context)}\n\n${layout}` },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0,
+        max_tokens: 8000,
+      },
+      { timeout: 180_000 },
+    ),
+  );
+  const result: { entries: ScheduleEntry[]; note: string | null } = cleanSchedule(parseJsonObject(chat.choices[0]?.message?.content ?? ""));
+  return { ...result, model: config.model, usage: { inputTokens: chat.usage?.prompt_tokens ?? 0, outputTokens: chat.usage?.completion_tokens ?? 0 } };
 }
 
 export async function readScheduleImage({ image, context, userId }: { image: string; context: ScheduleContext; userId: string }) {
@@ -117,8 +155,9 @@ export async function readScheduleImage({ image, context, userId }: { image: str
   if (vision) return readWithVisionProvider(vision, image, context);
 
   const config = getAiConfig();
-  // Furnizorii „chat” fără AI separat pentru poze (ex. Pollinations fără cheie) nu primesc imagini.
-  if (config.apiStyle === "chat") throw new ScheduleVisionUnavailableError();
+  if (!config.enabled) throw new ScheduleVisionUnavailableError();
+  // Furnizorii „chat” fără AI separat pentru poze (ex. Pollinations fără cheie) nu primesc imagini: citim cu OCR.
+  if (config.apiStyle === "chat") return readWithOcr(image, context);
 
   const response = await withFreeTierRetry(() =>
     getOpenAI().responses.create(

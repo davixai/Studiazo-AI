@@ -2,6 +2,7 @@ import { Camera, Gift, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { Alert } from "@/components/ui/alert";
+import { AuthFit } from "@/features/auth/components/auth-fit";
 import { FeatureMarquee } from "@/features/auth/components/feature-marquee";
 import { isPreviewMode } from "@/lib/env";
 
@@ -13,7 +14,7 @@ const HIGHLIGHTS = [
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+    <AuthFit className="grid min-h-dvh grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
       <div className="flex flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-10">
         <Link href="/autentificare" className="self-start rounded-md" aria-label="Studiazo AI">
           <Logo />
@@ -46,13 +47,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div aria-hidden="true" className="-mx-5 mb-6 sm:-mx-10 lg:hidden">
           <FeatureMarquee single />
         </div>
-        <p className="text-center text-xs text-ink-faint lg:text-left">Studiazo AI · pentru studenții din Iași</p>
+        <p className="text-center text-[13px] font-medium tracking-[0.01em] text-ink-muted lg:text-left">
+          <span className="font-semibold text-ink-soft">Studiazo AI</span> · creată de studenți, pentru studenții din Iași
+        </p>
       </div>
 
       <aside className="relative hidden overflow-hidden border-l border-line bg-surface-muted lg:block" aria-hidden="true">
         <AuthIllustration />
       </aside>
-    </div>
+    </AuthFit>
   );
 }
 

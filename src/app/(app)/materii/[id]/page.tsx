@@ -28,9 +28,9 @@ export async function generateMetadata({ params }: PageProps<"/materii/[id]">): 
 
 export default async function SubjectPage({ params, searchParams }: PageProps<"/materii/[id]">) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const subject = await getSubject(id);
+  // Materia, notițele și materialele în paralel (fiecare își validează id-ul; RLS le limitează la contul curent).
+  const [subject, notes, materials] = await Promise.all([getSubject(id), listNotes(id), listMaterials(id)]);
   if (!subject) notFound();
-  const [notes, materials] = await Promise.all([listNotes(subject.id), listMaterials(subject.id)]);
   const now = new Date();
 
   return (

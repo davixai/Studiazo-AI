@@ -13,7 +13,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!isSupabaseConfigured() && !isPreviewMode()) return <SetupRequired />;
 
   await requireUser();
-  const profile = await getProfile();
+  // Profilul și materiile (pentru asistentul plutitor) se citesc în paralel, nu una după alta.
+  const [profile, subjects] = await Promise.all([getProfile(), listSubjects()]);
   if (profile && !profile.onboardingCompletedAt) redirect("/bun-venit");
 
   const name = profile?.fullName ?? "";
@@ -44,7 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <SiteFooter />
       </div>
       <MobileTabBar />
-      <AiDock subjects={await listSubjects()} aiAvailable={getAiStatus().available && !isPreviewMode()} />
+      <AiDock subjects={subjects} aiAvailable={getAiStatus().available && !isPreviewMode()} />
     </div>
   );
 }

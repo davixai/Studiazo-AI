@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { Subject } from "@/lib/contracts/domain";
 import { isPreviewMode } from "@/lib/env";
 import { PREVIEW_SUBJECTS } from "@/lib/preview/fixtures";
@@ -12,7 +13,8 @@ import { SubjectIdSchema } from "./schemas";
 // Proprietar: Sergiu. Citit și de David (calendar, termene, asistent).
 // Nicio funcție nu primește user_id: RLS limitează rezultatele la utilizatorul curent.
 
-export async function listSubjects(): Promise<Subject[]> {
+/** Memorat pe durata unei cereri (React `cache`): structura comună și pagina o citesc o singură dată. */
+export const listSubjects = cache(async (): Promise<Subject[]> => {
   if (isPreviewMode()) return PREVIEW_SUBJECTS;
 
   const supabase = await createClient();
@@ -24,7 +26,7 @@ export async function listSubjects(): Promise<Subject[]> {
 
   if (error) throw new Error(`Nu am putut citi materiile: ${error.message}`);
   return (data ?? []).map(toSubject);
-}
+});
 
 /**
  * Panoul „Materii”: materiile active cu statistici (PDF-uri, poze, notițe, parcurse, pagini gata)
@@ -92,7 +94,8 @@ export async function listArchivedSubjects(): Promise<Subject[]> {
 }
 
 /** O materie activă după id; null dacă id-ul e invalid, materia e arhivată sau aparține altcuiva. */
-export async function getSubject(id: string): Promise<Subject | null> {
+/** Memorat pe cerere: titlul tabului (generateMetadata) și pagina materiei o citesc o singură dată. */
+export const getSubject = cache(async (id: string): Promise<Subject | null> => {
   if (!SubjectIdSchema.safeParse(id).success) return null;
   if (isPreviewMode()) return PREVIEW_SUBJECTS.find((s) => s.id === id) ?? null;
 
@@ -106,4 +109,4 @@ export async function getSubject(id: string): Promise<Subject | null> {
 
   if (error) throw new Error(`Nu am putut citi materia: ${error.message}`);
   return data ? toSubject(data) : null;
-}
+});

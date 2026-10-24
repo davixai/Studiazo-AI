@@ -6,8 +6,9 @@ import { getTheme } from "@/lib/theme/server";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin", "latin-ext"], display: "swap" });
-// Serif expresiv, doar pentru citatul „Gândul zilei”
-const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin", "latin-ext"], style: ["normal", "italic"], axes: ["opsz", "SOFT"], display: "swap" });
+// Serif expresiv, doar pentru citatul „Gândul zilei” (Acasă) și cardul de citat de la autentificare, ambele italice.
+// Doar varianta italică și fără preîncărcare: fișierele (~250 KB) se descarcă numai pe paginile care afișează citatul.
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin", "latin-ext"], style: ["italic"], axes: ["opsz", "SOFT"], display: "swap", preload: false });
 // Geometric, cu cifre de lățime egală, doar pentru ceasul din meniu
 const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin", "latin-ext"], display: "swap" });
 

@@ -71,16 +71,18 @@ export function Sidebar({ userName, userDetail }: AppNavProps) {
 export function MobileTopBar({ userName }: { userName: string }) {
   return (
     <header className="pt-safe sticky top-0 z-30 bg-canvas/85 backdrop-blur-xl lg:hidden">
-      <div className="flex h-14 items-center justify-between px-4 sm:px-6">
+      {/* Sub 300px (ex. ecranul exterior al telefoanelor pliabile, 280px) marginile și spațiile se strâng, ca bara să încapă. */}
+      <div className="flex h-14 items-center justify-between gap-2 px-4 max-[299px]:px-3 sm:px-6">
         <Link href="/azi" className="rounded-md" aria-label="Studiazo AI — Acasă">
           <Logo />
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 max-[299px]:gap-1.5">
           <LiveClockCompact />
           <Link
             href="/classroom"
             aria-label="Google Classroom"
-            className="flex size-9 items-center justify-center rounded-full border border-line/70 bg-surface text-ink-soft transition-colors hover:text-ink"
+            // Sub 280px (mai îngust decât orice telefon real) nu mai încape; Classroom rămâne în Profil.
+            className="flex size-9 items-center justify-center rounded-full max-[279px]:hidden border border-line/70 bg-surface text-ink-soft transition-colors hover:text-ink"
           >
             <GraduationCap className="size-[18px]" aria-hidden="true" />
           </Link>

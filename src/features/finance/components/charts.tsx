@@ -135,24 +135,27 @@ export function TrendChart({ points, month }: { points: TrendPoint[]; month: str
       </div>
 
       <figcaption className="sr-only">Venituri și cheltuieli pe ultimele {points.length} luni</figcaption>
-      <table className="sr-only">
-        <thead>
-          <tr>
-            <th scope="col">Luna</th>
-            <th scope="col">Venituri</th>
-            <th scope="col">Cheltuieli</th>
-          </tr>
-        </thead>
-        <tbody>
-          {points.map((p) => (
-            <tr key={p.month}>
-              <td>{monthLabel(p.month)}</td>
-              <td>{formatLei(p.income)}</td>
-              <td>{formatLei(p.expenses)}</td>
+      {/* sr-only pe un <div>, nu direct pe <table>: tabelele nu respectă overflow:hidden și împingeau pagina lateral sub 310px. */}
+      <div className="sr-only">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Luna</th>
+              <th scope="col">Venituri</th>
+              <th scope="col">Cheltuieli</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {points.map((p) => (
+              <tr key={p.month}>
+                <td>{monthLabel(p.month)}</td>
+                <td>{formatLei(p.income)}</td>
+                <td>{formatLei(p.expenses)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

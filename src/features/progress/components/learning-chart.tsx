@@ -60,22 +60,25 @@ export function LearningChart({ stats }: { stats: LearningStats }) {
         </ol>
       </div>
       <figcaption className="sr-only">Minute de învățare în ultimele 7 zile</figcaption>
-      <table className="sr-only">
-        <thead>
-          <tr>
-            <th scope="col">Zi</th>
-            <th scope="col">Minute</th>
-          </tr>
-        </thead>
-        <tbody>
-          {days.map((d) => (
-            <tr key={d.date}>
-              <td>{formatWeekdayShort(dayBounds(d.date).start)}</td>
-              <td>{d.minutes}</td>
+      {/* sr-only pe un <div>, nu direct pe <table>: tabelele nu respectă overflow:hidden și pot împinge pagina lateral. */}
+      <div className="sr-only">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Zi</th>
+              <th scope="col">Minute</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {days.map((d) => (
+              <tr key={d.date}>
+                <td>{formatWeekdayShort(dayBounds(d.date).start)}</td>
+                <td>{d.minutes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

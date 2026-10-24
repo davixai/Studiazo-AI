@@ -88,7 +88,8 @@ export default async function SubjectsPage() {
               Materiile tale
               <span className="text-[13px] font-medium text-ink-muted tabular">{subjects.length}</span>
             </h2>
-            <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {/* grid-cols-1 (minmax(0,1fr)): pe telefon coloana nu se mai lărgește după cel mai lat card (ieșea din ecran la 280px). */}
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {subjects.map((subject, i) => (
                 // `stagger` pe <li> și `lift` pe card: ambele animă transform, deci stau pe elemente diferite.
                 <li key={subject.id} className="stagger" style={delay(Math.min(i + 7, 12))}>

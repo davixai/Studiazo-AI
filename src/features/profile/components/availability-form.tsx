@@ -87,7 +87,8 @@ export function AvailabilityForm({ availability }: AvailabilityFormProps) {
       </ul>
 
       <div className="flex justify-end border-t border-line pt-6">
-        <SubmitButton className="w-full sm:w-auto">Salvează disponibilitatea</SubmitButton>
+        {/* Sub 300px (telefon pliabil închis) marginile interioare se strâng, ca textul să nu se taie. */}
+        <SubmitButton className="w-full max-[299px]:px-3 sm:w-auto">Salvează disponibilitatea</SubmitButton>
       </div>
     </form>
   );

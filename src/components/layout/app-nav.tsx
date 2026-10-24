@@ -16,7 +16,8 @@ type AppNavProps = { userName: string; userDetail: string | null };
 export function Sidebar({ userName, userDetail }: AppNavProps) {
   const pathname = usePathname();
   return (
-    <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line/70 bg-surface px-4 py-6 lg:flex">
+    // Pe ecranele joase (laptop 1280×720, zoom în browser) meniul se derulează, ca profilul de jos să rămână accesibil.
+    <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-line/70 bg-surface px-4 py-6 [scrollbar-width:thin] lg:flex">
       <Link href="/azi" className="mx-2 mb-5 rounded-md" aria-label="Studiazo AI — Acasă">
         <Logo />
       </Link>
@@ -100,7 +101,7 @@ export function MobileTabBar() {
       aria-label="Navigare principală"
       className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-surface/90 shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.6)] backdrop-blur-xl lg:hidden"
     >
-      <ul className="mx-auto grid max-w-xl px-1" style={{ gridTemplateColumns: `repeat(${MOBILE_ITEMS.length}, minmax(0, 1fr))` }}>
+      <ul className="mx-auto grid max-w-xl px-1 max-[389px]:px-0" style={{ gridTemplateColumns: `repeat(${MOBILE_ITEMS.length}, minmax(0, 1fr))` }}>
         {MOBILE_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
@@ -121,7 +122,10 @@ export function MobileTabBar() {
                 >
                   <Icon className="size-5" strokeWidth={active ? 2.3 : 1.9} />
                 </span>
-                <span className="max-w-full truncate px-1">{label === "Resurse Iași" ? "Resurse" : label}</span>
+                {/* Sub 390px (majoritatea telefoanelor Android au 360px) etichetele se strâng puțin, ca să nu se taie. */}
+                <span className="max-w-full truncate px-1 max-[389px]:px-0 max-[389px]:text-[10px] max-[389px]:tracking-[-0.02em]">
+                  {label === "Resurse Iași" ? "Resurse" : label}
+                </span>
               </Link>
             </li>
           );

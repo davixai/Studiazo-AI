@@ -50,6 +50,20 @@ export function PlaceInput({ id, label, marker, value, onChange, placeholder, ac
     };
   }, [query]);
 
+  // Pe ecranele joase (telefon ținut orizontal, laptop mic) lista ar ieși sub ecran sau sub bara de jos:
+  // aducem câmpul sus, ca sugestiile să se vadă. Ținem cont și de tastatura de pe telefon (visualViewport).
+  useEffect(() => {
+    if (!open) return;
+    const frame = requestAnimationFrame(() => {
+      const list = document.getElementById(listId);
+      if (!list || !wrap.current) return;
+      const visible = window.visualViewport?.height ?? window.innerHeight;
+      const bottomBar = window.matchMedia("(min-width: 1024px)").matches ? 0 : 72;
+      if (list.getBoundingClientRect().bottom > visible - bottomBar) wrap.current.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, listId]);
+
   useEffect(() => {
     if (!open) return;
     const close = (e: PointerEvent) => {
@@ -83,7 +97,7 @@ export function PlaceInput({ id, label, marker, value, onChange, placeholder, ac
   const remoteStart = local.length;
 
   return (
-    <div ref={wrap} className="relative">
+    <div ref={wrap} className="relative scroll-mt-20 lg:scroll-mt-6">
       <label htmlFor={id} className="mb-1.5 block text-[12px] font-semibold tracking-[0.08em] text-ink-muted uppercase">
         {label}
       </label>
@@ -140,7 +154,7 @@ export function PlaceInput({ id, label, marker, value, onChange, placeholder, ac
           id={listId}
           role="listbox"
           aria-label={label}
-          className="absolute inset-x-0 top-full z-20 mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-lg border border-line bg-surface p-1.5 shadow-lg animate-fade-in"
+          className="absolute inset-x-0 top-full z-20 mt-2 max-h-[min(20rem,55dvh)] overflow-y-auto overscroll-contain rounded-lg border border-line bg-surface p-1.5 shadow-lg animate-fade-in"
         >
           {options.length === 0 ? (
             <li className="px-3 py-6 text-center text-sm text-ink-muted">{searching ? "Caut în hartă…" : "Niciun loc găsit. Încearcă altă denumire sau o adresă."}</li>

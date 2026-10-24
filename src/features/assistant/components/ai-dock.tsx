@@ -230,7 +230,8 @@ export function AiDock({ subjects, aiAvailable }: { subjects: Subject[]; aiAvail
           open && "max-lg:hidden",
         )}
       >
-        {!open ? <span aria-hidden="true" className="absolute inset-0 animate-ping rounded-full bg-accent/40 [animation-duration:2.6s]" /> : null}
+        {/* pointer-events-none: pulsul crește de 2× și altfel „fură” atingerile butoanelor din jur. */}
+        {!open ? <span aria-hidden="true" className="pointer-events-none absolute inset-0 animate-ping rounded-full bg-accent/40 [animation-duration:2.6s]" /> : null}
         <span className="relative">
           {open ? (
             <X className="size-6 animate-pop-in" aria-hidden="true" />

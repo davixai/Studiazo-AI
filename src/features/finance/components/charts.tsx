@@ -114,7 +114,14 @@ export function TrendChart({ points, month }: { points: TrendPoint[]; month: str
                     className="w-3 origin-bottom animate-grow-y rounded-t-[4px] bg-viz-expense transition-[filter] group-hover:brightness-110 sm:w-4"
                     style={{ height: bar(p.expenses), animationDelay: `${130 + i * 60}ms` }}
                   />
-                  <span className="pointer-events-none absolute bottom-full z-10 mb-1 rounded-md bg-night px-2.5 py-1.5 text-[11px] whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+                  {/* Eticheta primei și ultimei luni se aliniază la margine, ca să nu iasă din ecran pe telefon. */}
+                  <span
+                    className={cn(
+                      "pointer-events-none absolute bottom-full z-10 mb-1 rounded-md bg-night px-2.5 py-1.5 text-[11px] whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100",
+                      i === 0 && "left-0",
+                      i === points.length - 1 && "right-0",
+                    )}
+                  >
                     <span className="block font-semibold">{monthLabel(p.month)}</span>
                     <span className="block text-white/80">Venituri: {formatLei(p.income)}</span>
                     <span className="block text-white/80">Cheltuieli: {formatLei(p.expenses)}</span>

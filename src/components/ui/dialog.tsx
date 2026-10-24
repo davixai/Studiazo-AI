@@ -45,7 +45,9 @@ export function Dialog({ open, onClose, title, description, children, footer, si
         if (e.target === e.currentTarget) onClose();
       }}
       className={cn(
-        "m-0 mt-auto w-full max-w-none overflow-visible bg-transparent p-0 text-ink backdrop:backdrop-blur-[1px]",
+        // max-h-none / max-w-none: anulează limitele implicite ale browserului (100% − 6px − 2em), altfel foaia
+        // de jos de pe telefon iese cu 6px sub ecran; înălțimea maximă o dă conținutul de mai jos.
+        "m-0 mt-auto max-h-none w-full max-w-none overflow-visible bg-transparent p-0 text-ink backdrop:backdrop-blur-[1px]",
         "sm:m-auto sm:px-4",
         size === "sm" && "sm:max-w-md",
         size === "md" && "sm:max-w-lg",

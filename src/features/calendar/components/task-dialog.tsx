@@ -12,7 +12,7 @@ import { TASK_KINDS, TASK_KIND_LABELS, type Subject, type Task, type TaskKind } 
 import { formatDuration } from "@/lib/time/format";
 import { toDateKey, toTimeOfDay } from "@/lib/time/zone";
 import { deleteTask, saveTask, setTaskCompleted } from "../actions";
-import { initialTaskFormState, TIMED_TASK_KINDS, type ActionResult, type TaskFormState } from "../schemas";
+import { initialTaskFormState, TIMED_TASK_KINDS, type ActionResult, type TaskFormState } from "../constants";
 import { KindPicker } from "./kind-picker";
 
 type TaskDialogProps = {

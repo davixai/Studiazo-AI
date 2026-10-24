@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SubmitButton } from "@/features/auth/components/form-parts";
-import { initialFormState } from "@/features/auth/schemas";
+import { initialFormState } from "@/features/auth/constants";
 import type { Subject } from "@/lib/contracts/domain";
 import { archiveSubject } from "../actions";
 

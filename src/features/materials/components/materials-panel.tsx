@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { countLabel } from "@/features/subjects/format";
 import { cn } from "@/lib/utils";
 import { prepareImage } from "../image-prep";
-import { DOCUMENT_ACCEPT, documentKindOf, type MaterialKind } from "../schemas";
+import { DOCUMENT_ACCEPT, documentKindOf, type MaterialKind } from "../files";
 import { PdfList, type MaterialItem } from "./pdf-list";
 import { PhotoGrid } from "./photo-grid";
 import { UploadQueue, useUploadQueue } from "./upload-queue";

@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Field, Input, describedBy } from "@/components/ui/field";
 import { requestPasswordReset, updatePassword } from "../actions";
-import { PASSWORD_MIN, initialFormState } from "../schemas";
+import { PASSWORD_MIN, initialFormState } from "../constants";
 import { PasswordInput, SubmitButton } from "./form-parts";
 
 export function RecoverForm() {

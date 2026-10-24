@@ -2,6 +2,8 @@ import { z } from "zod";
 import { PREFERRED_TIMES, type AvailabilityWindow } from "@/lib/contracts/domain";
 import { isTimeOfDay } from "@/lib/time/zone";
 
+export * from "./constants";
+
 const optionalText = (max: number) =>
   z
     .string()
@@ -40,13 +42,6 @@ export const AvailabilitySchema = z
       .refine((w) => w.end === "24:00" || w.end > w.start, "Intervalul trebuie să se termine după ce începe."),
   )
   .max(28);
-
-export const SESSION_LENGTH_OPTIONS = [25, 45, 50, 60, 90] as const;
-export const DAILY_LIMIT_OPTIONS = [60, 120, 180, 240, 300] as const;
-
-export const DELETE_CONFIRMATION = "ȘTERGE";
-
-export const WEEKDAY_LABELS = ["Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă", "Duminică"] as const;
 
 /**
  * Citește formularul de disponibilitate: câte un interval pe zi (d1 … d7 = luni … duminică),

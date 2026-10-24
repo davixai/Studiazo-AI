@@ -4,7 +4,7 @@ import { Copy, Trash2 } from "lucide-react";
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { initialFormState } from "@/features/auth/schemas";
+import { initialFormState } from "@/features/auth/constants";
 import { cn } from "@/lib/utils";
 import { copyPreviousMonth, deleteEntry } from "../actions";
 import { categoryInfo } from "../categories";

@@ -32,7 +32,7 @@ export function LearningChart({ stats }: { stats: LearningStats }) {
             const h = d.minutes > 0 ? Math.max(4, (d.minutes / scaleMax) * CHART_HEIGHT) : 0;
             const label = formatWeekdayShort(dayBounds(d.date).start).replace(".", "");
             return (
-              <li key={d.date} className="group relative flex flex-col items-center">
+              <li key={d.date} tabIndex={-1} className="group relative flex flex-col items-center outline-none">
                 <div className="relative flex w-full flex-1 items-end justify-center" style={{ height: CHART_HEIGHT, maxHeight: CHART_HEIGHT }}>
                   {i === maxIndex ? (
                     <span className="absolute text-[11px] font-bold text-ink tabular" style={{ bottom: h + 6 }}>
@@ -46,8 +46,8 @@ export function LearningChart({ stats }: { stats: LearningStats }) {
                     )}
                     style={{ height: h, animationDelay: `${120 + i * 60}ms` }}
                   />
-                  {/* Tooltip la hover */}
-                  <span className="pointer-events-none absolute bottom-full z-10 mb-1 rounded-md bg-night px-2 py-1 text-[11px] font-semibold whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+                  {/* Tooltip la hover; pe ecranele tactile apare la atingere (li primește focus) */}
+                  <span className="pointer-events-none absolute bottom-full z-10 mb-1 rounded-md bg-night px-2 py-1 text-[11px] font-semibold whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus:opacity-100">
                     {d.minutes > 0 ? formatDuration(d.minutes) : "0 min"}
                   </span>
                 </div>

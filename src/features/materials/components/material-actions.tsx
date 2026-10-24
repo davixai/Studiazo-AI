@@ -7,7 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SubmitButton } from "@/features/auth/components/form-parts";
-import { initialFormState, type FormState } from "@/features/auth/schemas";
+import { initialFormState, type FormState } from "@/features/auth/constants";
 import { cn } from "@/lib/utils";
 import { deleteMaterial, retryProcessing, setStudied } from "../actions";
 

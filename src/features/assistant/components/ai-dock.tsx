@@ -8,7 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ProposalCard } from "@/features/proposals/components/proposal-card";
 import { createQuiz } from "@/features/quizzes/actions";
-import { AI_LIMITS } from "@/lib/contracts/ai-tools";
+import { AI_LIMITS } from "@/lib/contracts/ai-limits";
 import type { Subject } from "@/lib/contracts/domain";
 import type { Proposal } from "@/lib/contracts/proposals";
 import { cn } from "@/lib/utils";

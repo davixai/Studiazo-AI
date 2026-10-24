@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/category";
-import { initialFormState } from "@/features/auth/schemas";
+import { initialFormState } from "@/features/auth/constants";
 import type { Subject } from "@/lib/contracts/domain";
 import { restoreSubject } from "../actions";
 

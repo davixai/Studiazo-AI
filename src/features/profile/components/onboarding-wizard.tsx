@@ -10,7 +10,7 @@ import { Input, Select } from "@/components/ui/field";
 import { TimeInput } from "@/components/ui/time-input";
 import { Spinner } from "@/components/ui/spinner";
 import { SquareLoader } from "@/components/ui/square-loader";
-import { initialFormState, type FormState } from "@/features/auth/schemas";
+import { initialFormState, type FormState } from "@/features/auth/constants";
 import { EVENT_KIND_LABELS, type Profile } from "@/lib/contracts/domain";
 import { formatDateLong } from "@/lib/time/format";
 import { fromLocal, toDateKey } from "@/lib/time/zone";

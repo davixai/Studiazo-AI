@@ -8,7 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { UploadQueue, useUploadQueue } from "@/features/materials/components/upload-queue";
-import { DOCUMENT_ACCEPT, documentKindOf, titleFromFileName } from "@/features/materials/schemas";
+import { DOCUMENT_ACCEPT, documentKindOf, titleFromFileName } from "@/features/materials/files";
 import { ProposalCard } from "@/features/proposals/components/proposal-card";
 import { createQuiz } from "@/features/quizzes/actions";
 import type { Subject } from "@/lib/contracts/domain";

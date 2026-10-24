@@ -4,13 +4,13 @@ import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Field, Input, Select, describedBy } from "@/components/ui/field";
 import { SubmitButton } from "@/features/auth/components/form-parts";
-import { initialFormState, type FormState } from "@/features/auth/schemas";
+import { initialFormState, type FormState } from "@/features/auth/constants";
 import { PREFERRED_TIMES, PREFERRED_TIME_LABELS, type PreferredTime, type Profile } from "@/lib/contracts/domain";
 import { IASI_UNIVERSITIES } from "@/lib/iasi";
 import { formatDuration } from "@/lib/time/format";
 import { cn } from "@/lib/utils";
 import { completeOnboarding, saveProfile } from "../actions";
-import { DAILY_LIMIT_OPTIONS, SESSION_LENGTH_OPTIONS } from "../schemas";
+import { DAILY_LIMIT_OPTIONS, SESSION_LENGTH_OPTIONS } from "../constants";
 
 type ProfileFormProps = {
   profile: Profile;

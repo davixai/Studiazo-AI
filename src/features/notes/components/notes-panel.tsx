@@ -9,12 +9,12 @@ import { Dialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Input, Textarea, describedBy } from "@/components/ui/field";
 import { SubmitButton } from "@/features/auth/components/form-parts";
-import { initialFormState, type FormState } from "@/features/auth/schemas";
+import { initialFormState, type FormState } from "@/features/auth/constants";
 import { countLabel } from "@/features/subjects/format";
 import { cn } from "@/lib/utils";
 import { deleteNote, saveNote } from "../actions";
 import { formatCount } from "../format";
-import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from "../schemas";
+import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from "../constants";
 import type { Note } from "../types";
 
 /** Notița, cu data relativă calculată pe server (evită diferențele de randare server/browser). */

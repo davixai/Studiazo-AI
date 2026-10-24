@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { SUBJECT_COLORS, type SubjectColor } from "@/lib/contracts/domain";
+import { SUBJECT_COLORS } from "@/lib/contracts/domain";
+import { SUBJECT_NAME_MAX } from "./constants";
 
-export const SUBJECT_NAME_MAX = 120;
+export * from "./constants";
 
 export const SubjectFormSchema = z.object({
   name: z
@@ -21,13 +22,3 @@ export type SubjectFormValues = z.infer<typeof SubjectFormSchema>;
 
 /** Id-ul unei materii primit din formular sau din URL (validat înainte de orice interogare). */
 export const SubjectIdSchema = z.uuid();
-
-export const SUBJECT_COLOR_LABELS: Record<SubjectColor, string> = {
-  blue: "Albastru",
-  teal: "Turcoaz",
-  green: "Verde",
-  amber: "Chihlimbar",
-  rose: "Roz",
-  violet: "Violet",
-  slate: "Gri",
-};

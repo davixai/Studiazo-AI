@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Field, Input, describedBy } from "@/components/ui/field";
 import { signIn } from "../actions";
-import { initialFormState } from "../schemas";
+import { initialFormState } from "../constants";
 import { PasswordInput, SubmitButton } from "./form-parts";
 
 export function SignInForm({ next, email, linkError }: { next?: string; email?: string; linkError?: boolean }) {

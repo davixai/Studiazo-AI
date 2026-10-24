@@ -21,7 +21,7 @@ import { formatDayLong, formatDuration } from "@/lib/time/format";
 import { dayBounds, toDateKey, toTimeOfDay } from "@/lib/time/zone";
 import { deleteEvent, saveEvent, setEventCompleted } from "../actions";
 import { KindPicker } from "./kind-picker";
-import { initialEventFormState, type ActionResult, type EventFormState } from "../schemas";
+import { initialEventFormState, type ActionResult, type EventFormState } from "../constants";
 
 type EventDialogProps = {
   /** null = activitate nouă. */

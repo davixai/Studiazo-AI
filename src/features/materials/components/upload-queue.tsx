@@ -8,7 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { discardUpload, finishUpload, startUpload } from "../actions";
 import { formatBytes } from "../format";
-import { checkFile, hasSignatureFor, KIND_LABEL, KIND_MIME, titleFromFileName, type DocumentKind, type MaterialKind } from "../schemas";
+import { checkFile, hasSignatureFor, KIND_LABEL, KIND_MIME, titleFromFileName, type DocumentKind, type MaterialKind } from "../files";
 import { readHead, uploadToSignedUrl, UploadError } from "../upload-client";
 
 type Phase = "waiting" | "preparing" | "uploading" | "processing" | "done" | "error";

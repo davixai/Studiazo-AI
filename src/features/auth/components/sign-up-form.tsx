@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/ui/button";
 import { Field, Input, describedBy } from "@/components/ui/field";
 import { signUp } from "../actions";
-import { PASSWORD_MIN, initialFormState } from "../schemas";
+import { PASSWORD_MIN, initialFormState } from "../constants";
 import { PasswordInput, SubmitButton } from "./form-parts";
 
 export function SignUpForm() {

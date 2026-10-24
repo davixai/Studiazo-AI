@@ -8,11 +8,11 @@ import { SUBJECT_COLOR_CLASSES } from "@/components/ui/category";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, describedBy } from "@/components/ui/field";
 import { SubmitButton } from "@/features/auth/components/form-parts";
-import { initialFormState, type FormState } from "@/features/auth/schemas";
+import { initialFormState, type FormState } from "@/features/auth/constants";
 import { SUBJECT_COLORS, type Subject, type SubjectColor } from "@/lib/contracts/domain";
 import { cn } from "@/lib/utils";
 import { createSubject, updateSubject } from "../actions";
-import { SUBJECT_COLOR_LABELS, SUBJECT_NAME_MAX } from "../schemas";
+import { SUBJECT_COLOR_LABELS, SUBJECT_NAME_MAX } from "../constants";
 
 type SubjectDialogProps =
   | { mode: "create"; defaultColor: SubjectColor }

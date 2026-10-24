@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { PASSWORD_MIN } from "./constants";
 
-export const PASSWORD_MIN = 8;
+export * from "./constants";
 
 const email = z.string().trim().toLowerCase().email("Introdu o adresă de email validă.").max(254);
 const password = z
@@ -24,19 +25,6 @@ export const RecoverSchema = z.object({ email });
 export const NewPasswordSchema = z
   .object({ password, confirm: z.string() })
   .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Parolele nu coincid." });
-
-/** Starea comună a formularelor (folosită cu useActionState). */
-export type FormState = {
-  status: "idle" | "error" | "success";
-  message?: string;
-  /** La înregistrare: emailul are deja cont → formularul arată „Intră în cont” / „Resetează parola”. */
-  accountExists?: boolean;
-  fieldErrors?: Record<string, string>;
-  /** Valorile trimise, ca formularul să nu se golească la eroare (fără parole). */
-  values?: Record<string, string>;
-};
-
-export const initialFormState: FormState = { status: "idle" };
 
 export function fieldErrorsFrom(error: z.ZodError): Record<string, string> {
   const result: Record<string, string> = {};

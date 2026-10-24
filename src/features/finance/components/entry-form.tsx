@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { describedBy, Field, Input, Select } from "@/components/ui/field";
-import { initialFormState, type FormState } from "@/features/auth/schemas";
+import { initialFormState, type FormState } from "@/features/auth/constants";
 import { cn } from "@/lib/utils";
 import { addEntry } from "../actions";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, type FinanceKind } from "../categories";

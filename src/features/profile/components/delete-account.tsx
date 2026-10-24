@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, describedBy } from "@/components/ui/field";
 import { SubmitButton } from "@/features/auth/components/form-parts";
-import { initialFormState } from "@/features/auth/schemas";
+import { initialFormState } from "@/features/auth/constants";
 import { deleteAccount } from "../actions";
-import { DELETE_CONFIRMATION } from "../schemas";
+import { DELETE_CONFIRMATION } from "../constants";
 
 export function DeleteAccount() {
   const [open, setOpen] = useState(false);

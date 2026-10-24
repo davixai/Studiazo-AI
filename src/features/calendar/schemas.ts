@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { EVENT_KINDS, RECURRENCE_KINDS, TASK_KINDS, type TaskKind } from "@/lib/contracts/domain";
+import { EVENT_KINDS, RECURRENCE_KINDS, TASK_KINDS } from "@/lib/contracts/domain";
 import { isDateKey, isTimeOfDay } from "@/lib/time/zone";
+
+export * from "./constants";
 
 const optionalText = (max: number) =>
   z
@@ -54,19 +56,6 @@ export function safeReturn(value: string | undefined) {
   return value && /^\/(calendar|azi)(\?[a-z]+=[\w-]+(&[a-z]+=[\w-]+)*)?$/.test(value) ? value : "/calendar";
 }
 
-/** Starea formularului de activitate. `warning` = se suprapune; studentul poate salva totuși. */
-export type EventFormState = {
-  status: "idle" | "error" | "warning";
-  message?: string;
-  fieldErrors?: Record<string, string>;
-  conflicts?: string[];
-  values?: Record<string, string>;
-};
-
-export const initialEventFormState: EventFormState = { status: "idle" };
-
-export type ActionResult = { ok: true } | { ok: false; message: string };
-
 const optionalMinutes = (min: number, max: number, message: string) =>
   z.preprocess(emptyToNull, z.coerce.number().int().min(min, message).max(max, message).nullable());
 
@@ -85,11 +74,5 @@ export const TaskFormSchema = z.object({
 
 export type TaskFormValues = z.infer<typeof TaskFormSchema>;
 
-/** Probele (examen, colocviu, test) au durată și loc; temele și proiectele au doar termen. */
-export const TIMED_TASK_KINDS: readonly TaskKind[] = ["examen", "colocviu", "test"];
-
 export const IdSchema = z.object({ id: z.uuid(), returnTo });
 export const CompleteTaskSchema = z.object({ id: z.uuid(), completed: z.boolean(), returnTo });
-
-export type TaskFormState = Omit<EventFormState, "conflicts" | "status"> & { status: "idle" | "error" };
-export const initialTaskFormState: TaskFormState = { status: "idle" };

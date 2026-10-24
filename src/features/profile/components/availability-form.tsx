@@ -4,12 +4,12 @@ import { useActionState, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { TimeInput } from "@/components/ui/time-input";
 import { SubmitButton } from "@/features/auth/components/form-parts";
-import { initialFormState, type FormState } from "@/features/auth/schemas";
+import { initialFormState, type FormState } from "@/features/auth/constants";
 import type { AvailabilityWindow } from "@/lib/contracts/domain";
 import { DEFAULT_AVAILABILITY } from "@/lib/time/slots";
 import { cn } from "@/lib/utils";
 import { saveAvailability } from "../actions";
-import { WEEKDAY_LABELS } from "../schemas";
+import { WEEKDAY_LABELS } from "../constants";
 
 type AvailabilityFormProps = { availability: AvailabilityWindow[] };
 

@@ -104,7 +104,7 @@ export function TrendChart({ points, month }: { points: TrendPoint[]; month: str
           {points.map((p, i) => {
             const current = p.month === month;
             return (
-              <li key={p.month} className="group relative flex flex-col items-center">
+              <li key={p.month} tabIndex={-1} className="group relative flex flex-col items-center outline-none">
                 <div className="relative flex w-full items-end justify-center gap-0.5" style={{ height: CHART_HEIGHT }}>
                   <span
                     className="w-3 origin-bottom animate-grow-y rounded-t-[4px] bg-viz-income transition-[filter] group-hover:brightness-110 sm:w-4"
@@ -117,7 +117,7 @@ export function TrendChart({ points, month }: { points: TrendPoint[]; month: str
                   {/* Eticheta primei și ultimei luni se aliniază la margine, ca să nu iasă din ecran pe telefon. */}
                   <span
                     className={cn(
-                      "pointer-events-none absolute bottom-full z-10 mb-1 rounded-md bg-night px-2.5 py-1.5 text-[11px] whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100",
+                      "pointer-events-none absolute bottom-full z-10 mb-1 rounded-md bg-night px-2.5 py-1.5 text-[11px] whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus:opacity-100",
                       i === 0 && "left-0",
                       i === points.length - 1 && "right-0",
                     )}

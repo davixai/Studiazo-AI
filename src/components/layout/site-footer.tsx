@@ -57,7 +57,8 @@ export function SiteFooter() {
   return (
     <footer className="mt-16 border-t border-line bg-surface/40 backdrop-blur-sm lg:mt-20">
       <div className="mx-auto w-full max-w-6xl px-4 pt-10 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pt-12 lg:pb-10">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_repeat(4,1fr)] lg:gap-8">
+        {/* Pe un rând doar de la xl: la 1024px, lângă meniul lateral, prima coloană ar fi prea îngustă pentru „Suport online”. */}
+        <div className="grid gap-10 xl:grid-cols-[1.2fr_repeat(4,1fr)] xl:gap-8">
           <div className="flex flex-col items-start gap-4">
             <Logo />
             <p className="max-w-xs text-[14px] leading-6 text-ink-muted">
@@ -74,7 +75,7 @@ export function SiteFooter() {
             <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />
           </div>
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:col-span-4">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 xl:col-span-4">
             {COLUMNS.map((col) => (
               <nav key={col.title} aria-label={col.title}>
                 <h2 className="mb-3 text-[15px] font-semibold text-accent-ink">{col.title}</h2>
@@ -117,7 +118,7 @@ export function SiteFooter() {
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="inline-flex h-9 items-center gap-1.5 self-start rounded-full border border-line px-3.5 text-[13px] font-medium text-ink-muted transition-colors hover:border-accent-line hover:text-ink sm:self-auto"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 self-start rounded-full border border-line px-3.5 whitespace-nowrap text-[13px] font-medium text-ink-muted transition-colors hover:border-accent-line hover:text-ink sm:self-auto"
           >
             <ArrowUp className="size-4" aria-hidden="true" />
             Înapoi sus

@@ -70,36 +70,33 @@ export default async function SubjectsPage() {
             />
           </section>
 
-          {/* Rândul 2: activitatea pe săptămâni și ce ai adăugat recent. */}
+          {/* Rândul 2: activitatea pe săptămâni, ce ai adăugat recent și distribuția conținutului (max. 5 materii).
+              Pe ecran lat stau toate trei pe un rând; pe laptop mic, graficul pe tot rândul și panourile sub el. */}
           <div className="grid gap-4 lg:grid-cols-12 lg:gap-5">
-            <ActivityPanel weeks={activityWeeks} labels={weekLabels} index={4} className="lg:col-span-8" />
+            <ActivityPanel weeks={activityWeeks} labels={weekLabels} index={4} className="lg:col-span-12 xl:col-span-6" />
             <RecentPanel
               index={5}
-              className="lg:col-span-4"
+              className="min-w-0 lg:col-span-6 xl:col-span-3"
               items={overview.recent.map((r) => ({ ...r, label: formatRelativeTime(new Date(r.at), now) }))}
             />
+            <ContentPanel subjects={subjects} index={6} className="min-w-0 lg:col-span-6 xl:col-span-3" />
           </div>
 
-          {/* Rândul 3: materiile și distribuția conținutului. */}
-          <div className="grid gap-6 lg:grid-cols-12 lg:gap-5">
-            <section aria-labelledby="materiile-tale" className="flex min-w-0 flex-col gap-3 lg:col-span-8">
-              <h2 id="materiile-tale" className="flex items-baseline gap-2 text-[15px] font-bold tracking-[-0.015em] text-ink">
-                Materiile tale
-                <span className="text-[13px] font-medium text-ink-muted tabular">{subjects.length}</span>
-              </h2>
-              <ul className="grid gap-4 sm:grid-cols-2">
-                {subjects.map((subject, i) => (
-                  // `stagger` pe <li> și `lift` pe card: ambele animă transform, deci stau pe elemente diferite.
-                  <li key={subject.id} className="stagger" style={delay(Math.min(i + 6, 12))}>
-                    <SubjectCard subject={subject} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <div className="min-w-0 lg:col-span-4 lg:pt-8">
-              <ContentPanel subjects={subjects} index={6} />
-            </div>
-          </div>
+          {/* Rândul 3: materiile, pe toată lățimea (o listă lungă nu mai lasă un gol în dreapta). */}
+          <section aria-labelledby="materiile-tale" className="flex min-w-0 flex-col gap-3">
+            <h2 id="materiile-tale" className="flex items-baseline gap-2 text-[15px] font-bold tracking-[-0.015em] text-ink">
+              Materiile tale
+              <span className="text-[13px] font-medium text-ink-muted tabular">{subjects.length}</span>
+            </h2>
+            <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {subjects.map((subject, i) => (
+                // `stagger` pe <li> și `lift` pe card: ambele animă transform, deci stau pe elemente diferite.
+                <li key={subject.id} className="stagger" style={delay(Math.min(i + 7, 12))}>
+                  <SubjectCard subject={subject} />
+                </li>
+              ))}
+            </ul>
+          </section>
         </>
       )}
 

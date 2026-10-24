@@ -163,15 +163,31 @@ export const classroom = {
     listAll<GSubmission>(token, `${CLASSROOM}/courses/${id(courseId)}/courseWork/-/studentSubmissions?userId=me`, "studentSubmissions"),
 };
 
-export type DriveFile = { id: string; name: string; mimeType: string; size?: string };
+export type DriveFile = { id: string; name: string; mimeType: string; size?: string; thumbnailLink?: string };
+
+/** Latura cea mai mare a pozelor convertite de Google (destul de clară pentru citit o tablă sau o pagină). */
+const IMAGE_SIDE = 2000;
 
 export const drive = {
   meta: (token: string, fileId: string) =>
-    getJson<DriveFile>(token, `${DRIVE}/files/${id(fileId)}?fields=id,name,mimeType,size&supportsAllDrives=true`),
-  async bytes(token: string, fileId: string, exportAsPdf: boolean): Promise<Uint8Array> {
-    const url = exportAsPdf
-      ? `${DRIVE}/files/${id(fileId)}/export?mimeType=application%2Fpdf`
-      : `${DRIVE}/files/${id(fileId)}?alt=media&supportsAllDrives=true`;
+    getJson<DriveFile>(token, `${DRIVE}/files/${id(fileId)}?fields=id,name,mimeType,size,thumbnailLink&supportsAllDrives=true`),
+  /** Conținutul unui folder (fără coșul de gunoi). */
+  children(token: string, folderId: string) {
+    const q = encodeURIComponent(`'${folderId.replace(/[^A-Za-z0-9_-]/g, "")}' in parents and trashed = false`);
+    return listAll<DriveFile>(
+      token,
+      `${DRIVE}/files?q=${q}&fields=nextPageToken,files(id,name,mimeType)&supportsAllDrives=true&includeItemsFromAllDrives=true`,
+      "files",
+    );
+  },
+  async bytes(token: string, file: DriveFile, via: "direct" | "pdf" | "jpeg"): Promise<Uint8Array> {
+    let url = `${DRIVE}/files/${id(file.id)}?alt=media&supportsAllDrives=true`;
+    if (via === "pdf") url = `${DRIVE}/files/${id(file.id)}/export?mimeType=application%2Fpdf`;
+    if (via === "jpeg") {
+      // Miniatura Google la rezoluție mare, cerută ca JPEG („-rj”): PNG, WebP, HEIC… fără conversie pe serverul nostru.
+      if (!file.thumbnailLink?.startsWith("https://")) throw new GoogleError(415, "noThumbnail");
+      url = file.thumbnailLink.replace(/=s\d+[^/]*$/, "") + `=s${IMAGE_SIDE}-rj`;
+    }
     return new Uint8Array(await (await call(token, url)).arrayBuffer());
   },
 };

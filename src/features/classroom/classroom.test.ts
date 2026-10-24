@@ -73,12 +73,24 @@ describe("courseNote", () => {
 });
 
 describe("downloadPlan", () => {
-  it("PDF direct, documente Google exportate, Office sărit", () => {
-    expect(downloadPlan("application/pdf")).toEqual({ kind: "pdf", export: false });
-    expect(downloadPlan("application/vnd.google-apps.presentation")).toEqual({ kind: "pdf", export: true });
-    expect(downloadPlan("image/jpeg")).toEqual({ kind: "image", export: false });
-    expect(downloadPlan("application/vnd.openxmlformats-officedocument.wordprocessingml.document")).toBeNull();
-    expect(unsupportedMessage("Curs.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")).toContain("PDF");
+  it("PDF, Word, PowerPoint și text direct; documente Google exportate ca PDF", () => {
+    expect(downloadPlan("application/pdf")).toEqual({ kind: "pdf", via: "direct" });
+    expect(downloadPlan("application/vnd.google-apps.presentation")).toEqual({ kind: "pdf", via: "pdf" });
+    expect(downloadPlan("application/vnd.google-apps.drawing")).toEqual({ kind: "pdf", via: "pdf" });
+    expect(downloadPlan("application/vnd.openxmlformats-officedocument.wordprocessingml.document")).toEqual({ kind: "docx", via: "direct" });
+    expect(downloadPlan("application/vnd.openxmlformats-officedocument.presentationml.presentation")).toEqual({ kind: "pptx", via: "direct" });
+    expect(downloadPlan("text/markdown")).toEqual({ kind: "txt", via: "direct" });
+  });
+  it("pozele JPEG direct, celelalte convertite de Google", () => {
+    expect(downloadPlan("image/jpeg")).toEqual({ kind: "image", via: "direct" });
+    expect(downloadPlan("image/png")).toEqual({ kind: "image", via: "jpeg" });
+    expect(downloadPlan("image/heic")).toEqual({ kind: "image", via: "jpeg" });
+  });
+  it("formatele necunoscute sunt sărite cu un mesaj clar", () => {
+    expect(downloadPlan("application/msword")).toBeNull();
+    expect(downloadPlan("video/mp4")).toBeNull();
+    expect(unsupportedMessage("Curs.doc", "application/msword")).toContain("PDF");
+    expect(unsupportedMessage("Lab.mp4", "video/mp4")).toContain("Classroom");
   });
 });
 

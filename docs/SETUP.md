@@ -58,7 +58,7 @@ git push -u origin main
 
 ## 3b. Google Classroom (opțional)
 
-Pagina `/classroom` importă cursurile (→ materii), temele cu termen (→ teme în calendar), PDF-urile și Google Docs/Slides/Sheets (→ materiale, exportate ca PDF) și anunțurile (→ o notiță „Din Google Classroom” pe materie). Accesul e doar de citire; tokenul Google stă într-un cookie httpOnly, legat de contul Studiazo, și expiră după ~1 oră. Nu salvăm refresh token.
+Pagina `/classroom` importă cursurile (→ materii), temele cu termen (→ teme în calendar), fișierele atașate (→ materiale: PDF, Word, PowerPoint și text direct; Google Docs/Slides/Sheets/Drawings exportate ca PDF; pozele PNG/WebP/HEIC convertite în JPEG de Google; folderele Drive deschise cu tot conținutul, max. 200 de fișiere pe curs) și anunțurile (→ o notiță „Din Google Classroom” pe materie). Accesul e doar de citire; tokenul Google stă într-un cookie httpOnly, legat de contul Studiazo, și expiră după ~1 oră. Nu salvăm refresh token.
 
 1. [console.cloud.google.com](https://console.cloud.google.com) → proiect nou `studiazo`.
 2. *APIs & Services → Library*: activați **Google Classroom API** și **Google Drive API**.

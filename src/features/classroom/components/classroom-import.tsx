@@ -10,7 +10,13 @@ import { IconBadge } from "@/components/ui/icon-badge";
 import { Spinner } from "@/components/ui/spinner";
 import { countLabel } from "@/features/subjects/format";
 import { cn } from "@/lib/utils";
-import { disconnectClassroom, importCourse, importFile, loadCourses, type ClassroomCourse } from "../actions";
+import { disconnectClassroom, importCourse, importFile, listCourseFiles, loadCourses, type ClassroomCourse } from "../actions";
+import { MAX_FILES_PER_COURSE, type ImportableFile } from "../mapping";
+
+/** Lista de fișiere a unei clase: se încarcă doar când studentul o deschide. */
+type FileList = { state: "incarca" } | { state: "gata"; files: ImportableFile[] } | { state: "eroare"; message: string };
+
+const FROM_LABEL: Record<ImportableFile["from"], string> = { curs: "Material", tema: "Temă", anunt: "Anunț" };
 
 const CALLBACK_ERRORS: Record<string, string> = {
   refuzat: "Nu ai permis accesul. Fără el nu putem citi cursurile din Classroom.",
@@ -36,12 +42,25 @@ const EMPTY: Progress = { phase: "asteapta", tasksAdded: 0, noteSaved: false, fi
 export function ClassroomImport({ connected: initiallyConnected, error }: { connected: boolean; error: string | null }) {
   const [connected, setConnected] = useState(initiallyConnected);
   const [authMessage, setAuthMessage] = useState<string | null>(error ? (CALLBACK_ERRORS[error] ?? CALLBACK_ERRORS.schimb) : null);
+  // Din meniu, fără conexiune și fără o eroare de arătat: mergem direct la Google.
+  const [redirecting] = useState(!initiallyConnected && !error);
+
+  useEffect(() => {
+    if (redirecting) window.location.replace("/api/classroom/connect");
+  }, [redirecting]);
 
   const needsAuth = useCallback((message: string) => {
     setConnected(false);
     setAuthMessage(message);
   }, []);
 
+  if (!connected && redirecting && !authMessage) {
+    return (
+      <Card className="flex items-center gap-3 p-6 text-sm text-ink-muted" role="status">
+        <Spinner /> Te duc la Google ca să te conectezi cu contul tău…
+      </Card>
+    );
+  }
   if (!connected) return <ConnectCard message={authMessage} />;
   return <CourseImporter onNeedsAuth={needsAuth} />;
 }
@@ -66,7 +85,7 @@ function ConnectCard({ message }: { message: string | null }) {
             {[
               [BookOpen, "Cursurile devin materii"],
               [CalendarCheck2, "Temele cu termen intră în calendar"],
-              [FileText, "PDF-urile și Google Docs devin materiale"],
+              [FileText, "PDF, Word, PowerPoint, Docs, poze și foldere devin materiale"],
               [Megaphone, "Anunțurile se salvează ca notiță"],
             ].map(([Icon, label]) => {
               const I = Icon as typeof BookOpen;
@@ -104,8 +123,39 @@ function CourseImporter({ onNeedsAuth }: { onNeedsAuth: (message: string) => voi
   const [progress, setProgress] = useState<Record<string, Progress>>({});
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [fileLists, setFileLists] = useState<Record<string, FileList>>({});
+  // Alegerea fișierelor, pe clasă; o clasă fără alegere își importă toate fișierele.
+  const [fileChoice, setFileChoice] = useState<Record<string, Set<string>>>({});
 
   const [attempt, setAttempt] = useState(0);
+
+  async function openFiles(courseId: string) {
+    if (fileLists[courseId]?.state === "gata" || fileLists[courseId]?.state === "incarca") return;
+    setFileLists((l) => ({ ...l, [courseId]: { state: "incarca" } }));
+    const result = await listCourseFiles(courseId);
+    if (!result.ok) {
+      if (result.reason === "auth") return onNeedsAuth(result.message);
+      setFileLists((l) => ({ ...l, [courseId]: { state: "eroare", message: result.message } }));
+      return;
+    }
+    setFileLists((l) => ({ ...l, [courseId]: { state: "gata", files: result.files } }));
+    setFileChoice((c) => (c[courseId] ? c : { ...c, [courseId]: new Set(result.files.map((f) => f.id)) }));
+  }
+
+  function toggleFile(courseId: string, fileId: string) {
+    setFileChoice((c) => {
+      const next = new Set(c[courseId]);
+      if (next.has(fileId)) next.delete(fileId);
+      else next.add(fileId);
+      return { ...c, [courseId]: next };
+    });
+  }
+
+  function setAllFiles(courseId: string, on: boolean) {
+    const list = fileLists[courseId];
+    if (list?.state !== "gata") return;
+    setFileChoice((c) => ({ ...c, [courseId]: new Set(on ? list.files.map((f) => f.id) : []) }));
+  }
 
   useEffect(() => {
     let active = true;
@@ -148,7 +198,8 @@ function CourseImporter({ onNeedsAuth }: { onNeedsAuth: (message: string) => voi
 
     for (const [i, course] of queue.entries()) {
       update(course.id, { phase: "lucru" });
-      const result = await importCourse({ courseId: course.id, colorIndex: i });
+      const choice = fileChoice[course.id];
+      const result = await importCourse({ courseId: course.id, colorIndex: i, fileIds: choice ? [...choice] : undefined });
       if (!result.ok) {
         if (result.reason === "auth") return onNeedsAuth(result.message);
         update(course.id, { phase: "eroare", error: result.message });
@@ -163,14 +214,31 @@ function CourseImporter({ onNeedsAuth }: { onNeedsAuth: (message: string) => voi
 
       let imported = 0;
       const skipped: string[] = [];
-      for (const [n, file] of result.files.entries()) {
+      // Coada crește când un fișier e folder: conținutul lui se adaugă la final (fără repetări, cu limită).
+      const files = [...result.files];
+      const seen = new Set(files.map((f) => f.id));
+      let folders = 0;
+      for (let n = 0; n < files.length; n++) {
+        const file = files[n];
         const r = await importFile({ subjectId: result.subjectId, fileId: file.id, title: file.title });
         if (!r.ok) {
           if (r.reason === "auth") return onNeedsAuth(r.message);
           skipped.push(r.message);
+        } else if (r.status === "folder") {
+          folders++;
+          for (const child of r.files) {
+            if (seen.has(child.id) || files.length >= MAX_FILES_PER_COURSE) continue;
+            seen.add(child.id);
+            files.push(child);
+          }
         } else if (r.status === "importat") imported++;
         else if (r.status === "sarit" && r.message) skipped.push(r.message);
-        update(course.id, { filesDone: n + 1, filesImported: imported, skipped: [...skipped] });
+        update(course.id, {
+          filesDone: n + 1 - folders,
+          filesTotal: files.length - folders,
+          filesImported: imported,
+          skipped: [...skipped],
+        });
       }
       update(course.id, { phase: "gata" });
     }
@@ -270,6 +338,11 @@ function CourseImporter({ onNeedsAuth }: { onNeedsAuth: (message: string) => voi
                 disabled={running}
                 onToggle={() => toggle(course.id)}
                 progress={progress[course.id]}
+                files={fileLists[course.id]}
+                chosen={fileChoice[course.id]}
+                onOpenFiles={() => void openFiles(course.id)}
+                onToggleFile={(fileId) => toggleFile(course.id, fileId)}
+                onSetAllFiles={(on) => setAllFiles(course.id, on)}
               />
             ))}
           </ul>
@@ -288,6 +361,11 @@ function CourseRow({
   disabled,
   onToggle,
   progress,
+  files,
+  chosen,
+  onOpenFiles,
+  onToggleFile,
+  onSetAllFiles,
 }: {
   course: ClassroomCourse;
   index: number;
@@ -295,8 +373,20 @@ function CourseRow({
   disabled: boolean;
   onToggle: () => void;
   progress?: Progress;
+  files?: FileList;
+  chosen?: Set<string>;
+  onOpenFiles: () => void;
+  onToggleFile: (fileId: string) => void;
+  onSetAllFiles: (on: boolean) => void;
 }) {
   const inputId = `curs-${course.id}`;
+  const [open, setOpen] = useState(false);
+  const showPicker = open && checked && (!progress || progress.phase === "asteapta");
+
+  function toggleOpen() {
+    if (!open) onOpenFiles();
+    setOpen((o) => !o);
+  }
   const pct = progress && progress.filesTotal > 0 ? Math.round((progress.filesDone / progress.filesTotal) * 100) : progress?.phase === "gata" ? 100 : 0;
 
   return (
@@ -317,6 +407,21 @@ function CourseRow({
         </label>
         <StatusBadge course={course} progress={progress} />
       </div>
+
+      {checked && !disabled && (!progress || progress.phase === "asteapta") ? (
+        <div className="mt-2 pl-[30px] sm:pl-[74px]">
+          <button
+            type="button"
+            onClick={toggleOpen}
+            aria-expanded={open}
+            className="inline-flex items-center gap-1.5 rounded-sm text-[13px] font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <FileText className="size-4" aria-hidden="true" />
+            {open ? "Ascunde fișierele" : chosen && files?.state === "gata" ? `Fișiere alese: ${chosen.size} din ${files.files.length}` : "Alege fișierele"}
+          </button>
+          {showPicker ? <FilePicker files={files} chosen={chosen} onToggleFile={onToggleFile} onSetAll={onSetAllFiles} /> : null}
+        </div>
+      ) : null}
 
       {progress && progress.phase !== "asteapta" ? (
         <div className="mt-3 pl-[30px] sm:pl-[74px]">
@@ -348,6 +453,64 @@ function CourseRow({
         </div>
       ) : null}
     </li>
+  );
+}
+
+function FilePicker({
+  files,
+  chosen,
+  onToggleFile,
+  onSetAll,
+}: {
+  files?: FileList;
+  chosen?: Set<string>;
+  onToggleFile: (fileId: string) => void;
+  onSetAll: (on: boolean) => void;
+}) {
+  if (!files || files.state === "incarca") {
+    return (
+      <p className="mt-2 flex items-center gap-2 text-[13px] text-ink-muted">
+        <Spinner className="size-3.5" /> Citesc fișierele clasei…
+      </p>
+    );
+  }
+  if (files.state === "eroare") return <p className="mt-2 text-[13px] text-danger">{files.message}</p>;
+  if (files.files.length === 0) {
+    return <p className="mt-2 text-[13px] text-ink-muted">Clasa nu are fișiere atașate. Se importă temele și anunțurile.</p>;
+  }
+
+  const all = chosen?.size === files.files.length;
+  return (
+    <div className="mt-2 rounded-md border border-line bg-surface-sunken/50 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2 text-[12px] text-ink-muted">
+        <span>
+          {chosen?.size ?? 0} din {files.files.length} alese · folderele se importă cu tot conținutul
+        </span>
+        <button type="button" onClick={() => onSetAll(!all)} className="font-semibold text-accent hover:underline">
+          {all ? "Debifează tot" : "Bifează tot"}
+        </button>
+      </div>
+      <ul className="max-h-64 space-y-1 overflow-y-auto">
+        {files.files.map((f) => {
+          const id = `fisier-${f.id}`;
+          return (
+            <li key={f.id} className="flex items-center gap-2.5 rounded-sm px-1 py-1 hover:bg-surface">
+              <input
+                id={id}
+                type="checkbox"
+                checked={chosen?.has(f.id) ?? false}
+                onChange={() => onToggleFile(f.id)}
+                className="size-4 shrink-0 cursor-pointer rounded accent-accent"
+              />
+              <label htmlFor={id} className="min-w-0 flex-1 cursor-pointer truncate text-[13px] text-ink">
+                {f.title}
+              </label>
+              <span className="shrink-0 text-[11px] text-ink-muted">{FROM_LABEL[f.from]}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

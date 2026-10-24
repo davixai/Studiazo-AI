@@ -1,3 +1,4 @@
+import { KIND_MIME, PDF_MIME, type MaterialKind } from "@/features/materials/schemas";
 import { SUBJECT_COLORS, type SubjectColor, type TaskKind } from "@/lib/contracts/domain";
 import { fromLocal } from "@/lib/time/zone";
 
@@ -34,6 +35,8 @@ export type GSubmission = { courseWorkId?: string; state?: string };
 export type ImportableFile = { id: string; title: string; from: "curs" | "tema" | "anunt" };
 
 export const NOTE_TITLE = "Din Google Classroom";
+/** Câte fișiere se preiau dintr-un curs, inclusiv cele din folderele atașate. */
+export const MAX_FILES_PER_COURSE = 200;
 const NOTE_MAX = 50_000;
 const TASK_NOTES_MAX = 4_000;
 const TITLE_MAX = 160;
@@ -161,26 +164,41 @@ export function courseNote(course: GCourse, announcements: GPost[], materials: G
   return clip([header, ...blocks].join("\n\n"), NOTE_MAX);
 }
 
-/** Cum se descarcă un fișier Drive ca material: PDF direct, documente Google exportate ca PDF, poze JPEG. */
-export type DownloadPlan = { kind: "pdf" | "image"; export: boolean };
+export const FOLDER_MIME = "application/vnd.google-apps.folder";
+
+/**
+ * Cum se descarcă un fișier Drive ca material:
+ * - `direct`: fișierul așa cum e (PDF, Word, PowerPoint, text, poze JPEG);
+ * - `pdf`: documentele Google exportate ca PDF;
+ * - `jpeg`: celelalte poze (PNG, WebP, HEIC…), luate de la Google deja convertite în JPEG.
+ */
+export type DownloadPlan = { kind: MaterialKind; via: "direct" | "pdf" | "jpeg" };
 
 const GOOGLE_EXPORTABLE = new Set([
   "application/vnd.google-apps.document",
   "application/vnd.google-apps.presentation",
   "application/vnd.google-apps.spreadsheet",
+  "application/vnd.google-apps.drawing",
 ]);
 
+const TEXT_MIMES = new Set(["text/plain", "text/markdown", "text/csv"]);
+
 export function downloadPlan(mimeType: string): DownloadPlan | null {
-  if (mimeType === "application/pdf") return { kind: "pdf", export: false };
-  if (GOOGLE_EXPORTABLE.has(mimeType)) return { kind: "pdf", export: true };
-  if (mimeType === "image/jpeg") return { kind: "image", export: false };
+  if (mimeType === PDF_MIME) return { kind: "pdf", via: "direct" };
+  if (GOOGLE_EXPORTABLE.has(mimeType)) return { kind: "pdf", via: "pdf" };
+  if (mimeType === KIND_MIME.docx) return { kind: "docx", via: "direct" };
+  if (mimeType === KIND_MIME.pptx) return { kind: "pptx", via: "direct" };
+  if (TEXT_MIMES.has(mimeType)) return { kind: "txt", via: "direct" };
+  if (mimeType === "image/jpeg") return { kind: "image", via: "direct" };
+  if (mimeType.startsWith("image/")) return { kind: "image", via: "jpeg" };
   return null;
 }
 
 /** Mesajul pentru fișierele pe care nu le putem prelua. */
 export function unsupportedMessage(name: string, mimeType: string) {
-  if (/officedocument|msword|ms-powerpoint|ms-excel/.test(mimeType)) {
-    return `„${name}” e fișier Office. Deschide-l în Google Drive, salvează-l ca PDF și reimportă.`;
+  if (/msword|ms-powerpoint|ms-excel|spreadsheetml/.test(mimeType)) {
+    return `„${name}” e într-un format Office vechi sau Excel. Deschide-l în Google Drive, salvează-l ca PDF și reimportă.`;
   }
+  if (mimeType.startsWith("video/") || mimeType.startsWith("audio/")) return `„${name}” e video sau audio; îl găsești în continuare în Classroom.`;
   return `„${name}” are un format pe care nu-l putem citi încă.`;
 }

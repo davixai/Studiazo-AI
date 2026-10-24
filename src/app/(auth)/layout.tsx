@@ -48,7 +48,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <FeatureMarquee single />
         </div>
         <p className="text-center text-[13px] font-medium tracking-[0.01em] text-ink-muted lg:text-left">
-          Făcut cu grijă de studenți, pentru studenți
+          <span className="font-semibold text-ink-soft">Studiazo AI</span> · Făcut cu grijă de studenți, pentru studenți
         </p>
       </div>
 

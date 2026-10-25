@@ -1,19 +1,10 @@
 import "server-only";
 import OpenAI from "openai";
-import { getAiConfig, getVisionConfig } from "./config";
+import { getAiConfig } from "./config";
 
-// Punctul unic de acces la OpenAI. Pentru alt furnizor se schimbă doar acest modul și config.ts.
+// Punctul unic de acces la OpenAI.
 
 let cached: OpenAI | null = null;
-let cachedVision: OpenAI | null = null;
-
-/** Clientul pentru poze (AI_VISION_*), sau null dacă nu e configurat separat. */
-export function getVisionOpenAI(): { client: OpenAI; model: string } | null {
-  const config = getVisionConfig();
-  if (!config) return null;
-  cachedVision ??= new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL, timeout: config.timeoutMs, maxRetries: 1 });
-  return { client: cachedVision, model: config.model };
-}
 
 export class AiUnavailableError extends Error {
   constructor() {
@@ -25,27 +16,8 @@ export class AiUnavailableError extends Error {
 export function getOpenAI(): OpenAI {
   const config = getAiConfig();
   if (!config.enabled) throw new AiUnavailableError();
-  cached ??= new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL, timeout: config.timeoutMs, maxRetries: config.maxRetries });
+  cached ??= new OpenAI({ apiKey: config.apiKey, timeout: config.timeoutMs, maxRetries: config.maxRetries });
   return cached;
-}
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Planurile gratuite limitează ritmul (ex. un răspuns la 30 de secunde). La 402/429 așteptăm cât cere
- * serviciul („Retry after Ns”) și reîncercăm de câteva ori, în loc să afișăm direct o eroare.
- */
-export async function withFreeTierRetry<T>(request: () => Promise<T>, attempts = 4): Promise<T> {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await request();
-    } catch (error) {
-      const limited = error instanceof OpenAI.APIError && (error.status === 402 || error.status === 429);
-      if (!limited || attempt >= attempts) throw error;
-      const seconds = Number(/retry after (\d+)\s*s/i.exec(error.message)?.[1] ?? 30);
-      await sleep((Math.min(seconds, 60) + 1) * 1000);
-    }
-  }
 }
 
 /** Transformă erorile SDK în mesaje pentru student (fără detalii interne). */
@@ -59,7 +31,7 @@ export function describeAiError(error: unknown): { code: string; message: string
   if (error instanceof OpenAI.APIConnectionError) {
     return { code: "network", message: "Nu am putut contacta asistentul. Verifică conexiunea.", retryable: true };
   }
-  if (error instanceof OpenAI.RateLimitError || (error instanceof OpenAI.APIError && error.status === 402)) {
+  if (error instanceof OpenAI.RateLimitError) {
     return { code: "rate_limited", message: "Sunt prea multe cereri acum. Încearcă peste un minut.", retryable: true };
   }
   if (error instanceof OpenAI.AuthenticationError || error instanceof OpenAI.PermissionDeniedError) {

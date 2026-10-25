@@ -1,5 +1,5 @@
 import "server-only";
-import { getOpenAI, withFreeTierRetry } from "@/lib/ai/client";
+import { getOpenAI } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import type { MaterialPage } from "./material-context";
 
@@ -50,21 +50,12 @@ function notesPrompt(chunk: DigestChunk, index: number, total: number, focus: st
 async function notesFor(prompt: string) {
   const client = getOpenAI();
   const config = getAiConfig();
-  if (config.apiStyle === "chat") {
-    const response = await withFreeTierRetry(() =>
-      client.chat.completions.create({ model: config.model, messages: [{ role: "user", content: prompt }] }),
-    );
-    return {
-      text: (response.choices[0]?.message?.content ?? "").trim(),
-      usage: { inputTokens: response.usage?.prompt_tokens ?? 0, outputTokens: response.usage?.completion_tokens ?? 0 },
-    };
-  }
   const response = await client.responses.create({
     model: config.model,
     input: prompt,
     reasoning: { effort: "low" },
     max_output_tokens: NOTES_MAX_TOKENS,
-    ...(config.openaiExtras ? { store: false } : {}),
+    store: false,
   });
   return {
     text: response.output_text.trim(),

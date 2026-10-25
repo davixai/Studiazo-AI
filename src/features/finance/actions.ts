@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { fieldErrorsFrom, type FormState } from "@/features/auth/schemas";
-import { describeAiError, getOpenAI, withFreeTierRetry } from "@/lib/ai/client";
+import { describeAiError, getOpenAI } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import { requireUser } from "@/lib/auth/session";
 import { isPreviewMode } from "@/lib/env";
@@ -112,39 +112,21 @@ export async function getFinanceAdvice(input: unknown): Promise<AdviceResult> {
   const prompt = buildAdvicePrompt(month.data, summarize(data.entries), data.entries, trend(data.history, month.data));
 
   try {
-    let text: string;
-    let usage = { input: 0, output: 0 };
-    if (config.apiStyle === "chat") {
-      const chat = await withFreeTierRetry(() =>
-        getOpenAI().chat.completions.create({
-          model: config.model,
-          messages: [
-            { role: "system", content: ADVICE_INSTRUCTIONS },
-            { role: "user", content: prompt },
-          ],
-        }),
-      );
-      text = chat.choices[0]?.message?.content ?? "";
-      usage = { input: chat.usage?.prompt_tokens ?? 0, output: chat.usage?.completion_tokens ?? 0 };
-    } else {
-      const response = await withFreeTierRetry(() =>
-        getOpenAI().responses.create({
-          model: config.model,
-          instructions: ADVICE_INSTRUCTIONS,
-          input: [{ role: "user", content: prompt }],
-          reasoning: { effort: "low" },
-          max_output_tokens: Math.max(config.maxOutputTokens, 2000),
-          ...(config.openaiExtras ? { store: false, safety_identifier: createHash("sha256").update(user.id).digest("hex").slice(0, 32) } : {}),
-        }),
-      );
-      text = response.output_text;
-      usage = { input: response.usage?.input_tokens ?? 0, output: response.usage?.output_tokens ?? 0 };
-    }
+    const response = await getOpenAI().responses.create({
+      model: config.model,
+      instructions: ADVICE_INSTRUCTIONS,
+      input: [{ role: "user", content: prompt }],
+      reasoning: { effort: "low" },
+      max_output_tokens: Math.max(config.maxOutputTokens, 2000),
+      store: false,
+      safety_identifier: createHash("sha256").update(user.id).digest("hex").slice(0, 32),
+    });
+    const usage = { input: response.usage?.input_tokens ?? 0, output: response.usage?.output_tokens ?? 0 };
 
     if (!isPreviewMode()) {
       await supabase.from("ai_usage").insert({ kind: "finance", model: config.model, input_tokens: usage.input, output_tokens: usage.output });
     }
-    text = text.trim();
+    const text = response.output_text.trim();
     return text ? { ok: true, text } : { ok: false, message: "AI-ul nu a trimis niciun sfat. Încearcă din nou." };
   } catch (error) {
     if (!isPreviewMode()) await supabase.from("ai_usage").insert({ kind: "finance", model: config.model, ok: false });

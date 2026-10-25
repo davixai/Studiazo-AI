@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { getOpenAI, withFreeTierRetry } from "@/lib/ai/client";
+import { getOpenAI } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import type { Quiz } from "@/lib/contracts/quiz";
 import { reviewPrompt } from "./review-prompt";
@@ -32,30 +32,14 @@ export async function generateReview({
   const prompt = reviewPrompt(subjectName, quiz, answers);
   const maxTokens = Math.max(config.maxOutputTokens, 1800);
 
-  if (config.apiStyle === "chat") {
-    const chat = await withFreeTierRetry(() =>
-      getOpenAI().chat.completions.create({
-        model: config.model,
-        messages: [
-          { role: "system", content: INSTRUCTIONS },
-          { role: "user", content: prompt },
-        ],
-        max_tokens: maxTokens,
-      }),
-    );
-    return {
-      text: (chat.choices[0]?.message?.content ?? "").trim(),
-      usage: { inputTokens: chat.usage?.prompt_tokens ?? 0, outputTokens: chat.usage?.completion_tokens ?? 0 },
-    };
-  }
-
   const response = await getOpenAI().responses.create({
     model: config.model,
     instructions: INSTRUCTIONS,
     input: [{ role: "user", content: prompt }],
     reasoning: { effort: "low" },
     max_output_tokens: maxTokens,
-    ...(config.openaiExtras ? { store: false, safety_identifier: createHash("sha256").update(userId).digest("hex").slice(0, 32) } : {}),
+    store: false,
+    safety_identifier: createHash("sha256").update(userId).digest("hex").slice(0, 32),
   });
   return {
     text: response.output_text.trim(),

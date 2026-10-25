@@ -4,7 +4,6 @@ import type { ResponseInputItem } from "openai/resources/responses/responses";
 import { getOpenAI } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import { AI_LIMITS } from "@/lib/contracts/ai-tools";
-import { runChatAssistant } from "./engine-chat";
 import { TOOL_DEFINITIONS, type ToolResult } from "./tools";
 
 // Bucla asistentului (Responses API): modelul răspunde sau cere instrumente; codul le execută și îi dă
@@ -26,7 +25,6 @@ export type RunInput = {
 
 export async function runAssistant({ instructions, input, userId, execute }: RunInput): Promise<AssistantTurn> {
   const config = getAiConfig();
-  if (config.apiStyle === "chat") return runChatAssistant({ instructions, input, userId, execute });
   const client = getOpenAI();
   const items: ResponseInputItem[] = [...input];
   const proposalIds: string[] = [];
@@ -42,15 +40,11 @@ export async function runAssistant({ instructions, input, userId, execute }: Run
       tool_choice: step >= AI_LIMITS.maxToolSteps ? "none" : "auto",
       reasoning: { effort: "low" },
       max_output_tokens: config.maxOutputTokens,
-      ...(config.openaiExtras
-        ? {
-            // Conversațiile rămân la noi (Supabase), nu și la OpenAI.
-            store: false,
-            include: ["reasoning.encrypted_content" as const],
-            prompt_cache_key: "studiazo-assistant-v1",
-            safety_identifier: createHash("sha256").update(userId).digest("hex").slice(0, 32),
-          }
-        : {}),
+      // Conversațiile rămân la noi (Supabase), nu și la OpenAI.
+      store: false,
+      include: ["reasoning.encrypted_content"],
+      prompt_cache_key: "studiazo-assistant-v1",
+      safety_identifier: createHash("sha256").update(userId).digest("hex").slice(0, 32),
     });
     usage.inputTokens += response.usage?.input_tokens ?? 0;
     usage.outputTokens += response.usage?.output_tokens ?? 0;
@@ -66,9 +60,7 @@ export async function runAssistant({ instructions, input, userId, execute }: Run
       };
     }
 
-    // Alți furnizori nu primesc înapoi pașii de raționament (nu au conținutul criptat al OpenAI).
-    const output = config.openaiExtras ? response.output : response.output.filter((item) => item.type !== "reasoning");
-    items.push(...(output as ResponseInputItem[]));
+    items.push(...(response.output as ResponseInputItem[]));
     for (const call of calls) {
       const result = await execute(call.name, call.arguments);
       if (result.proposalId) proposalIds.push(result.proposalId);

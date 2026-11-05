@@ -136,6 +136,7 @@ export const PLACES: Place[] = [
   { id: "cafe-fika", name: "Fika", detail: "Piața Unirii 7", group: "Cafenele", lat: 47.165227, lng: 27.580005 },
   { id: "cafe-harmony-cafe", name: "Harmony Cafe", detail: "Bd. Carol I 27", group: "Cafenele", lat: 47.177062, lng: 27.569485 },
   { id: "cafe-zireto", name: "Zireto", detail: "Pista Copou", group: "Cafenele", lat: 47.181089, lng: 27.567217 },
+  { id: "cafe-noir-copou", name: "NOIR Coffee (Copou)", detail: "Aleea Grigore Ghica Vodă", group: "Cafenele", lat: 47.185238, lng: 27.563137 },
   { id: "cafe-tucano-coffee-india", name: "Tucano Coffee India", detail: "Bd. Ștefan cel Mare 52", group: "Cafenele", lat: 47.160894, lng: 27.583869 },
   { id: "cafe-tucano-coffee-indonesia-iulius-mall", name: "Tucano Coffee Indonesia (Iulius Mall)", detail: "Iulius Mall", group: "Cafenele", lat: 47.155214, lng: 27.605742 },
   { id: "cafe-navar-specialty-coffee", name: "Navar Specialty Coffee", detail: "Bd. Ștefan cel Mare 18-20", group: "Cafenele", lat: 47.160613, lng: 27.584216 },

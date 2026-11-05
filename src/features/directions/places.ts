@@ -2,6 +2,12 @@
 // biblioteci, cămine, cantine și repere. Coordonatele sunt luate din OpenStreetMap (căutare Photon/Nominatim, verificate punct cu punct prin căutare inversă, 2026-10-20).
 // Facultățile care nu au un punct propriu în OpenStreetMap folosesc clădirea principală a universității
 // și sunt marcate `approx`, ca interfața să spună asta. Nu adăuga coordonate ghicite.
+//
+// Locurile pentru timpul liber (cafenele, restaurante, cluburi, supermarketuri, farmacii non-stop, cinema, sport) au fost alese de echipă
+// din surse publice (site-urile oficiale ale lanțurilor, Colegiul Farmaciștilor, Zile și Nopți, Tripadvisor) și verificate pe 2026-11-07:
+// fiecare are în OpenStreetMap un punct cu același nume la adresa din listă, iar coordonatele sunt ale acelui punct.
+// Excepție: magazinele dintr-un mall care nu au punct propriu folosesc coordonatele mall-ului (scrie „Iulius Mall” / „Palas Mall”).
+// Ce nu s-a găsit pe hartă sau nu era confirmat ca deschis a rămas pe dinafară.
 
 export type LatLng = { lat: number; lng: number };
 
@@ -15,7 +21,23 @@ export type Place = LatLng & {
   approx?: boolean;
 };
 
-export const PLACE_GROUPS = ["Universități", "UAIC", "TUIASI", "UMF", "IULS", "UNAGE", "Biblioteci", "Cămine și cantine", "Repere"] as const;
+export const PLACE_GROUPS = [
+  "Universități",
+  "UAIC",
+  "TUIASI",
+  "UMF",
+  "IULS",
+  "UNAGE",
+  "Biblioteci",
+  "Cămine și cantine",
+  "Repere",
+  "Cafenele",
+  "Restaurante",
+  "Cluburi și baruri",
+  "Supermarketuri",
+  "Farmacii non-stop",
+  "Timp liber",
+] as const;
 export type PlaceGroup = (typeof PLACE_GROUPS)[number];
 
 const UAIC_MAIN = { lat: 47.174251, lng: 27.571137 }; // Corpul A, Bd. Carol I 11
@@ -108,6 +130,85 @@ export const PLACES: Place[] = [
   { id: "stadion", name: "Stadionul „Emil Alexandrescu”", detail: "Str. George Coșbuc", group: "Repere", lat: 47.184565, lng: 27.561198 },
   { id: "sala-polivalenta", name: "Sala Polivalentă", detail: "Str. Sfântul Constantin", group: "Repere", lat: 47.154331, lng: 27.588424 },
   { id: "aeroport", name: "Aeroportul Internațional Iași", detail: "Drumul Aeroportului", group: "Repere", lat: 47.179896, lng: 27.62038 },
+
+  { id: "cafe-gist-specialty-coffee-shop", name: "Gist Specialty Coffee Shop", detail: "Str. Cuza Vodă 4", group: "Cafenele", lat: 47.165144, lng: 27.581836 },
+  { id: "cafe-jassyro-specialty-coffee-to-go", name: "Jassyro Specialty Coffee To Go", detail: "Bd. Ștefan cel Mare 1C", group: "Cafenele", lat: 47.164778, lng: 27.58096 },
+  { id: "cafe-fika", name: "Fika", detail: "Piața Unirii 7", group: "Cafenele", lat: 47.165227, lng: 27.580005 },
+  { id: "cafe-harmony-cafe", name: "Harmony Cafe", detail: "Bd. Carol I 27", group: "Cafenele", lat: 47.177062, lng: 27.569485 },
+  { id: "cafe-tucano-coffee-india", name: "Tucano Coffee India", detail: "Bd. Ștefan cel Mare 52", group: "Cafenele", lat: 47.160894, lng: 27.583869 },
+  { id: "cafe-tucano-coffee-indonesia-iulius-mall", name: "Tucano Coffee Indonesia (Iulius Mall)", detail: "Iulius Mall", group: "Cafenele", lat: 47.155214, lng: 27.605742 },
+  { id: "cafe-navar-specialty-coffee", name: "Navar Specialty Coffee", detail: "Bd. Ștefan cel Mare 18-20", group: "Cafenele", lat: 47.160613, lng: 27.584216 },
+  { id: "cafe-coffee-story", name: "Coffee Story", detail: "Str. Sfântul Lazăr 30", group: "Cafenele", lat: 47.157012, lng: 27.590606 },
+  { id: "cafe-cafeneaua-noastra", name: "Cafeneaua Noastră", detail: "Str. Sfântul Lazăr 30", group: "Cafenele", lat: 47.157051, lng: 27.590621 },
+  { id: "cafe-acaju-cafe", name: "Acaju Cafe", detail: "Str. Anastasie Fătu 2A", group: "Cafenele", lat: 47.169108, lng: 27.574 },
+  { id: "cafe-bistro-la-noi", name: "Bistro „La noi”", detail: "Bd. Ștefan cel Mare 8", group: "Cafenele", lat: 47.163389, lng: 27.581655 },
+
+  { id: "rest-toujours", name: "Toujours", detail: "Str. Gându 2", group: "Restaurante", lat: 47.166083, lng: 27.576913 },
+  { id: "rest-mamma-mia", name: "Mamma Mia", detail: "Bd. Ștefan cel Mare 10-12", group: "Restaurante", lat: 47.164192, lng: 27.580807 },
+  { id: "rest-cuib", name: "Cuib", detail: "Str. Gavriil Musicescu 14", group: "Restaurante", lat: 47.167189, lng: 27.576743 },
+  { id: "rest-blue-acqua", name: "Blue Acqua", detail: "Șos. Arcu 78", group: "Restaurante", lat: 47.17143, lng: 27.564634 },
+  { id: "rest-romeo-e-giulietta", name: "Romeo e Giulietta", detail: "Piața Unirii 2", group: "Restaurante", lat: 47.166817, lng: 27.579964 },
+  { id: "rest-oscar", name: "Oscar", detail: "Str. Lascăr Catargi 12-16", group: "Restaurante", lat: 47.171156, lng: 27.579525 },
+  { id: "rest-andalu-gastrobar", name: "Andalu Gastrobar", detail: "Str. Codrescu 6", group: "Restaurante", lat: 47.17865, lng: 27.572949 },
+  { id: "rest-popeyes-mall-moldova", name: "Popeyes Mall Moldova", detail: "Mall Moldova, Șos. Păcurari 121", group: "Restaurante", lat: 47.167955, lng: 27.516447 },
+  { id: "rest-popeyes-palas", name: "Popeyes Palas", detail: "Palas Mall", group: "Restaurante", lat: 47.157772, lng: 27.589879 },
+  { id: "rest-hesburger-mall-moldova", name: "Hesburger Mall Moldova", detail: "Mall Moldova, Șos. Păcurari 121", group: "Restaurante", lat: 47.167669, lng: 27.516501 },
+
+  { id: "bar-rock-n-rolla", name: "Rock'n'Rolla", detail: "Str. Grigore Ghica Vodă 14", group: "Cluburi și baruri", lat: 47.160614, lng: 27.595288 },
+  { id: "bar-la-baza", name: "La Bază", detail: "Galeriile Ștefan cel Mare, demisol", group: "Cluburi și baruri", lat: 47.162707, lng: 27.581466 },
+  { id: "bar-the-gate-bar", name: "The Gate Bar", detail: "Bd. Ștefan cel Mare 8B", group: "Cluburi și baruri", lat: 47.163124, lng: 27.581413 },
+  { id: "bar-beer-zone", name: "Beer Zone", detail: "Str. Alexandru Lăpușneanu 16", group: "Cluburi și baruri", lat: 47.167887, lng: 27.578988 },
+  { id: "bar-taverna-music-pub", name: "Taverna Music Pub", detail: "Pasajul Comercial Ștefan cel Mare, demisol", group: "Cluburi și baruri", lat: 47.162863, lng: 27.58127 },
+
+  { id: "mag-lidl-pantelimon-halipa", name: "Lidl Pantelimon Halipa", detail: "Str. Pantelimon Halipa 3C", group: "Supermarketuri", lat: 47.152179, lng: 27.573076 },
+  { id: "mag-lidl-vasile-lupu", name: "Lidl Vasile Lupu", detail: "Str. Vasile Lupu 78", group: "Supermarketuri", lat: 47.15993, lng: 27.610098 },
+  { id: "mag-lidl-tabacului", name: "Lidl Tabacului", detail: "Str. Tabacului 7A", group: "Supermarketuri", lat: 47.16991, lng: 27.553406 },
+  { id: "mag-lidl-chimiei", name: "Lidl Chimiei", detail: "Bd. Chimiei 2A", group: "Supermarketuri", lat: 47.153321, lng: 27.604891 },
+  { id: "mag-lidl-primaverii", name: "Lidl Primăverii", detail: "Bd. Primăverii 2", group: "Supermarketuri", lat: 47.147287, lng: 27.593508 },
+  { id: "mag-lidl-poitiers", name: "Lidl Poitiers", detail: "Bd. Poitiers 1", group: "Supermarketuri", lat: 47.137617, lng: 27.596296 },
+  { id: "mag-lidl-bucium", name: "Lidl Bucium", detail: "Șos. Bucium 53E", group: "Supermarketuri", lat: 47.127169, lng: 27.618069 },
+  { id: "mag-lidl-moara-de-foc", name: "Lidl Moara de Foc", detail: "Șos. Moara de Foc 2", group: "Supermarketuri", lat: 47.172946, lng: 27.551722 },
+  { id: "mag-lidl-tudor-neculai", name: "Lidl Tudor Neculai", detail: "Aleea Tudor Neculai 50", group: "Supermarketuri", lat: 47.136531, lng: 27.571921 },
+  { id: "mag-kaufland-pacurari", name: "Kaufland Păcurari", detail: "Șos. Păcurari 86M", group: "Supermarketuri", lat: 47.174624, lng: 27.536557 },
+  { id: "mag-kaufland-tatarasi", name: "Kaufland Tătărași", detail: "Str. Aurel Vlaicu 54A", group: "Supermarketuri", lat: 47.157407, lng: 27.624353 },
+  { id: "mag-kaufland-galata", name: "Kaufland Galata", detail: "Șos. Voinești 37", group: "Supermarketuri", lat: 47.145965, lng: 27.556952 },
+  { id: "mag-kaufland-alexandru-cel-bun", name: "Kaufland Alexandru cel Bun", detail: "Str. Theodor Râșcanu 6A", group: "Supermarketuri", lat: 47.161361, lng: 27.575891 },
+  { id: "mag-kaufland-chimiei", name: "Kaufland Chimiei", detail: "Bd. Chimiei 2D", group: "Supermarketuri", lat: 47.152203, lng: 27.605913 },
+  { id: "mag-kaufland-mitropolit-varlaam", name: "Kaufland Mitropolit Varlaam", detail: "Str. Mitropolit Varlaam 20", group: "Supermarketuri", lat: 47.14342, lng: 27.587291 },
+  { id: "mag-carrefour-era", name: "Carrefour Era", detail: "Mall Moldova, Șos. Păcurari 121", group: "Supermarketuri", lat: 47.166603, lng: 27.513084 },
+  { id: "mag-carrefour-felicia", name: "Carrefour Felicia", detail: "Str. Bucium 36", group: "Supermarketuri", lat: 47.144815, lng: 27.611597 },
+  { id: "mag-carrefour-market-hala-centrala", name: "Carrefour Market Hala Centrală", detail: "Str. Anastasie Panu 46", group: "Supermarketuri", lat: 47.161449, lng: 27.590361 },
+  { id: "mag-carrefour-market-iulius-mall", name: "Carrefour Market Iulius Mall", detail: "Iulius Mall", group: "Supermarketuri", lat: 47.155374, lng: 27.605494 },
+  { id: "mag-carrefour-market-alexandru-cel-bun", name: "Carrefour Market Alexandru cel Bun", detail: "Piața Voievozilor 1", group: "Supermarketuri", lat: 47.162878, lng: 27.564335 },
+  { id: "mag-carrefour-market-salciilor", name: "Carrefour Market Sălciilor", detail: "Str. Sălciilor 8", group: "Supermarketuri", lat: 47.143535, lng: 27.577371 },
+  { id: "mag-carrefour-express-pacurari", name: "Carrefour Express Păcurari", detail: "Șos. Păcurari 23", group: "Supermarketuri", lat: 47.174515, lng: 27.547082 },
+  { id: "mag-carrefour-express-palas", name: "Carrefour Express Palas", detail: "Palas Campus, Str. Sfântul Andrei 39A", group: "Supermarketuri", lat: 47.156604, lng: 27.580597 },
+  { id: "mag-carrefour-express-vasile-lupu-esplanada", name: "Carrefour Express Vasile Lupu (Esplanada)", detail: "Str. Vasile Lupu 82A", group: "Supermarketuri", lat: 47.159643, lng: 27.613315 },
+  { id: "mag-carrefour-express-gemi", name: "Carrefour Express Gemi", detail: "Calea Galata 5-9", group: "Supermarketuri", lat: 47.153075, lng: 27.570071 },
+  { id: "mag-carrefour-express-tatarasi", name: "Carrefour Express Tătărași", detail: "Str. Tătărași 73-75", group: "Supermarketuri", lat: 47.163149, lng: 27.604998 },
+  { id: "mag-auchan-palas", name: "Auchan Palas", detail: "Str. Palas 5C", group: "Supermarketuri", lat: 47.155131, lng: 27.588767 },
+  { id: "mag-auchan-bucium", name: "Auchan Bucium", detail: "Șos. Bucium 34E", group: "Supermarketuri", lat: 47.131355, lng: 27.612258 },
+  { id: "mag-mega-image-copou", name: "Mega Image Copou", detail: "Bd. Carol I 48 · non-stop", group: "Supermarketuri", lat: 47.179951, lng: 27.568569 },
+  { id: "mag-mega-image-independentei", name: "Mega Image Independenței", detail: "Bd. Independenței 33", group: "Supermarketuri", lat: 47.165894, lng: 27.589808 },
+  { id: "mag-mega-image-stefan-cel-mare", name: "Mega Image Ștefan cel Mare", detail: "Bd. Ștefan cel Mare 9 · non-stop", group: "Supermarketuri", lat: 47.162719, lng: 27.582795 },
+  { id: "mag-mega-image-pacurari", name: "Mega Image Păcurari", detail: "Șos. Păcurari 58-64", group: "Supermarketuri", lat: 47.174566, lng: 27.540738 },
+  { id: "mag-mega-image-podu-ros", name: "Mega Image Podu Roș", detail: "Str. Nicolina", group: "Supermarketuri", lat: 47.150243, lng: 27.588077 },
+  { id: "mag-mega-image-lacului", name: "Mega Image Lacului", detail: "Str. Lacului 16", group: "Supermarketuri", lat: 47.14289, lng: 27.582754 },
+  { id: "mag-mega-image-vama-veche", name: "Mega Image Vama Veche", detail: "Str. Gării 22", group: "Supermarketuri", lat: 47.166579, lng: 27.571141 },
+  { id: "mag-mega-image-nationala", name: "Mega Image Națională", detail: "Șos. Națională 55-59 · non-stop", group: "Supermarketuri", lat: 47.151827, lng: 27.585861 },
+  { id: "mag-shop-go-mircea-cel-batran-1", name: "Shop&Go Mircea cel Bătrân 1", detail: "Str. Mircea cel Bătrân 1 · non-stop", group: "Supermarketuri", lat: 47.155224, lng: 27.570102 },
+  { id: "mag-shop-go-basarabi-5a", name: "Shop&Go Basarabi 5A", detail: "Str. Basarabi 5A · non-stop", group: "Supermarketuri", lat: 47.163032, lng: 27.559807 },
+
+  { id: "farm-farmacia-ropharma", name: "Farmacia Ropharma", detail: "Piața Unirii 3 · non-stop", group: "Farmacii non-stop", lat: 47.167358, lng: 27.580808 },
+  { id: "farm-farmacia-rosmarin", name: "Farmacia Rosmarin", detail: "Bd. Tudor Vladimirescu 44 · non-stop", group: "Farmacii non-stop", lat: 47.15786, lng: 27.601868 },
+  { id: "farm-farmacia-help-flux-med", name: "Farmacia Help Flux Med", detail: "Bd. Tudor Vladimirescu 105 · non-stop", group: "Farmacii non-stop", lat: 47.157265, lng: 27.602905 },
+
+  { id: "liber-cinema-city-iulius-mall", name: "Cinema City Iulius Mall", detail: "Iulius Mall", group: "Timp liber", lat: 47.155767, lng: 27.605483 },
+  { id: "liber-cinema-city-mall-moldova", name: "Cinema City Mall Moldova", detail: "Mall Moldova, Șos. Păcurari 121", group: "Timp liber", lat: 47.167074, lng: 27.516697 },
+  { id: "liber-world-class-mall-moldova", name: "World Class Mall Moldova", detail: "Mall Moldova, Șos. Păcurari 121", group: "Timp liber", lat: 47.167423, lng: 27.516045 },
+  { id: "liber-stay-fit-gym-palas-campus", name: "Stay Fit Gym Palas Campus", detail: "Str. Iancu Bacalu 24", group: "Timp liber", lat: 47.156898, lng: 27.581616 },
+  { id: "liber-stay-fit-gym-iulius-mall", name: "Stay Fit Gym Iulius Mall", detail: "Iulius Mall, etaj 1", group: "Timp liber", lat: 47.155214, lng: 27.605742 },
+  { id: "liber-stay-fit-gym-palas-mall", name: "Stay Fit Gym Palas Mall", detail: "Palas Mall, etaj 1", group: "Timp liber", lat: 47.157772, lng: 27.589879 },
 ];
 
 /** Locul în linkul paginii (?de=…&la=…): id-ul din listă sau „lat,lng” pentru adrese și puncte de pe hartă. */

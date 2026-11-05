@@ -64,6 +64,24 @@ describe("locurile din Trasee", () => {
     expect(filterPlaces("informatica").map((p) => p.id)).toContain("uaic-info");
     expect(filterPlaces("biblioteca eminescu").map((p) => p.id)).toEqual(["bcu"]);
   });
+
+  it("găsesc locurile de timp liber după nume, categorie și program", () => {
+    expect(filterPlaces("fika").map((p) => p.id)).toEqual(["cafe-fika"]);
+    expect(filterPlaces("lidl").length).toBeGreaterThan(5);
+    expect(filterPlaces("non-stop").every((p) => p.detail?.includes("non-stop") || p.group === "Farmacii non-stop")).toBe(true);
+    expect(filterPlaces("farmacii non-stop").length).toBe(3);
+  });
+
+  it("locurile de timp liber nu au două puncte identice, în afară de magazinele din mall", () => {
+    const leisure = new Set(["Cafenele", "Restaurante", "Cluburi și baruri", "Supermarketuri", "Farmacii non-stop", "Timp liber"]);
+    const seen = new Map<string, string>();
+    for (const p of PLACES.filter((x) => leisure.has(x.group))) {
+      const k = `${p.lat},${p.lng}`;
+      const other = seen.get(k);
+      if (other && !/Mall/.test(`${p.detail} ${p.name}`)) expect.fail(`${p.id} are aceleași coordonate ca ${other}`);
+      seen.set(k, p.id);
+    }
+  });
 });
 
 describe("linkuri și formatare", () => {

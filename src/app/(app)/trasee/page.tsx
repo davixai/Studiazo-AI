@@ -22,7 +22,7 @@ export default async function DirectionsPage({ searchParams }: PageProps<"/trase
     <div className="flex flex-col gap-6 lg:gap-8">
       <PageHeader
         title="Trasee"
-        description="Cum ajungi de la o facultate la alta, la bibliotecă, la cămin sau oriunde în Iași: pe jos, cu mașina sau cu bicicleta."
+        description="Cum ajungi la facultate, la cămin, la bibliotecă, la o cafenea sau la un magazin non-stop din Iași: pe jos, cu bicicleta sau cu mașina."
       />
       <RoutePlanner
         initialFrom={placeFromParam(one(params.de))}

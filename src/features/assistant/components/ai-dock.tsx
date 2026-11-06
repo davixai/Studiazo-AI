@@ -14,6 +14,7 @@ import type { Proposal } from "@/lib/contracts/proposals";
 import { cn } from "@/lib/utils";
 import { sendMessage } from "../actions";
 import type { ChatMessage } from "../queries";
+import { DictateButton } from "./dictate-button";
 import { MessageContent } from "./message-content";
 
 // Asistentul mereu la îndemână: o iconiță în colțul din dreapta-jos, pe fiecare pagină din aplicație.
@@ -82,6 +83,7 @@ export function AiDock({ subjects, aiAvailable }: { subjects: Subject[]; aiAvail
   const [draft, setDraft] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ text: string; image: string | null } | null>(null);
   const [error, setError] = useState<{ message: string; retryable: boolean } | null>(null);
   const [sending, startSending] = useTransition();
@@ -409,6 +411,11 @@ export function AiDock({ subjects, aiAvailable }: { subjects: Subject[]; aiAvail
             ) : null}
 
             {imageError ? <p className="mb-2 text-[13px] font-medium text-danger">{imageError}</p> : null}
+            {voiceError ? (
+              <p className="mb-2 text-[13px] font-medium text-danger" role="alert">
+                {voiceError}
+              </p>
+            ) : null}
             {image ? (
               <div className="relative mb-2 inline-flex animate-pop-in">
                 {/* eslint-disable-next-line @next/next/no-img-element -- previzualizare locală (data URL) */}
@@ -467,6 +474,16 @@ export function AiDock({ subjects, aiAvailable }: { subjects: Subject[]; aiAvail
                   }
                 }}
                 className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[15px] leading-6 text-ink placeholder:text-ink-faint focus:outline-none disabled:cursor-not-allowed"
+              />
+              <DictateButton
+                value={draft}
+                onChange={(text) => {
+                  setDraft(text);
+                  requestAnimationFrame(() => resizeInput(inputRef.current));
+                }}
+                onError={setVoiceError}
+                disabled={!aiAvailable || busy}
+                className="rounded-lg"
               />
               <button
                 type="submit"

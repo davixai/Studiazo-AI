@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { formatDayShort, formatRelativeDay } from "@/lib/time/format";
 import { deleteConversation, sendMessage } from "../actions";
 import type { ChatMessage, ConversationSummary } from "../queries";
+import { DictateButton } from "./dictate-button";
 import { MessageContent } from "./message-content";
 
 type ChatViewProps = {
@@ -70,6 +71,7 @@ export function ChatView({
   const [pendingQuestion, setPendingQuestion] = useState<{ text: string; image: string | null } | null>(null);
   const [error, setError] = useState<{ message: string; retryable: boolean } | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
   const [creatingQuiz, startCreatingQuiz] = useTransition();
   const endRef = useRef<HTMLDivElement>(null);
@@ -342,6 +344,11 @@ export function ChatView({
         className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-1 rounded-xl border border-line/70 bg-surface p-2 shadow-md lg:bottom-6"
       >
         {imageError ? <p className="px-2 pt-1 pb-2 text-[13px] font-medium text-danger">{imageError}</p> : null}
+        {voiceError ? (
+          <p className="px-2 pt-1 pb-2 text-[13px] font-medium text-danger" role="alert">
+            {voiceError}
+          </p>
+        ) : null}
         {image ? (
           <div className="relative mb-2 ml-1 inline-flex animate-pop-in">
             {/* eslint-disable-next-line @next/next/no-img-element -- previzualizare locală (data URL), nu o imagine de optimizat */}
@@ -422,6 +429,7 @@ export function ChatView({
             disabled={!aiAvailable}
             className="max-h-40 min-h-10 flex-1 resize-none [field-sizing:content] bg-transparent px-1 py-2 text-[15px] leading-6 text-ink placeholder:text-ink-faint focus:outline-none"
           />
+          <DictateButton value={draft} onChange={setDraft} onError={setVoiceError} disabled={!aiAvailable || sending} className="rounded-full" />
           <button
             type="submit"
             disabled={!aiAvailable || sending || (!draft.trim() && !image)}

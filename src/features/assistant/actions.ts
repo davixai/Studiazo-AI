@@ -15,6 +15,7 @@ import { isPreviewMode } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { PROPOSAL_COLUMNS, toProposal } from "@/lib/supabase/mappers";
 import { runAssistant } from "./engine";
+import { proposalIdsOf, toHistory, type HistoryRow, type ProposalNote } from "./history";
 import { buildInstructions } from "./prompt";
 import { imagePathOf, toChatMessage, type ChatMessage } from "./queries";
 import { executeTool } from "./tools";
@@ -70,13 +71,12 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
 
   const { data: historyRows } = await supabase
     .from("messages")
-    .select("role, content")
+    .select("role, content, metadata")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(AI_LIMITS.maxHistoryMessages);
-  const history: ResponseInputItem[] = (historyRows ?? [])
-    .reverse()
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content as string }));
+  const rows = (historyRows ?? []).reverse() as HistoryRow[];
+  const history = toHistory(rows, await proposalNotes(rows.flatMap((r) => proposalIdsOf(r.metadata))));
 
   const question = text || "Ce vezi în poză? Ajută-mă cu ea.";
   const current: ResponseInputItem = image
@@ -170,7 +170,20 @@ export async function deleteConversation(input: unknown): Promise<{ ok: true } |
   return { ok: true };
 }
 
-type ResolvedConversation = { ok: true; id: string } | { ok: false; message: string; retryable: boolean };
+/** Starea propunerilor din istoric (RLS: doar ale studentului). */
+async function proposalNotes(ids: string[]): Promise<Map<string, ProposalNote>> {
+  if (ids.length === 0) return new Map();
+  const supabase = await createClient();
+  const { data } = await supabase.from("ai_proposals").select(PROPOSAL_COLUMNS).in("id", ids);
+  return new Map(
+    (data ?? [])
+      .map(toProposal)
+      .filter((p): p is Proposal => p !== null)
+      .map((p) => [p.id, { status: p.status, kind: p.payload.kind, items: p.payload.items.length }]),
+  );
+}
+
+type ResolvedConversation ={ ok: true; id: string } | { ok: false; message: string; retryable: boolean };
 
 /** Conversația în care scriem: cea deschisă (verificată că e a acestui chat), una nouă sau ultima. */
 async function resolveConversation({

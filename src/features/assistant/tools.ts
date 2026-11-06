@@ -156,7 +156,9 @@ export async function executeTool(name: string, rawArgs: string, ctx: ToolContex
       case "propose_study_sessions":
         return await proposeSessions(parsed.data as ArgsOf<"propose_study_sessions">, ctx);
     }
-  } catch {
+  } catch (error) {
+    // În log doar numele instrumentului și mesajul erorii, fără datele studentului.
+    console.error(`[asistent] ${name} a eșuat:`, error instanceof Error ? error.message : error);
     return fail("Nu am putut citi datele acum. Spune-i studentului să încerce din nou.");
   }
 }
@@ -230,13 +232,21 @@ async function freeSlots({ from_date, days, min_minutes }: ArgsOf<"find_free_slo
     minMinutes: min_minutes,
     notBefore: ctx.now,
   });
+  const view = slots.map((s) => ({
+    date: toDateKey(s.start),
+    start: toTimeOfDay(s.start),
+    end: toTimeOfDay(s.end),
+    minutes: Math.round((s.end.getTime() - s.start.getTime()) / 60_000),
+  }));
+  // Calculul pe zile îl face codul, nu modelul: altfel greșește aritmetica limitei zilnice.
+  const limit = ctx.profile?.dailyStudyLimitMinutes ?? null;
+  const free = new Map<string, number>();
+  for (const s of view) free.set(s.date, (free.get(s.date) ?? 0) + s.minutes);
   return ok({
-    slots: slots.map((s) => ({
-      date: toDateKey(s.start),
-      start: toTimeOfDay(s.start),
-      end: toTimeOfDay(s.end),
-      minutes: Math.round((s.end.getTime() - s.start.getTime()) / 60_000),
-    })),
+    slots: view,
+    daily_limit_minutes: limit,
+    days: [...free].map(([date, minutes]) => ({ date, free_minutes: minutes, can_study_minutes: limit ? Math.min(minutes, limit) : minutes })),
+    note: "can_study_minutes = cât poți planifica în acea zi (liber și în limita zilnică). Totalul posibil până la un termen = suma lor pe zilele dinaintea termenului. Folosește exact aceste cifre.",
   });
 }
 

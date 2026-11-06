@@ -61,8 +61,10 @@ export async function runAssistant({ instructions, input, userId, execute }: Run
     }
 
     items.push(...(response.output as ResponseInputItem[]));
-    for (const call of calls) {
-      const result = await execute(call.name, call.arguments);
+    // Instrumentele cerute în aceeași rundă rulează în paralel; rezultatele se adaugă în ordinea cererilor.
+    const results = await Promise.all(calls.map((call) => execute(call.name, call.arguments)));
+    for (const [index, call] of calls.entries()) {
+      const result = results[index]!;
       if (result.proposalId) proposalIds.push(result.proposalId);
       if (result.citations) citations.push(...result.citations);
       if (result.usage) {

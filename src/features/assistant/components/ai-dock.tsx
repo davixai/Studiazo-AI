@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { sendMessage } from "../actions";
 import type { ChatMessage } from "../queries";
 import { DictateButton } from "./dictate-button";
+import { MemoryNotes } from "./memory-notes";
 import { MessageContent } from "./message-content";
 
 // Asistentul mereu la îndemână: o iconiță în colțul din dreapta-jos, pe fiecare pagină din aplicație.
@@ -355,6 +356,7 @@ export function AiDock({ subjects, aiAvailable }: { subjects: Subject[]; aiAvail
               ) : (
                 <div key={m.id} className="flex flex-col gap-3">
                   <AssistantBubble text={m.content} />
+                  <MemoryNotes notes={m.memory} className="pl-9" />
                   {m.proposalIds.map((id) => (proposals[id] ? <ProposalCard key={id} proposal={proposals[id]} subjects={subjects} /> : null))}
                 </div>
               ),

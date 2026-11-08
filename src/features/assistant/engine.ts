@@ -4,7 +4,7 @@ import type { ResponseInputItem } from "openai/resources/responses/responses";
 import { getOpenAI } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
 import { AI_LIMITS } from "@/lib/contracts/ai-tools";
-import { TOOL_DEFINITIONS, type ToolResult } from "./tools";
+import { TOOL_DEFINITIONS, type MemoryNote, type ToolResult } from "./tools";
 
 // Bucla asistentului (Responses API): modelul răspunde sau cere instrumente; codul le execută și îi dă
 // rezultatul. Cel mult AI_LIMITS.maxToolSteps runde de instrumente, apoi răspunsul final e obligatoriu.
@@ -13,6 +13,8 @@ export type AssistantTurn = {
   text: string;
   proposalIds: string[];
   citations: Array<{ materialId: string; page: number }>;
+  /** Ce a reținut sau a uitat în acest răspuns. */
+  memory: MemoryNote[];
   usage: { inputTokens: number; outputTokens: number };
 };
 
@@ -29,6 +31,7 @@ export async function runAssistant({ instructions, input, userId, execute }: Run
   const items: ResponseInputItem[] = [...input];
   const proposalIds: string[] = [];
   const citations: AssistantTurn["citations"] = [];
+  const memory: MemoryNote[] = [];
   const usage = { inputTokens: 0, outputTokens: 0 };
 
   for (let step = 0; ; step++) {
@@ -56,6 +59,7 @@ export async function runAssistant({ instructions, input, userId, execute }: Run
         text: text || "Nu am reușit să formulez un răspuns. Încearcă să reformulezi întrebarea.",
         proposalIds,
         citations,
+        memory,
         usage,
       };
     }
@@ -67,6 +71,7 @@ export async function runAssistant({ instructions, input, userId, execute }: Run
       const result = results[index]!;
       if (result.proposalId) proposalIds.push(result.proposalId);
       if (result.citations) citations.push(...result.citations);
+      if (result.memory) memory.push(result.memory);
       if (result.usage) {
         usage.inputTokens += result.usage.inputTokens;
         usage.outputTokens += result.usage.outputTokens;

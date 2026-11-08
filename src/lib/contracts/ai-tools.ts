@@ -33,6 +33,10 @@ export const AI_TOOL_ARGS = {
   }),
   /** Temele la care studentul greșește în testele grilă recente (pe materie sau toate). */
   get_weak_topics: z.object({ subject_id: z.string().max(64).nullable() }),
+  /** Ține minte un lucru durabil despre student, spus de el în chat (vizibil și ștergibil în Profil). */
+  remember: z.object({ fact: z.string().trim().min(3).max(200) }),
+  /** Uită un lucru reținut (id din lista „Ce ți-a spus”). */
+  forget: z.object({ memory_id: z.uuid() }),
   /** Pregătește teme/examene pentru salvare — NU salvează; creează o propunere 'pending'. */
   propose_task: z.object({
     explanation: z.string().max(600),

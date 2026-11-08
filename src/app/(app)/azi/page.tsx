@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { DailyMessage } from "@/features/assistant/components/daily-message";
+import { previewDailyMessage } from "@/features/assistant/daily-preview";
 import { AgendaRow } from "@/features/calendar/components/agenda-row";
 import { NextUpCard } from "@/features/dashboard/components/next-up";
 import { RecommendedSession, type RecommendedSessionView } from "@/features/dashboard/components/recommended-session";
@@ -13,6 +15,9 @@ import { UpcomingList } from "@/features/dashboard/components/upcoming-list";
 import { getTodayOverview, type TodayOverview } from "@/features/dashboard/queries";
 import { ThemeToggle } from "@/features/profile/components/theme-switch";
 import { getProfile } from "@/features/profile/queries";
+import { listSubjects } from "@/features/subjects/queries";
+import { getAiStatus } from "@/lib/ai/config";
+import { isPreviewMode } from "@/lib/env";
 import { StreakCard, StreakStrip } from "@/features/progress/components/streak";
 import { getLearningStats } from "@/features/progress/queries";
 import type { AgendaItem } from "@/lib/contracts/domain";
@@ -29,7 +34,9 @@ const EXAM_KINDS = ["examen", "colocviu", "test"];
 const delay = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
 export default async function TodayPage() {
-  const [overview, profile, stats, theme] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats(), getTheme()]);
+  const [overview, profile, stats, theme, subjects] = await Promise.all([getTodayOverview(), getProfile(), getLearningStats(), getTheme(), listSubjects()]);
+  const preview = isPreviewMode();
+  const assistantWrites = getAiStatus().available || preview;
   const { now, agenda, upcoming } = overview;
   const name = firstName(profile?.fullName ?? "");
   const remaining = agenda.filter((i) => endOf(i) > now).length;
@@ -68,6 +75,9 @@ export default async function TodayPage() {
           <MotivationalQuote initialIndex={Math.floor(now.getTime() / 1000) % QUOTES.length} />
         </div>
       </div>
+
+      {/* Asistentul îi scrie primul: o dată pe zi, din ce știe despre el. */}
+      {assistantWrites ? <DailyMessage subjects={subjects} preview={preview ? previewDailyMessage(now) : undefined} /> : null}
 
       {/* Mobil: ce urmează + streak + scurtături */}
       <div className="flex min-w-0 flex-col gap-4 lg:hidden">

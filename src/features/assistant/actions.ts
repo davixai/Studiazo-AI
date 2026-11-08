@@ -14,10 +14,13 @@ import type { Proposal } from "@/lib/contracts/proposals";
 import { isPreviewMode } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { PROPOSAL_COLUMNS, toProposal } from "@/lib/supabase/mappers";
+import { toDateKey } from "@/lib/time/zone";
 import { runAssistant } from "./engine";
+import { getStudyHabits } from "./habits";
 import { proposalIdsOf, toHistory, type HistoryRow, type ProposalNote } from "./history";
-import { buildInstructions } from "./prompt";
+import { buildInstructions, DAILY_PROMPT } from "./prompt";
 import { imagePathOf, toChatMessage, type ChatMessage } from "./queries";
+import { listMemories, removeMemory } from "./memory";
 import { executeTool } from "./tools";
 
 /** Poză redimensionată în browser (JPEG/PNG/WebP), ca data URL; limita de 1 MB a Server Actions o acoperă. */
@@ -61,7 +64,13 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
     return { ok: false, message: "Ai trimis multe întrebări în ultima oră. Mai încearcă puțin mai târziu.", retryable: false };
   }
 
-  const [profile, study, subjects] = await Promise.all([getProfile(), getStudyProfile(), listSubjects()]);
+  const [profile, study, subjects, memories, habits] = await Promise.all([
+    getProfile(),
+    getStudyProfile(),
+    listSubjects(),
+    listMemories(),
+    getStudyHabits(),
+  ]);
   const subject = subjectId ? (subjects.find((s) => s.id === subjectId) ?? null) : null;
   if (subjectId && !subject) return { ok: false, message: "Materia nu mai există.", retryable: false };
 
@@ -93,7 +102,7 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
   let turn;
   try {
     turn = await runAssistant({
-      instructions: buildInstructions({ now, profile, study, subjects, subject }),
+      instructions: buildInstructions({ now, profile, study, subjects, subject, memories, habits }),
       input: [...history, current],
       userId: user.id,
       execute: (name, args) => executeTool(name, args, { now, profile, subjects, subjectId, conversationId }),
@@ -131,18 +140,14 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
         role: "assistant",
         created_at: new Date(answeredAt).toISOString(),
         content: turn.text.slice(0, 20_000),
-        metadata: { proposalIds: turn.proposalIds, citations: turn.citations },
+        metadata: { proposalIds: turn.proposalIds, citations: turn.citations, ...(turn.memory.length ? { memory: turn.memory } : {}) },
       },
     ])
     .select("id, role, content, metadata, created_at");
   if (error) return { ok: false, message: "Nu am putut salva conversația. Încearcă din nou.", retryable: true };
   await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
 
-  const proposals = turn.proposalIds.length
-    ? ((await supabase.from("ai_proposals").select(PROPOSAL_COLUMNS).in("id", turn.proposalIds)).data ?? [])
-        .map(toProposal)
-        .filter((p): p is Proposal => p !== null)
-    : [];
+  const proposals = await loadProposals(turn.proposalIds);
 
   return {
     ok: true,
@@ -150,6 +155,123 @@ export async function sendMessage(input: unknown): Promise<SendResult> {
     messages: (saved ?? []).map((r) => toChatMessage(r)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     proposals,
   };
+}
+
+async function loadProposals(ids: string[]): Promise<Proposal[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createClient();
+  const { data } = await supabase.from("ai_proposals").select(PROPOSAL_COLUMNS).in("id", ids);
+  return (data ?? []).map(toProposal).filter((p): p is Proposal => p !== null);
+}
+
+// ─── Mesajul zilei: asistentul scrie primul ───────────────────────────────────────────────
+
+export type DailyResult = { ok: true; conversationId: string; message: ChatMessage; proposals: Proposal[] } | { ok: false };
+
+/**
+ * Mesajul zilei de pe Acasă: o dată pe zi, asistentul îi scrie primul studentului, în chatul general
+ * (ca să-i poată răspunde acolo). Dacă există deja mesajul de azi, îl întoarce; altfel îl scrie.
+ */
+export async function getDailyMessage(): Promise<DailyResult> {
+  if (isPreviewMode()) return { ok: false };
+  const config = getAiConfig();
+  if (!config.enabled) return { ok: false };
+  const user = await requireUser();
+
+  const now = new Date();
+  const today = toDateKey(now);
+  const existing = await findDailyMessage(today);
+  if (existing) return existing;
+
+  const supabase = await createClient();
+  const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
+  const { count } = await supabase.from("ai_usage").select("id", { count: "exact", head: true }).gte("created_at", hourAgo);
+  if ((count ?? 0) >= config.requestsPerHour) return { ok: false };
+
+  const [profile, study, subjects, memories, habits] = await Promise.all([
+    getProfile(),
+    getStudyProfile(),
+    listSubjects(),
+    listMemories(),
+    getStudyHabits(now),
+  ]);
+  const conversation = await resolveConversation({ subjectId: null, requested: null, newConversation: false, title: "Mesajele asistentului" });
+  if (!conversation.ok) return { ok: false };
+  const conversationId = conversation.id;
+
+  // Ultimele mesaje, ca să știe unde rămăseseră.
+  const { data: historyRows } = await supabase
+    .from("messages")
+    .select("role, content, metadata")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: false })
+    .limit(6);
+  const rows = (historyRows ?? []).reverse() as HistoryRow[];
+  const history = toHistory(rows, await proposalNotes(rows.flatMap((r) => proposalIdsOf(r.metadata))));
+
+  let turn;
+  try {
+    turn = await runAssistant({
+      instructions: buildInstructions({ now, profile, study, subjects, subject: null, memories, habits }),
+      input: [...history, { role: "user", content: DAILY_PROMPT }],
+      userId: user.id,
+      execute: (name, args) => executeTool(name, args, { now, profile, subjects, subjectId: null, conversationId, noMemory: true }),
+    });
+  } catch {
+    await supabase.from("ai_usage").insert({ kind: "chat", model: config.model, ok: false });
+    return { ok: false };
+  }
+  await supabase.from("ai_usage").insert({
+    kind: "chat",
+    model: config.model,
+    input_tokens: turn.usage.inputTokens,
+    output_tokens: turn.usage.outputTokens,
+  });
+
+  const { data: saved, error } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id: conversationId,
+      role: "assistant",
+      content: turn.text.slice(0, 4_000),
+      metadata: { proposalIds: turn.proposalIds, citations: turn.citations, dailyDay: today },
+    })
+    .select("id, role, content, metadata, created_at")
+    .single();
+  // Altă filă l-a scris între timp (indexul unic): îl arătăm pe acela.
+  if (error || !saved) return (await findDailyMessage(today)) ?? { ok: false };
+  await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
+
+  return { ok: true, conversationId, message: toChatMessage(saved), proposals: await loadProposals(turn.proposalIds) };
+}
+
+async function findDailyMessage(day: string): Promise<DailyResult | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("messages")
+    .select("id, role, content, metadata, created_at, conversation_id")
+    .eq("role", "assistant")
+    .eq("metadata->>dailyDay", day)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  const message = toChatMessage(data);
+  return { ok: true, conversationId: data.conversation_id as string, message, proposals: await loadProposals(message.proposalIds) };
+}
+
+// ─── Memoria, din Profil ────────────────────────────────────────────────────────────────
+
+/** Studentul șterge un lucru pe care asistentul l-a reținut despre el. */
+export async function deleteMemory(input: unknown): Promise<{ ok: true } | { ok: false; message: string }> {
+  if (isPreviewMode()) return { ok: false, message: "Modul previzualizare nu salvează date." };
+  await requireUser();
+  const parsed = z.object({ id: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Nu am găsit acest lucru." };
+  const result = await removeMemory(parsed.data.id);
+  if (!result.ok) return { ok: false, message: result.message };
+  revalidatePath("/profil");
+  return { ok: true };
 }
 
 /** Șterge o conversație din istoric, cu mesajele și pozele ei. Propunerile deja salvate rămân în calendar. */

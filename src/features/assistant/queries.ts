@@ -3,6 +3,7 @@ import type { Proposal } from "@/lib/contracts/proposals";
 import { isPreviewMode } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { PROPOSAL_COLUMNS, toProposal } from "@/lib/supabase/mappers";
+import type { MemoryNote } from "./tools";
 
 // Fiecare chat (general sau al unei materii) are mai multe conversații; implicit se deschide ultima.
 // Pozele trimise în chat stau în bucketul privat `materials`, sub {user_id}/chat/, și se arată prin URL semnat.
@@ -17,6 +18,10 @@ export type ChatMessage = {
   imageUrl: string | null;
   /** Mesajul vine de la „Explică-mi ce n-a mers bine” după un test: linkul către test. */
   quizId: string | null;
+  /** Ce a reținut sau a uitat asistentul în acest răspuns. */
+  memory: MemoryNote[];
+  /** Mesajul zilei: asistentul a scris primul. */
+  daily: boolean;
 };
 
 export type ConversationSummary = { id: string; title: string; updatedAt: string };
@@ -34,7 +39,15 @@ const MAX_MESSAGES = 1000;
 const IMAGE_URL_SECONDS = 3600;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-type Metadata = { proposalIds?: unknown; image?: unknown; imagePath?: unknown; quizId?: unknown };
+type Metadata = { proposalIds?: unknown; image?: unknown; imagePath?: unknown; quizId?: unknown; memory?: unknown; dailyDay?: unknown };
+
+function memoryNotesOf(raw: unknown): MemoryNote[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (n): n is MemoryNote =>
+      typeof n === "object" && n !== null && (n.action === "remembered" || n.action === "forgot") && typeof n.text === "string",
+  );
+}
 
 export function imagePathOf(metadata: unknown): string | null {
   const path = (metadata as Metadata | null)?.imagePath;
@@ -53,6 +66,8 @@ export function toChatMessage(r: Record<string, unknown>, imageUrls: Map<string,
     hasImage: metadata.image === true,
     imageUrl: path ? (imageUrls.get(path) ?? null) : null,
     quizId: typeof metadata.quizId === "string" ? metadata.quizId : null,
+    memory: memoryNotesOf(metadata.memory),
+    daily: typeof metadata.dailyDay === "string",
   };
 }
 

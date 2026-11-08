@@ -18,6 +18,7 @@ import { formatDayShort, formatRelativeDay } from "@/lib/time/format";
 import { deleteConversation, sendMessage } from "../actions";
 import type { ChatMessage, ConversationSummary } from "../queries";
 import { DictateButton } from "./dictate-button";
+import { MemoryNotes } from "./memory-notes";
 import { MessageContent } from "./message-content";
 
 type ChatViewProps = {
@@ -269,7 +270,9 @@ export function ChatView({
             <UserBubble key={m.id} text={m.content} hasImage={m.hasImage} image={m.localImage ?? m.imageUrl} quizId={m.quizId} />
           ) : (
             <div key={m.id} className="flex flex-col gap-3">
+              {m.daily ? <p className="text-xs font-semibold text-accent sm:pl-11">Ți-a scris primul</p> : null}
               <AssistantMessage text={m.content} />
+              <MemoryNotes notes={m.memory} />
               {m.proposalIds.map((id) =>
                 proposals[id] ? (
                   <div key={id} className="sm:pl-11">

@@ -75,7 +75,7 @@ export function ProposalCard({ proposal, subjects }: ProposalCardProps) {
   return (
     <article
       aria-label={`Propunere: ${heading}`}
-      className="overflow-hidden rounded-lg border border-line/70 bg-surface shadow-sm animate-rise-in"
+      className="@container overflow-hidden rounded-lg border border-line/70 bg-surface shadow-sm animate-rise-in"
     >
       <header className="flex items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
@@ -84,8 +84,12 @@ export function ProposalCard({ proposal, subjects }: ProposalCardProps) {
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-ink-muted">Propunere de la asistent</p>
           <h3 className="mt-0.5 text-[15px] leading-snug font-semibold text-ink">{heading}</h3>
+          {/* Card îngust (telefon, asistentul plutitor): starea coboară sub titlu, ca titlul să nu se rupă pe cuvinte. */}
+          <span className={cn("mt-2 inline-block rounded-full px-2.5 py-1 text-[11px] font-bold whitespace-nowrap @sm:hidden", STATUS[status].className)}>
+            {STATUS[status].label}
+          </span>
         </div>
-        <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold whitespace-nowrap", STATUS[status].className)}>
+        <span className={cn("hidden shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold whitespace-nowrap @sm:inline-block", STATUS[status].className)}>
           {STATUS[status].label}
         </span>
       </header>

@@ -4,6 +4,9 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconBadge } from "@/components/ui/icon-badge";
+import { MemoryPanel } from "@/features/assistant/components/memory-panel";
+import { describeHabits, getStudyHabits, HABIT_DAYS } from "@/features/assistant/habits";
+import { listMemories } from "@/features/assistant/memory";
 import { signOut } from "@/features/auth/actions";
 import { AvailabilityForm } from "@/features/profile/components/availability-form";
 import { DeleteAccount } from "@/features/profile/components/delete-account";
@@ -16,7 +19,14 @@ import { getTheme } from "@/lib/theme/server";
 export const metadata: Metadata = { title: "Profil" };
 
 export default async function ProfilePage() {
-  const [profile, user, study, theme] = await Promise.all([getProfile(), getCurrentUser(), getStudyProfile(), getTheme()]);
+  const [profile, user, study, theme, memories, habits] = await Promise.all([
+    getProfile(),
+    getCurrentUser(),
+    getStudyProfile(),
+    getTheme(),
+    listMemories(),
+    getStudyHabits(),
+  ]);
   if (!profile) return null;
 
   return (
@@ -54,6 +64,14 @@ export default async function ProfilePage() {
         </div>
 
         <div className="contents xl:flex xl:flex-col xl:gap-8">
+          <Card id="memorie" className="stagger scroll-mt-24 p-5 max-xl:order-1 sm:p-8" style={{ "--i": 2 } as React.CSSProperties}>
+            <MemoryPanel
+              memories={memories.map((m) => ({ id: m.id, content: m.content }))}
+              habits={habits ? describeHabits(habits, "tu") : []}
+              days={HABIT_DAYS}
+            />
+          </Card>
+
           <Card id="disponibilitate" className="stagger scroll-mt-24 p-5 max-xl:order-2 sm:p-8" style={{ "--i": 2 } as React.CSSProperties}>
             <AvailabilityForm availability={profile.availability} />
           </Card>

@@ -12,6 +12,7 @@ import { dayBounds, fromLocal, shiftDateKey, toDateKey, toTimeOfDay } from "@/li
 import { chunkPages, DIGEST_MAX_CHUNKS, digestChunks } from "./digest";
 import { normalize, NOTES_SOURCE, pickPages, type MaterialPage } from "./material-context";
 import { loadSubjectMaterial } from "./materials";
+import { removeMemory, saveMemory } from "./memory";
 
 // Instrumentele asistentului. Argumentele modelului sunt validate cu AI_TOOL_ARGS; identitatea vine din
 // sesiune (RLS), nu din argumente. Erorile se întorc modelului ca text, ca să-și poată corecta cererea.
@@ -23,7 +24,12 @@ export type ToolContext = {
   /** Materia chatului curent (implicită pentru get_subject_material). */
   subjectId: string | null;
   conversationId: string;
+  /** Mesajul zilei: asistentul scrie primul și nu salvează nimic în memorie. */
+  noMemory?: boolean;
 };
+
+/** Ce a reținut sau a uitat asistentul într-un răspuns; aplicația îl arată sub mesaj. */
+export type MemoryNote = { action: "remembered" | "forgot"; text: string };
 
 export type ToolResult = {
   output: string;
@@ -31,6 +37,7 @@ export type ToolResult = {
   citations?: Array<{ materialId: string; page: number }>;
   /** Tokenii folosiți de instrument însuși (ex. citirea unui material întreg). */
   usage?: { inputTokens: number; outputTokens: number };
+  memory?: MemoryNote;
 };
 
 const nullable = (type: string) => ({ type: [type, "null"] });
@@ -79,6 +86,14 @@ export const TOOL_DEFINITIONS: FunctionTool[] = [
   ),
   tool("get_weak_topics", "Temele la care studentul a greșit în testele grilă recente, de la cea mai slabă. Folosește-l când planifici recapitularea.", {
     subject_id: { ...nullable("string"), description: "Id-ul materiei sau null pentru toate" },
+  }),
+  tool(
+    "remember",
+    "Ține minte un lucru durabil despre student, spus de el (program, cum învață, ce îl încurcă, obiective). Studentul îl vede și îl poate șterge în Profil.",
+    { fact: { type: "string", description: "Scurt, la persoana a treia, ex. „Lucrează la cafenea sâmbăta”" } },
+  ),
+  tool("forget", "Uită un lucru reținut, când nu mai e valabil sau studentul cere asta.", {
+    memory_id: { type: "string", description: "Id-ul din lista „Ce ți-a spus și ai reținut”" },
   }),
   tool("propose_task", "Pregătește teme sau examene pentru calendar. NU salvează: studentul confirmă cu un buton.", {
     explanation: { type: "string", description: "O propoziție pentru student" },
@@ -151,6 +166,10 @@ export async function executeTool(name: string, rawArgs: string, ctx: ToolContex
         return await subjectMaterial(parsed.data as ArgsOf<"get_subject_material">, ctx);
       case "digest_material":
         return await digestMaterial(parsed.data as ArgsOf<"digest_material">, ctx);
+      case "remember":
+        return await rememberTool(parsed.data as ArgsOf<"remember">, ctx);
+      case "forget":
+        return await forgetTool(parsed.data as ArgsOf<"forget">, ctx);
       case "propose_task":
         return await proposeTask(parsed.data as ArgsOf<"propose_task">, ctx);
       case "propose_study_sessions":
@@ -339,6 +358,20 @@ async function weakTopicsTool({ subject_id }: ArgsOf<"get_weak_topics">, ctx: To
     })),
     note: attempts.length === 0 ? "Studentul nu a rezolvat încă teste grilă." : undefined,
   });
+}
+
+async function rememberTool({ fact }: ArgsOf<"remember">, ctx: ToolContext): Promise<ToolResult> {
+  if (ctx.noMemory) return fail("Acum nu salvezi nimic în memorie.");
+  const result = await saveMemory(fact);
+  if (!result.ok) return fail(result.message);
+  return { output: JSON.stringify({ status: "saved", note: "Aplicația îi arată «Am reținut». Nu repeta lung." }), memory: { action: "remembered", text: result.content } };
+}
+
+async function forgetTool({ memory_id }: ArgsOf<"forget">, ctx: ToolContext): Promise<ToolResult> {
+  if (ctx.noMemory) return fail("Acum nu modifici memoria.");
+  const result = await removeMemory(memory_id);
+  if (!result.ok) return fail(result.message);
+  return { output: JSON.stringify({ status: "forgotten" }), memory: { action: "forgot", text: result.content } };
 }
 
 async function proposeTask({ explanation, items }: ArgsOf<"propose_task">, ctx: ToolContext) {

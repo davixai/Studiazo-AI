@@ -10,4 +10,6 @@ export const AI_LIMITS = {
   /** Câte caractere de material se trimit într-o cerere (~6k tokeni). */
   maxMaterialChars: 24_000,
   maxUserMessageChars: 4_000,
+  /** Câte lucruri ține minte asistentul despre un student (le vede și le șterge în Profil). */
+  maxMemories: 40,
 } as const;

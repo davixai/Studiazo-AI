@@ -11,5 +11,5 @@ export const AI_LIMITS = {
   maxMaterialChars: 24_000,
   maxUserMessageChars: 4_000,
   /** Câte lucruri ține minte asistentul despre un student (le vede și le șterge în Profil). */
-  maxMemories: 40,
+  maxMemories: 100,
 } as const;

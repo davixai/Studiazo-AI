@@ -52,6 +52,8 @@ Pozele trimise în chat stau în același bucket, la `{user_id}/chat/{uuid}.jpg`
 
 `supabase/seed/demo.sql` este separat de migrații, iar toate titlurile au sufixul „(demo)”. Se rulează manual după crearea unui cont de test (vezi SETUP.md).
 
+`supabase/seed/prezentare.sql` umple un cont ca la un student real: profil, orar (dacă lipsește), job și sport, teme și examene, sesiuni de studiu, un test, notițe, buget pe 3 luni, două conversații cu asistentul și memoria lui. Se rulează în SQL Editor, de câte ori vrei (întâi șterge ce a adăugat data trecută).
+
 ## Reguli pentru migrații noi
 
 1. Fișier nou `supabase/migrations/YYYYMMDDHHMMSS_descriere.sql`, cu marcaj de timp unic. **Nu edita migrațiile aplicate.**

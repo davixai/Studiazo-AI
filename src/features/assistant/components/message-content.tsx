@@ -5,7 +5,7 @@ import { Fragment, type ReactNode } from "react";
 
 type Block =
   | { type: "p"; lines: string[] }
-  | { type: "ul" | "ol"; items: string[] }
+  | { type: "ul" | "ol"; items: string[]; start?: number }
   | { type: "code"; text: string };
 
 const LATEX_SYMBOLS: Record<string, string> = {
@@ -58,13 +58,17 @@ export function parseBlocks(text: string): Block[] {
     // Curățarea LaTeX doar în text, nu în blocurile de cod ($HOME, \n etc.).
     const line = plainMath(raw);
     const bullet = /^\s*[-*•]\s+(.*)$/.exec(line);
-    const numbered = /^\s*\d+[.)]\s+(.*)$/.exec(line);
+    const numbered = /^\s*(\d+)[.)]\s+(.*)$/.exec(line);
     const last = blocks[blocks.length - 1];
-    if (bullet || numbered) {
-      const type = bullet ? "ul" : "ol";
-      const item = (bullet ?? numbered)?.[1] ?? "";
-      if (last?.type === type) last.items.push(item);
-      else blocks.push({ type, items: [item] });
+    if (bullet) {
+      if (last?.type === "ul") last.items.push(bullet[1]);
+      else blocks.push({ type: "ul", items: [bullet[1]] });
+      continue;
+    }
+    if (numbered) {
+      if (last?.type === "ol") last.items.push(numbered[2]);
+      // O listă numerotată întreruptă (de ex. întrebare, apoi variantele ei) continuă de la numărul scris, nu de la 1.
+      else blocks.push({ type: "ol", items: [numbered[2]], ...(Number(numbered[1]) > 1 ? { start: Number(numbered[1]) } : {}) });
       continue;
     }
     const heading = /^#{1,6}\s+(.*)$/.exec(line);
@@ -111,7 +115,7 @@ export function MessageContent({ text }: { text: string }) {
           );
         const List = block.type;
         return (
-          <List key={i} className={List === "ul" ? "flex list-disc flex-col gap-1 pl-5 marker:text-accent" : "flex list-decimal flex-col gap-1 pl-5 marker:font-semibold marker:text-accent"}>
+          <List key={i} start={List === "ol" && block.start && block.start > 1 ? block.start : undefined} className={List === "ul" ? "flex list-disc flex-col gap-1 pl-5 marker:text-accent" : "flex list-decimal flex-col gap-1 pl-5 marker:font-semibold marker:text-accent"}>
             {block.items.map((item, j) => (
               <li key={j} className="pl-1">
                 {inline(item)}

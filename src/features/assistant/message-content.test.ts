@@ -30,3 +30,10 @@ describe("plainMath", () => {
     ]);
   });
 });
+
+describe("liste numerotate întrerupte", () => {
+  it("continuă numerotarea de la numărul scris, nu de la 1", () => {
+    const blocks = parseBlocks("1. Prima întrebare\n- A) da\n- B) nu\n2. A doua întrebare\n- A) da");
+    expect(blocks.map((b) => (b.type === "ol" ? `ol:${b.start ?? 1}` : b.type))).toEqual(["ol:1", "ul", "ol:2", "ul"]);
+  });
+});
